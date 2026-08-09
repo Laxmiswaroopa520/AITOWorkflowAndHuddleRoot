@@ -1,0 +1,48 @@
+// Update these enum files before the API reads imported Activities.
+// Preserve numeric values as appropriate for your project; database values are stored as names.
+
+public enum ActivityCategory
+{
+    Unspecified = 0,
+    Admin = 1,
+    Engagement = 2,
+    Execution = 3,
+    Insight = 4,
+    Planning = 5
+}
+
+public enum ActivityFrequency
+{
+    Unspecified = 0,
+    Daily = 1,
+    Weekly = 2,
+    Monthly = 3,
+    Quarterly = 4,
+    AsNeeded = 5
+}
+
+public enum ActivityPriority
+{
+    Unspecified = 0,
+    Medium = 1,
+    High = 2
+}
+
+public enum ToolCoverageLevel
+{
+    Unspecified = 0,
+    Supported = 1,
+    FullySupported = 2,
+    MultiAgentSupported = 3
+}
+
+public enum TriggerContext
+{
+    Unspecified = 0,
+    None = 1,
+    AsNeeded = 2,
+    PreMeeting = 3,
+    PostMeeting = 4,
+    Recurring = 5,
+    RenewalCycle = 6
+}
