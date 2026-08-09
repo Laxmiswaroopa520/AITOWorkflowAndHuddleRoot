@@ -40,13 +40,36 @@ public sealed class ExceptionHandlingMiddleware
         }
         catch (Exception exception)
         {
-            _logger.LogError(
+            (int statusCode, string title) =
+                MapException(exception);
+
+            if (
+                statusCode ==
+                StatusCodes.Status500InternalServerError)
+            {
+                _logger.LogError(
+                    exception,
+                    "An unhandled exception occurred. " +
+                    "Correlation ID: {CorrelationId}",
+                    context.TraceIdentifier);
+
+                await WriteUnexpectedProblemAsync(context);
+
+                return;
+            }
+
+            _logger.LogWarning(
                 exception,
-                "An unhandled exception occurred. " +
+                "A request failed with status {StatusCode}. " +
                 "Correlation ID: {CorrelationId}",
+                statusCode,
                 context.TraceIdentifier);
 
-            await WriteUnexpectedProblemAsync(context);
+            await WriteMappedProblemAsync(
+                context,
+                exception,
+                statusCode,
+                title);
         }
     }
 
@@ -95,6 +118,38 @@ public sealed class ExceptionHandlingMiddleware
     }
 
     private static async Task
+        WriteMappedProblemAsync(
+            HttpContext context,
+            Exception exception,
+            int statusCode,
+            string title)
+    {
+        context.Response.StatusCode =
+            statusCode;
+
+        context.Response.ContentType =
+            "application/problem+json";
+
+        var problemDetails =
+            new ProblemDetails
+            {
+                Status = statusCode,
+                Title = title,
+                Detail = exception.Message,
+                Instance = context.Request.Path
+            };
+
+        problemDetails.Extensions[
+            "correlationId"
+        ] = context.TraceIdentifier;
+
+        await context.Response.WriteAsJsonAsync(
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json");
+    }
+
+    private static async Task
         WriteUnexpectedProblemAsync(
             HttpContext context)
     {
@@ -129,7 +184,9 @@ public sealed class ExceptionHandlingMiddleware
         ] = context.TraceIdentifier;
 
         await context.Response.WriteAsJsonAsync(
-            problemDetails);
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json");
     }
 
     private static (
@@ -269,7 +326,9 @@ public sealed class ExceptionHandlingMiddleware
             context.TraceIdentifier;
 
         await context.Response.WriteAsJsonAsync(
-            problemDetails);
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json");
     }
 }
 */

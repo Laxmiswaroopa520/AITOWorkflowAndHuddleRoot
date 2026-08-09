@@ -8,14 +8,14 @@ import {
 } from "@/api/useApiClient";
 
 import {
-  updateWorkflow,
-} from "../api/updateWorkflow";
+  deleteWorkflow,
+} from "../api/deleteWorkflow";
 
 import {
   savedWorkflowKeys,
 } from "./savedWorkflowKeys";
 
-export function useUpdateWorkflow() {
+export function useDeleteWorkflow() {
   const apiClient =
     useApiClient();
 
@@ -24,23 +24,14 @@ export function useUpdateWorkflow() {
 
   return useMutation({
     mutationFn: (
-      input: Parameters<
-        typeof updateWorkflow
-      >[1],
+      workflowId: string,
     ) =>
-      updateWorkflow(
+      deleteWorkflow(
         apiClient,
-        input,
+        workflowId,
       ),
 
-    onSuccess: async workflow => {
-      queryClient.setQueryData(
-        savedWorkflowKeys.detail(
-          workflow.id,
-        ),
-        workflow,
-      );
-
+    onSuccess: async () => {
       await queryClient
         .invalidateQueries({
           queryKey:

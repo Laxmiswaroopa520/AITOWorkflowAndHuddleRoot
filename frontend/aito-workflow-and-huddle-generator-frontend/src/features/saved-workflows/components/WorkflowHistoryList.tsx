@@ -71,7 +71,7 @@ export function WorkflowHistoryList({
   if (isLoading) {
     return (
       <LoadingSpinner
-        label="Loading saved workflows..."
+        message="Loading saved workflows..."
       />
     );
   }

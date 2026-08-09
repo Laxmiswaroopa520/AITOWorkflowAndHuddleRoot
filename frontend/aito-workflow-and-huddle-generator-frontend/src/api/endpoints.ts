@@ -57,3 +57,6 @@ export const apiEndpoints = {
       `/api/workflows/${workflowId}/favorite`,
   },
 } as const;
+
+export const endpoints =
+  apiEndpoints;

@@ -27,13 +27,19 @@ export interface ApiClient {
     signal?: AbortSignal,
   ): Promise<TResponse>;
 
-  post<TRequest, TResponse>(
+  post<TResponse, TRequest>(
     path: string,
     body: TRequest,
     signal?: AbortSignal,
   ): Promise<TResponse>;
 
-  put<TRequest, TResponse>(
+  put<TResponse, TRequest>(
+    path: string,
+    body: TRequest,
+    signal?: AbortSignal,
+  ): Promise<TResponse>;
+
+  patch<TResponse, TRequest>(
     path: string,
     body: TRequest,
     signal?: AbortSignal,
@@ -90,7 +96,7 @@ export function createApiClient(
     );
 
     if (!response.ok) {
-      let details: unknown = null;
+      let details: unknown;
 
       try {
         details = await response.json();
@@ -122,7 +128,7 @@ export function createApiClient(
         signal,
       }),
 
-    post: <TRequest, TResponse>(
+    post: <TResponse, TRequest>(
       path: string,
       body: TRequest,
       signal?: AbortSignal,
@@ -133,13 +139,24 @@ export function createApiClient(
         signal,
       }),
 
-    put: <TRequest, TResponse>(
+    put: <TResponse, TRequest>(
       path: string,
       body: TRequest,
       signal?: AbortSignal,
     ) =>
       request<TResponse>(path, {
         method: "PUT",
+        body: JSON.stringify(body),
+        signal,
+      }),
+
+    patch: <TResponse, TRequest>(
+      path: string,
+      body: TRequest,
+      signal?: AbortSignal,
+    ) =>
+      request<TResponse>(path, {
+        method: "PATCH",
         body: JSON.stringify(body),
         signal,
       }),

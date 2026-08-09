@@ -35,7 +35,6 @@ interface ActivityCardProps {
   onToggle: () => void;
   onToggleDetails: () => void;
 }
-
 export function ActivityCard({
   activity,
   isSelected,
@@ -362,43 +361,5 @@ export function ActivityCard({
   </motion.div>
 )}
     </motion.article>
-  );
-}
-
-interface DetailSectionProps {
-  title: string;
-  content: string;
-}
-
-function DetailSection({
-  title,
-  content,
-}: DetailSectionProps) {
-  return (
-    <div className="mb-3 last:mb-0">
-      <p
-        className="
-          text-[11px]
-          font-semibold
-          uppercase
-          tracking-wide
-          text-muted-foreground
-        "
-      >
-        {title}
-      </p>
-
-      <p
-        className="
-          mt-1
-          whitespace-pre-wrap
-          text-xs
-          leading-5
-          text-foreground
-        "
-      >
-        {content}
-      </p>
-    </div>
   );
 }

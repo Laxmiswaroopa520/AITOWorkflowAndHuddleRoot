@@ -52,16 +52,10 @@ export function HealthDiagnosticPage() {
           ? error.message
           : "An unknown error occurred.";
 
-    const correlationId =
-      error instanceof ApiError
-        ? error.correlationId
-        : undefined;
-
     return (
       <ErrorState
         title="API connection failed"
         message={message}
-        correlationId={correlationId}
         onRetry={() => {
           void healthQuery.refetch();
         }}
