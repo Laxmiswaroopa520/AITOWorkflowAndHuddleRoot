@@ -29,6 +29,30 @@ public interface IApplicationDbContext
 
     DbSet<WorkflowShare> WorkflowShares { get; }
 
+    DbSet<HuddleSegment> HuddleSegments { get; }
+    DbSet<HuddleSegmentRole> HuddleSegmentRoles { get; }
+    DbSet<HuddleFocusArea> HuddleFocusAreas { get; }
+    DbSet<HuddleMcemStage> HuddleMcemStages { get; }
+    DbSet<HuddleTopic> HuddleTopics { get; }
+    DbSet<HuddleTopicRole> HuddleTopicRoles { get; }
+    DbSet<HuddleRolePathItem> HuddleRolePathItems { get; }
+    DbSet<HuddleTopicMcemStage> HuddleTopicMcemStages { get; }
+    DbSet<HuddlePhase> HuddlePhases { get; }
+    DbSet<HuddleActivity> HuddleActivities { get; }
+    DbSet<HuddleFacilitatorGuide> HuddleFacilitatorGuides { get; }
+    DbSet<HuddleAgent> HuddleAgents { get; }
+    DbSet<HuddleTopicAgent> HuddleTopicAgents { get; }
+    DbSet<HuddleActivityAgent> HuddleActivityAgents { get; }
+    DbSet<HuddleResource> HuddleResources { get; }
+    DbSet<HuddleTopicResource> HuddleTopicResources { get; }
+    DbSet<HuddleActivityResource> HuddleActivityResources { get; }
+    DbSet<HuddleAgentResource> HuddleAgentResources { get; }
+    DbSet<UserHuddlePlan> UserHuddlePlans { get; }
+    DbSet<UserHuddlePlanItem> UserHuddlePlanItems { get; }
+    DbSet<UserHuddleSession> UserHuddleSessions { get; }
+    DbSet<UserHuddleActivityProgress> UserHuddleActivityProgress { get; }
+    DbSet<HuddleVote> HuddleVotes { get; }
+
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default);
 }

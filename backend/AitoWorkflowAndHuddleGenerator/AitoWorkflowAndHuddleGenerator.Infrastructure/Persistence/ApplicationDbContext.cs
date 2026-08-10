@@ -42,6 +42,30 @@ public sealed class ApplicationDbContext
     public DbSet<WorkflowShare> WorkflowShares =>
         Set<WorkflowShare>();
 
+    public DbSet<HuddleSegment> HuddleSegments => Set<HuddleSegment>();
+    public DbSet<HuddleSegmentRole> HuddleSegmentRoles => Set<HuddleSegmentRole>();
+    public DbSet<HuddleFocusArea> HuddleFocusAreas => Set<HuddleFocusArea>();
+    public DbSet<HuddleMcemStage> HuddleMcemStages => Set<HuddleMcemStage>();
+    public DbSet<HuddleTopic> HuddleTopics => Set<HuddleTopic>();
+    public DbSet<HuddleTopicRole> HuddleTopicRoles => Set<HuddleTopicRole>();
+    public DbSet<HuddleRolePathItem> HuddleRolePathItems => Set<HuddleRolePathItem>();
+    public DbSet<HuddleTopicMcemStage> HuddleTopicMcemStages => Set<HuddleTopicMcemStage>();
+    public DbSet<HuddlePhase> HuddlePhases => Set<HuddlePhase>();
+    public DbSet<HuddleActivity> HuddleActivities => Set<HuddleActivity>();
+    public DbSet<HuddleFacilitatorGuide> HuddleFacilitatorGuides => Set<HuddleFacilitatorGuide>();
+    public DbSet<HuddleAgent> HuddleAgents => Set<HuddleAgent>();
+    public DbSet<HuddleTopicAgent> HuddleTopicAgents => Set<HuddleTopicAgent>();
+    public DbSet<HuddleActivityAgent> HuddleActivityAgents => Set<HuddleActivityAgent>();
+    public DbSet<HuddleResource> HuddleResources => Set<HuddleResource>();
+    public DbSet<HuddleTopicResource> HuddleTopicResources => Set<HuddleTopicResource>();
+    public DbSet<HuddleActivityResource> HuddleActivityResources => Set<HuddleActivityResource>();
+    public DbSet<HuddleAgentResource> HuddleAgentResources => Set<HuddleAgentResource>();
+    public DbSet<UserHuddlePlan> UserHuddlePlans => Set<UserHuddlePlan>();
+    public DbSet<UserHuddlePlanItem> UserHuddlePlanItems => Set<UserHuddlePlanItem>();
+    public DbSet<UserHuddleSession> UserHuddleSessions => Set<UserHuddleSession>();
+    public DbSet<UserHuddleActivityProgress> UserHuddleActivityProgress => Set<UserHuddleActivityProgress>();
+    public DbSet<HuddleVote> HuddleVotes => Set<HuddleVote>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -50,5 +74,6 @@ public sealed class ApplicationDbContext
 
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(ApplicationDbContext).Assembly);
+
     }
 }
