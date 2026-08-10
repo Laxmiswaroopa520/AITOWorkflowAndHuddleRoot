@@ -17,22 +17,22 @@ interface WorkflowProgressProps {
 const workflowSteps: Array<{
   id: WorkflowStep;
   number: number;
-  label: string;
+  label: string; subtitle: string;
 }> = [
   {
     id: "discover",
     number: 1,
-    label: "Discover",
+    label: "Choose Your Role", subtitle: "Tell us what you do",
   },
   {
     id: "customize",
     number: 2,
-    label: "Customize",
+    label: "Select Activities", subtitle: "Pick your priorities",
   },
   {
     id: "generate",
     number: 3,
-    label: "Generate",
+    label: "Your Workflow", subtitle: "Build your day",
   },
 ];
 
@@ -49,11 +49,9 @@ export function WorkflowProgress({
     <nav
       aria-label="Workflow progress"
       className="
-        border-b
-        border-border
-        bg-card/80
+        bg-background
         px-4
-        py-4
+        py-3
         backdrop-blur
       "
     >
@@ -61,7 +59,7 @@ export function WorkflowProgress({
         className="
           mx-auto
           flex
-          max-w-3xl
+          max-w-2xl
           items-center
           justify-center
         "
@@ -88,15 +86,15 @@ export function WorkflowProgress({
                   className="
                     flex
                     items-center
-                    gap-2
+                    gap-2.5
                   "
                 >
                   <span
                     className={cn(
                       `
                         flex
-                        h-8
-                        w-8
+                    h-9
+                        w-9
                         items-center
                         justify-center
                         rounded-full
@@ -137,13 +135,11 @@ export function WorkflowProgress({
                     )}
                   </span>
 
-                  <span
+                  <span className="hidden sm:block"><span
                     className={cn(
                       `
-                        hidden
                         text-sm
-                        font-medium
-                        sm:block
+                        font-semibold
                       `,
 
                       isCurrent
@@ -152,7 +148,7 @@ export function WorkflowProgress({
                     )}
                   >
                     {step.label}
-                  </span>
+                  </span><span className="block text-[11px] text-muted-foreground">{step.subtitle}</span></span>
                 </div>
 
                 {index <

@@ -1,11 +1,20 @@
 import {
   ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  Filter,
+  FolderOpen,
   Loader2,
+  Plus,
+  Sparkles,
+  Timer,
 } from "lucide-react";
 
 import {
   useMemo,
 } from "react";
+import { Link } from "react-router";
 
 import {
   Button,
@@ -42,14 +51,6 @@ import {
 import {
   groupActivitiesByBucket,
 } from "../utils/groupActivitiesByBucket";
-
-import {
-  ActivityFilters,
-} from "./ActivityFilters";
-
-import {
-  SelectedActivitiesPanel,
-} from "./SelectedActivitiesPanel";
 
 import {
   WorkflowBucketList,
@@ -116,7 +117,6 @@ export function ActivitySelectionStep({
   selectedActivities,
   selectedActivityIds,
   expandedActivityId,
-  totalDuration,
   onBack,
   onRetry,
   onFiltersChange,
@@ -125,8 +125,6 @@ export function ActivitySelectionStep({
   onToggleDetails,
   onSelectActivities,
   onDeselectActivities,
-  onRemoveActivity,
-  onClearActivities,
   onBuild,
 }: ActivitySelectionStepProps) {
   const filteredActivities =
@@ -147,38 +145,10 @@ export function ActivitySelectionStep({
     ],
   );
 
-  const categories = useMemo(
-    () =>
-      uniqueSorted(
-        activities.map(
-          activity =>
-            activity.category,
-        ),
-      ),
-    [activities],
-  );
-
-  const priorities = useMemo(
-    () =>
-      uniqueSorted(
-        activities.map(
-          activity =>
-            activity.priority,
-        ),
-      ),
-    [activities],
-  );
-
-  const frequencies = useMemo(
-    () =>
-      uniqueSorted(
-        activities.map(
-          activity =>
-            activity.frequency,
-        ),
-      ),
-    [activities],
-  );
+  const allFilteredSelected = filteredActivities.length > 0 && filteredActivities.every(activity => selectedActivityIds.has(activity.id));
+  const selectedByCategory = useMemo(() => selectedActivities.reduce<Record<string, number>>((counts, activity) => { counts[activity.category] = (counts[activity.category] ?? 0) + 1; return counts; }, {}), [selectedActivities]);
+  const updateFilter = <K extends keyof WorkflowFilters>(key: K, value: WorkflowFilters[K]) => onFiltersChange({ ...filters, [key]: value });
+  const toggleAll = () => allFilteredSelected ? onDeselectActivities(filteredActivities.map(activity => activity.id)) : onSelectActivities(filteredActivities);
 
   if (isLoading) {
     return (
@@ -299,14 +269,7 @@ export function ActivitySelectionStep({
 
   return (
     <section
-      className="
-        mx-auto
-        w-full
-        max-w-[1500px]
-        px-4
-        pb-10
-        pt-4
-      "
+      className="mx-auto w-full max-w-[1800px] px-4 pb-10 pt-3 lg:px-10 xl:px-16"
     >
       <Button
         type="button"
@@ -322,114 +285,14 @@ export function ActivitySelectionStep({
         Change role
       </Button>
 
-      <div
-        className="
-          mt-5
-          flex
-          flex-wrap
-          items-start
-          justify-between
-          gap-4
-        "
-      >
-        <div>
-          <p
-            className="
-              text-xs
-              font-semibold
-              uppercase
-              tracking-[0.14em]
-              text-primary
-            "
-          >
-            Customize
-          </p>
-
-          <h1
-            className="
-              mt-1
-              text-3xl
-              font-bold
-              tracking-tight
-            "
-          >
-            Build your workflow
-          </h1>
-
-          <p
-            className="
-              mt-2
-              text-muted-foreground
-            "
-          >
-            Recommended activities for{" "}
-            <strong className="text-foreground">
-              {role.name}
-            </strong>
-            .
-          </p>
-        </div>
-
-        <div
-          className="
-            rounded-xl
-            border
-            border-border
-            bg-card
-            px-4
-            py-3
-            text-right
-            shadow-sm
-          "
-        >
-          <p
-            className="
-              text-xs
-              text-muted-foreground
-            "
-          >
-            Available activities
-          </p>
-
-          <p
-            className="
-              mt-1
-              text-2xl
-              font-bold
-            "
-          >
-            {activities.length}
-          </p>
-        </div>
+      <div className="mt-3 flex flex-col gap-4 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-4"><span className="rounded-xl bg-primary/10 p-3"><Sparkles className="h-6 w-6 text-primary" /></span><div><h1 className="text-lg font-bold">Select Your Activities</h1><p className="text-sm text-muted-foreground">Choose the activities you want to focus on. These will build your personalized schedule.</p></div><button type="button" onClick={toggleAll} className={`ml-2 flex items-center gap-2 rounded-xl border-2 px-4 py-2 text-sm font-semibold shadow-sm transition ${allFilteredSelected ? "border-primary bg-primary text-white" : "border-primary/40 bg-primary/10 text-primary"}`}>{allFilteredSelected ? <><CheckCircle2 className="h-4 w-4" />Deselect All</> : <><Plus className="h-4 w-4" />Select All</>}</button></div>
+        <div className="flex flex-wrap items-center gap-3"><label className="relative"><Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><select aria-label="AI tool filter" value={filters.aiToolId} onChange={event => updateFilter("aiToolId", event.target.value)} className="h-10 w-40 rounded-md border bg-background pl-9 pr-3 text-sm"><option value="all">All AI Tools</option>{aiTools.map(tool => <option key={tool.externalId} value={tool.externalId}>{tool.name}</option>)}</select></label><label className="relative"><Timer className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><select aria-label="Duration filter" value={filters.duration} onChange={event => updateFilter("duration", event.target.value as WorkflowFilters["duration"])} className="h-10 w-36 rounded-md border bg-background pl-9 pr-3 text-sm"><option value="all">Any duration</option><option value="short">15 min or less</option><option value="medium">16–30 min</option><option value="long">Over 30 min</option></select></label></div>
       </div>
 
-      <div className="mt-6">
-        <ActivityFilters
-          filters={filters}
-          aiTools={aiTools}
-          workflowBuckets={
-            workflowBuckets
-          }
-          categories={categories}
-          priorities={priorities}
-          frequencies={frequencies}
-          onChange={
-            onFiltersChange
-          }
-          onClear={
-            onClearFilters
-          }
-        />
-      </div>
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-4"><div className="flex flex-wrap items-center gap-3"><span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm ${selectedActivities.length ? "bg-primary/10 text-primary" : "bg-secondary"}`}><Check className="mr-1.5 h-3.5 w-3.5" />{selectedActivities.length} selected</span>{Object.entries(selectedByCategory).map(([category,count]) => <span key={category} className="rounded-full border px-2.5 py-1 text-xs">{category}: {count}</span>)}</div><div className="flex items-center gap-3"><Link to="/workflows" className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium"><FolderOpen className="h-4 w-4" />My Workflows</Link><Button type="button" size="lg" disabled={!selectedActivities.length} onClick={onBuild} className="gap-2">Build My Day <ArrowRight className="h-4 w-4" /></Button></div></div>
 
-      <div
-        className="
-          mt-6
-          grid
-          gap-6
-          lg:grid-cols-[minmax(0,1fr)_310px]
-        "
-      >
+      <div className="mt-5">
         <WorkflowBucketList
           groups={groups}
           selectedActivityIds={
@@ -454,36 +317,8 @@ export function ActivitySelectionStep({
             onClearFilters
           }
         />
-
-        <SelectedActivitiesPanel
-          activities={
-            selectedActivities
-          }
-          totalDuration={
-            totalDuration
-          }
-          onRemove={
-            onRemoveActivity
-          }
-          onClear={
-            onClearActivities
-          }
-          onBuild={onBuild}
-        />
       </div>
     </section>
   );
 }
 
-function uniqueSorted(
-  values: string[],
-): string[] {
-  return Array.from(
-    new Set(
-      values.filter(Boolean),
-    ),
-  ).sort(
-    (left, right) =>
-      left.localeCompare(right),
-  );
-}

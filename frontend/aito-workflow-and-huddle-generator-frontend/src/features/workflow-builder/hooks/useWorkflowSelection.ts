@@ -263,6 +263,39 @@ export function useWorkflowSelection() {
     );
   };
 
+  const swapActivities = (
+    firstActivityId: number,
+    secondActivityId: number,
+  ): void => {
+    if (firstActivityId === secondActivityId) {
+      return;
+    }
+
+    setSelectedActivities(currentActivities => {
+      const firstIndex = currentActivities.findIndex(
+        activity => activity.id === firstActivityId,
+      );
+      const secondIndex = currentActivities.findIndex(
+        activity => activity.id === secondActivityId,
+      );
+
+      if (firstIndex < 0 || secondIndex < 0) {
+        return currentActivities;
+      }
+
+      const reorderedActivities = [...currentActivities];
+      [
+        reorderedActivities[firstIndex],
+        reorderedActivities[secondIndex],
+      ] = [
+        reorderedActivities[secondIndex],
+        reorderedActivities[firstIndex],
+      ];
+
+      return reorderedActivities;
+    });
+  };
+
   const clearActivities =
     (): void => {
       setSelectedActivities([]);
@@ -400,6 +433,7 @@ export function useWorkflowSelection() {
     selectActivities,
     deselectActivities,
     removeActivity,
+    swapActivities,
     clearActivities,
     clearFilters,
     clearPersistenceContext,

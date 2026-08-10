@@ -59,13 +59,13 @@ export function RoleCard({
           group
           relative
           flex
-          min-h-[190px]
+          min-h-[132px]
           w-full
           flex-col
           rounded-2xl
           border
           bg-card
-          p-5
+          p-3.5
           text-left
           transition-all
           duration-200
@@ -109,12 +109,12 @@ export function RoleCard({
         </span>
       )}
 
-      <div
+      <div className="flex items-start gap-2.5 pr-5"><div
         className={cn(
           `
             flex
-            h-11
-            w-11
+            h-9
+            w-9
             items-center
             justify-center
             rounded-xl
@@ -128,63 +128,20 @@ export function RoleCard({
         />
       </div>
 
-      <div className="mt-5">
-        <p
-          className="
-            text-xs
-            font-semibold
-            uppercase
-            tracking-[0.12em]
-            text-muted-foreground
-          "
-        >
-          {role.abbreviation}
-        </p>
-
+      <div className="min-w-0 flex-1">
         <h3
           className="
-            mt-1
-            text-base
+            pt-0.5 text-[15px]
             font-semibold
+            leading-snug
             text-foreground
           "
         >
           {role.name}
         </h3>
 
-        {role.description && (
-          <p
-            className="
-              mt-2
-              line-clamp-3
-              text-sm
-              leading-relaxed
-              text-muted-foreground
-            "
-          >
-            {role.description}
-          </p>
-        )}
-      </div>
-
-      <span
-        className={cn(
-          `
-            mt-auto
-            inline-flex
-            w-fit
-            rounded-full
-            px-2.5
-            py-1
-            text-[11px]
-            font-medium
-            text-white
-          `,
-          style.badgeBg,
-        )}
-      >
-        {segment}
-      </span>
+      </div></div>
+      {role.description && <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">{role.description}</p>}
     </motion.button>
   );
 }

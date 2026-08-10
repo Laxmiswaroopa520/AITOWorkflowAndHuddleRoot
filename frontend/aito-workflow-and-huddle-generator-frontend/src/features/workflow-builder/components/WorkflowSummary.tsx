@@ -1,8 +1,10 @@
 import {
+  ArrowLeftRight,
   Clock,
   Copy,
   Save,
   Sparkles,
+  X,
 } from "lucide-react";
 
 import {
@@ -47,6 +49,10 @@ import {
 } from "../hooks/useWorkflowSelection";
 
 import {
+  DaySchedule,
+} from "./DaySchedule";
+
+import {
   WorkflowNavigation,
 } from "./WorkflowNavigation";
 
@@ -74,7 +80,13 @@ export function WorkflowSummary({
     saveAsWorkflow,
     setEditingWorkflow,
     setSaveAsWorkflow,
+    swapActivities,
   } = useWorkflowSelection();
+
+  const [
+    swapSourceActivityId,
+    setSwapSourceActivityId,
+  ] = useState<number | null>(null);
 
   const [
     saveDialogMode,
@@ -101,7 +113,34 @@ export function WorkflowSummary({
     groupActivitiesByBucket(
       activities,
       [],
+      true,
     );
+
+  const swapSourceActivity =
+    activities.find(
+      activity =>
+        activity.id === swapSourceActivityId,
+    );
+
+  const handleSwap = (
+    activityId: number,
+  ): void => {
+    if (swapSourceActivityId === null) {
+      setSwapSourceActivityId(activityId);
+      return;
+    }
+
+    if (swapSourceActivityId === activityId) {
+      setSwapSourceActivityId(null);
+      return;
+    }
+
+    swapActivities(
+      swapSourceActivityId,
+      activityId,
+    );
+    setSwapSourceActivityId(null);
+  };
 
   /*
    * Automatically open Save As when
@@ -525,7 +564,11 @@ export function WorkflowSummary({
         </div>
       </div>
 
-      <div className="mt-7 space-y-5">
+      <div className="mt-7">
+        <DaySchedule activities={activities} />
+      </div>
+
+      <div className="hidden" aria-hidden="true">
         {groups.map(group => {
           const Icon =
             BUCKET_ICONS[group.name] ??
@@ -674,6 +717,46 @@ export function WorkflowSummary({
                           </p>
                         )}
                       </div>
+
+                      <Button
+                        type="button"
+                        variant={
+                          swapSourceActivityId === activity.id
+                            ? "default"
+                            : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handleSwap(activity.id)}
+                        disabled={
+                          swapSourceActivity !== undefined &&
+                          swapSourceActivity.workflowBucketExternalId !==
+                            activity.workflowBucketExternalId
+                        }
+                        aria-label={
+                          swapSourceActivityId === activity.id
+                            ? `Cancel swapping ${activity.title}`
+                            : swapSourceActivityId === null
+                              ? `Swap ${activity.title}`
+                              : `Swap with ${activity.title}`
+                        }
+                        className="shrink-0 gap-1.5"
+                      >
+                        {swapSourceActivityId === activity.id ? (
+                          <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : (
+                          <ArrowLeftRight
+                            className="h-3.5 w-3.5"
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span className="hidden sm:inline">
+                          {swapSourceActivityId === activity.id
+                            ? "Cancel"
+                            : swapSourceActivityId === null
+                              ? "Swap"
+                              : "Swap here"}
+                        </span>
+                      </Button>
                     </article>
                   ),
                 )}

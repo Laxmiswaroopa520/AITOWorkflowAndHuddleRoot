@@ -1,385 +1,53 @@
-import {
-  ArrowRight,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
-
-import {
-  useMemo,
-  useState,
-} from "react";
-
-import {
-  motion,
-} from "motion/react";
-
-import {
-  Button,
-} from "@/components/ui/button";
-
-import {
-  ErrorState,
-} from "@/components/feedback/ErrorState";
-
-import type {
-  Role,
-} from "../types/role.types";
-
-import {
-  RoleCard,
-} from "./RoleCard";
-
-import {
-  SegmentTabs,
-} from "./SegmentTabs";
-
-import discoverHeroGraphic from
-  "@/assets/workflow/discover-hero-graphic.png";
+import { Bot, CheckCircle2, ChevronDown, Clock3, Loader2, Play, Sparkles, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ErrorState } from "@/components/feedback/ErrorState";
+import type { Role } from "../types/role.types";
+import { RoleCard } from "./RoleCard";
+import { SegmentTabs } from "./SegmentTabs";
+import discoverHeroGraphic from "@/assets/workflow/discover-hero-graphic.png";
 
 interface RoleSelectorProps {
-  roles: Role[];
-  isLoading: boolean;
-  error: Error | null;
-  selectedRoleId: string | null;
-  selectedSegment: string;
-  onSelectRole: (
-    roleId: string,
-  ) => void;
-  onSelectSegment: (
-    segment: string,
-  ) => void;
-  onContinue: () => void;
-  onRetry: () => void;
+  roles: Role[]; isLoading: boolean; error: Error | null;
+  selectedRoleId: string | null; selectedSegment: string;
+  onSelectRole: (roleId: string) => void; onSelectSegment: (segment: string) => void;
+  onContinue: () => void; onRetry: () => void;
 }
 
-export function RoleSelector({
-  roles,
-  isLoading,
-  error,
-  selectedRoleId,
-  selectedSegment,
-  onSelectRole,
-  onSelectSegment,
-  onContinue,
-  onRetry,
-}: RoleSelectorProps) {
-  const [
-    validationMessage,
-    setValidationMessage,
-  ] = useState<string | null>(
-    null,
-  );
+export function RoleSelector(props: RoleSelectorProps) {
+  const [showAll, setShowAll] = useState(false);
+  const segments = useMemo(() => Array.from(new Set(props.roles.map(r => r.segment).filter((v): v is string => Boolean(v)))), [props.roles]);
+  const filtered = useMemo(() => props.selectedSegment === "All" ? props.roles : props.roles.filter(r => r.segment === props.selectedSegment), [props.roles, props.selectedSegment]);
+  const visible = showAll ? filtered : filtered.slice(0, 6);
 
-  const segments =
-    useMemo(
-      () =>
-        Array.from(
-          new Set(
-            roles
-              .map(
-                role =>
-                  role.segment,
-              )
-              .filter(
-                (
-                  segment,
-                ): segment is string =>
-                  Boolean(segment),
-              ),
-          ),
-        ),
-      [roles],
-    );
+  if (props.isLoading) return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="ml-3 text-sm text-muted-foreground">Loading roles...</span></div>;
+  if (props.error) return <ErrorState title="Roles could not be loaded" message={props.error.message} onRetry={props.onRetry} />;
 
-  const visibleRoles =
-    useMemo(() => {
-      if (
-        selectedSegment === "All"
-      ) {
-        return roles;
-      }
+  const selectRole = (roleId: string) => { props.onSelectRole(roleId); props.onContinue(); };
 
-      return roles.filter(
-        role =>
-          role.segment ===
-          selectedSegment,
-      );
-    }, [
-      roles,
-      selectedSegment,
-    ]);
-
-  const handleContinue =
-    (): void => {
-      if (!selectedRoleId) {
-        setValidationMessage(
-          "Select a role before continuing.",
-        );
-
-        return;
-      }
-
-      setValidationMessage(null);
-      onContinue();
-    };
-
-  if (isLoading) {
-    return (
-      <div
-        className="
-          flex
-          min-h-[65vh]
-          items-center
-          justify-center
-        "
-      >
-        <div className="text-center">
-          <Loader2
-            className="
-              mx-auto
-              h-8
-              w-8
-              animate-spin
-              text-primary
-            "
-          />
-
-          <p
-            className="
-              mt-3
-              text-sm
-              text-muted-foreground
-            "
-          >
-            Loading roles...
-          </p>
-        </div>
+  return <section className="mx-auto w-full max-w-[1800px] space-y-4 px-4 pb-8 pt-4 lg:px-10 xl:px-16">
+    <div className="relative min-h-[140px] overflow-hidden rounded-2xl">
+      <div className="relative z-10 max-w-2xl">
+        <p className="flex items-center gap-1.5 text-sm font-bold">Welcome 👋</p>
+        <h1 className="mt-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-fuchsia-500 bg-clip-text text-2xl font-bold leading-tight text-transparent lg:text-[30px]">Let&apos;s build your ideal workflow.</h1>
+        <p className="mt-2 hidden max-w-[560px] text-sm text-muted-foreground sm:block">Based on your role, I&apos;ll recommend the most impactful activities, AI tools, and time allocations.</p>
       </div>
-    );
-  }
+      <img src={discoverHeroGraphic} alt="" className="absolute inset-y-0 right-0 hidden h-full w-[44%] object-cover opacity-75 [mask-image:linear-gradient(to_right,transparent,black_28%)] lg:block" />
+    </div>
 
-  if (error) {
-    return (
-      <ErrorState
-        title="Roles could not be loaded"
-        message={error.message}
-        onRetry={onRetry}
-      />
-    );
-  }
-
-  return (
-    <section
-      className="
-        mx-auto
-        w-full
-        max-w-7xl
-        px-4
-        pb-10
-        pt-6
-      "
-    >
-      <div
-        className="
-          grid
-          items-center
-          gap-10
-          lg:grid-cols-[1.1fr_0.9fr]
-        "
-      >
-        <motion.div
-          initial={{
-            opacity: 0,
-            x: -20,
-          }}
-          animate={{
-            opacity: 1,
-            x: 0,
-          }}
-        >
-          <div
-            className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-full
-              border
-              border-primary/20
-              bg-primary/10
-              px-3
-              py-1.5
-              text-xs
-              font-semibold
-              text-primary
-            "
-          >
-            <Sparkles
-              className="h-3.5 w-3.5"
-            />
-
-            Discover your workflow
-          </div>
-
-          <h1
-            className="
-              mt-5
-              max-w-3xl
-              text-3xl
-              font-bold
-              tracking-tight
-              text-foreground
-              sm:text-4xl
-              lg:text-5xl
-            "
-          >
-            Build a workflow tailored
-            to your role
-          </h1>
-
-          <p
-            className="
-              mt-4
-              max-w-2xl
-              text-base
-              leading-7
-              text-muted-foreground
-              sm:text-lg
-            "
-          >
-            Select your role and we
-            will recommend the most
-            relevant activities and AI
-            tools for your day.
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{
-            opacity: 0,
-            scale: 0.96,
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-          }}
-          className="
-            flex
-            justify-center
-            lg:justify-end
-          "
-        >
-          <img
-            src={discoverHeroGraphic}
-            alt=""
-            className="
-              w-full
-              max-w-[430px]
-              object-contain
-            "
-          />
-        </motion.div>
+    <div className="grid gap-4 lg:grid-cols-3">
+      <div className="flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm lg:col-span-2 lg:p-5">
+        <div><div className="mb-1 flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><h2 className="text-lg font-semibold">Recommended Roles</h2></div><p className="text-sm text-muted-foreground">Choose your role to get a personalized workflow experience.</p></div>
+        <SegmentTabs segments={segments} selectedSegment={props.selectedSegment} onSelect={props.onSelectSegment} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{visible.map(role => <RoleCard key={role.externalId} role={role} isSelected={props.selectedRoleId === role.externalId} onSelect={selectRole} />)}</div>
+        {filtered.length > 6 && <div className="flex justify-center"><button type="button" onClick={() => setShowAll(v => !v)} className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary/10"><ChevronDown className={`h-4 w-4 transition ${showAll ? "rotate-180" : ""}`} />{showAll ? "Show fewer roles" : "View all roles"}</button></div>}
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/10 bg-primary/5 p-2.5"><div className="flex items-center gap-2 text-sm text-muted-foreground"><Sparkles className="h-4 w-4 shrink-0 text-primary" />Learn how top performers are driving customer impact through Frontier Accelerator resources and activities.</div><span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-primary">Explore <Sparkles className="h-3.5 w-3.5" /></span></div>
       </div>
 
-      <div className="mt-10">
-        <SegmentTabs
-          segments={segments}
-          selectedSegment={
-            selectedSegment
-          }
-          onSelect={
-            onSelectSegment
-          }
-        />
-      </div>
-
-      {visibleRoles.length > 0 ? (
-        <motion.div
-          layout
-          className="
-            mt-8
-            grid
-            gap-4
-            sm:grid-cols-2
-            lg:grid-cols-3
-            xl:grid-cols-4
-          "
-        >
-          {visibleRoles.map(role => (
-            <RoleCard
-              key={role.externalId}
-              role={role}
-              isSelected={
-                selectedRoleId ===
-                role.externalId
-              }
-              onSelect={
-                onSelectRole
-              }
-            />
-          ))}
-        </motion.div>
-      ) : (
-        <div
-          className="
-            mt-10
-            rounded-2xl
-            border
-            border-dashed
-            border-border
-            bg-muted/30
-            px-6
-            py-12
-            text-center
-          "
-        >
-          <p className="font-medium">
-            No roles are available for
-            this segment.
-          </p>
-        </div>
-      )}
-
-      {validationMessage && (
-        <p
-          role="alert"
-          className="
-            mt-5
-            text-center
-            text-sm
-            font-medium
-            text-destructive
-          "
-        >
-          {validationMessage}
-        </p>
-      )}
-
-      <div
-        className="
-          mt-8
-          flex
-          justify-center
-        "
-      >
-        <Button
-          type="button"
-          size="lg"
-          className="
-            min-w-[210px]
-            gap-2
-            rounded-xl
-          "
-          onClick={
-            handleContinue
-          }
-        >
-          Continue
-
-          <ArrowRight
-            className="h-4 w-4"
-          />
-        </Button>
-      </div>
-    </section>
-  );
+      <aside className="flex flex-col gap-4 rounded-2xl border bg-white p-4 shadow-sm lg:p-5">
+        <div><div className="mb-1 flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /><h2 className="text-lg font-semibold">What you&apos;ll get</h2></div><p className="text-sm text-muted-foreground">A personalized workflow designed to maximize your impact.</p></div>
+        <div className="mt-5 space-y-4">{[[CheckCircle2,"Relevant activities","Recommendations matched to your role"],[Bot,"The right AI tools","Primary and supporting tools for each task"],[Clock3,"A balanced day","Activities arranged across morning, midday and late day"]].map(([Icon,title,copy]) => { const I=Icon as typeof CheckCircle2; return <div key={title as string} className="flex gap-3"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700"><I className="h-4 w-4" /></span><div><p className="text-sm font-semibold">{title as string}</p><p className="text-xs leading-5 text-muted-foreground">{copy as string}</p></div></div>; })}</div>
+      </aside>
+    </div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-gradient-to-r from-primary/5 via-primary/10 to-transparent p-2.5 lg:p-3"><div className="flex items-center gap-2.5"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 via-violet-600 to-emerald-500"><Sparkles className="h-5 w-5 text-white" /></span><div><p className="text-sm font-semibold">New here? Start with a quick tour</p><p className="text-xs text-muted-foreground">See how to choose a role, personalise your workflow, and get the most from the experience.</p></div></div><span className="flex items-center gap-1.5 text-sm font-semibold text-primary"><Play className="h-3.5 w-3.5" />How it works</span></div>
+  </section>;
 }

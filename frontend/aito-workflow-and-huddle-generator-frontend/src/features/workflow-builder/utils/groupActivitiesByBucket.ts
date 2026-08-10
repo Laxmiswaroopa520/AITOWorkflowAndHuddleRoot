@@ -17,6 +17,7 @@ export function groupActivitiesByBucket(
   activities: Activity[],
   workflowBuckets:
     WorkflowBucket[],
+  preserveActivityOrder = false,
 ): ActivityBucketGroup[] {
   const bucketsById =
     new Map(
@@ -77,16 +78,13 @@ export function groupActivitiesByBucket(
     .map(group => ({
       ...group,
 
-      activities: [
-        ...group.activities,
-      ].sort(
-        (left, right) =>
-          left.sortOrder -
-            right.sortOrder ||
-          left.title.localeCompare(
-            right.title,
+      activities: preserveActivityOrder
+        ? [...group.activities]
+        : [...group.activities].sort(
+            (left, right) =>
+              left.sortOrder - right.sortOrder ||
+              left.title.localeCompare(right.title),
           ),
-      ),
     }))
     .sort(
       (left, right) =>

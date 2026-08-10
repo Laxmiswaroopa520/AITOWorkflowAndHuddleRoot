@@ -88,14 +88,7 @@ export function WorkflowBucketSection({
   return (
     <motion.section
       layout
-      className="
-        overflow-hidden
-        rounded-2xl
-        border
-        border-border
-        bg-card
-        shadow-sm
-      "
+      className="rounded-none border-0 bg-transparent shadow-none"
     >
       <header
         className="
@@ -104,11 +97,7 @@ export function WorkflowBucketSection({
           items-center
           justify-between
           gap-3
-          border-b
-          border-border
-          bg-muted/20
-          px-5
-          py-4
+          mb-3 px-0 py-0
         "
       >
         <div
@@ -121,8 +110,8 @@ export function WorkflowBucketSection({
           <div
             className="
               flex
-              h-10
-              w-10
+              h-9
+              w-9
               items-center
               justify-center
               rounded-xl
@@ -163,7 +152,7 @@ export function WorkflowBucketSection({
 
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={
             handleSelectAll
@@ -181,9 +170,9 @@ export function WorkflowBucketSection({
           className="
             grid
             gap-3
-            p-4
+            p-0
             md:grid-cols-2
-            xl:grid-cols-3
+            lg:grid-cols-3
           "
         >
           {activities.map(

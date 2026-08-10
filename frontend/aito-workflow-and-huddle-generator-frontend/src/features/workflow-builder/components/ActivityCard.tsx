@@ -57,9 +57,8 @@ export function ActivityCard({
       className={cn(
         `
           relative
-          overflow-hidden
-          rounded-xl
-          border
+          h-full cursor-pointer overflow-hidden rounded-xl
+          border-2
           bg-card
           transition-all
           duration-200
@@ -67,14 +66,10 @@ export function ActivityCard({
 
         isSelected
           ? `
-              border-primary
-              bg-primary/[0.025]
-              shadow-md
-              ring-1
-              ring-primary/20
+              border-primary bg-primary/5 shadow-lg shadow-primary/10
             `
           : `
-              border-border
+              border-transparent
               hover:border-primary/30
               hover:shadow-md
             `,
@@ -84,10 +79,7 @@ export function ActivityCard({
         type="button"
         aria-pressed={isSelected}
         className="
-          absolute
-          right-3
-          top-3
-          z-10
+          absolute left-4 top-4 z-10
           flex
           h-6
           w-6
@@ -122,15 +114,8 @@ export function ActivityCard({
         )}
       </button>
 
-      <div className="p-4 pr-12">
-        <div
-          className="
-            flex
-            flex-wrap
-            items-center
-            gap-1.5
-          "
-        >
+      <div className="p-4 pl-12" onClick={onToggle}>
+        <div className="hidden">
           <span
             className={cn(
               `
@@ -188,9 +173,8 @@ export function ActivityCard({
           </span>
         </div>
 
-        <h3
+        <div className="flex items-center gap-2"><h3
           className="
-            mt-3
             text-sm
             font-semibold
             leading-5
@@ -198,13 +182,13 @@ export function ActivityCard({
           "
         >
           {activity.title}
-        </h3>
+        </h3>{activity.priority === "High" && <span className="rounded bg-destructive/10 px-1.5 text-[10px] text-destructive">High</span>}</div>
 
         {activity.description && (
           <p
             className={cn(
               `
-                mt-2
+                mt-1.5
                 text-xs
                 leading-5
                 text-muted-foreground
@@ -217,9 +201,15 @@ export function ActivityCard({
           </p>
         )}
 
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium", categoryStyle.background, categoryStyle.text, categoryStyle.border)}>{activity.category}</span>
+          <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium"><Clock className="mr-1 h-2.5 w-2.5" />{activity.durationMinutes}m</span>
+          <span className="rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground">{activity.frequency}</span>
+        </div>
+
         <div
           className="
-            mt-3
+            mt-2
             flex
             flex-wrap
             items-center
@@ -257,7 +247,7 @@ export function ActivityCard({
         <button
           type="button"
           className="
-            mt-3
+            mt-2
             inline-flex
             items-center
             gap-1
@@ -266,9 +256,7 @@ export function ActivityCard({
             text-primary
             hover:underline
           "
-          onClick={
-            onToggleDetails
-          }
+          onClick={event => { event.stopPropagation(); onToggleDetails(); }}
         >
           {isExpanded
             ? "Hide details"
