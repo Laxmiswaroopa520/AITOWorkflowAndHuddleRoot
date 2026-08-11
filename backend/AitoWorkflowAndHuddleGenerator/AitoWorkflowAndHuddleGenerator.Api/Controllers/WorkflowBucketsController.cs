@@ -41,9 +41,7 @@ public sealed class WorkflowBucketsController
         StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(
         StatusCodes.Status403Forbidden)]
-    public async Task<
-        ActionResult<
-            IReadOnlyList<WorkflowBucketResponse>>>
+    public async Task< ActionResult< IReadOnlyList<WorkflowBucketResponse>>>
         GetWorkflowBuckets(
             [FromQuery] bool includeInactive,
             CancellationToken cancellationToken)

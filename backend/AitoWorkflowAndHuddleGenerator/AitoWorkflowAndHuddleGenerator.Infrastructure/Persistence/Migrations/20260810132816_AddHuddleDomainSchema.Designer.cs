@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260809161627_AddHuddleDomainSchema")]
+    [Migration("20260810132816_AddHuddleDomainSchema")]
     partial class AddHuddleDomainSchema
     {
         /// <inheritdoc />
