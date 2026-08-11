@@ -1,6 +1,6 @@
 import { InteractionStatus } from "@azure/msal-browser";
 import { useMsal } from "@azure/msal-react";
-import { FolderOpen, HeartPulse, LogOut, Menu, Workflow } from "lucide-react";
+import { FolderOpen, HeartPulse, LogOut, Menu, Users, Workflow } from "lucide-react";
 import { NavLink } from "react-router";
 import { useState } from "react";
 import { useCurrentUser } from "@/auth/useCurrentUser";
@@ -11,6 +11,7 @@ import aitoLogo from "@/assets/AITO New Logo.png";
 const navigationItems = [
   { label: "Workflow", path: "/workflow", icon: Workflow },
   { label: "My Workflows", path: "/workflows", icon: FolderOpen },
+  { label: "Huddle", path: "/huddle", icon: Users },
   { label: "API Diagnostics", path: "/diagnostics", icon: HeartPulse },
 ];
 

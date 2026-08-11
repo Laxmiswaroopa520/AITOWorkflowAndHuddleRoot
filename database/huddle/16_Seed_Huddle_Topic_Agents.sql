@@ -1,9 +1,4 @@
-/*
-    IMPORTANT:
-    Review the selected database before executing this script.
-    This script was generated for manual execution in SSMS.
-    It has not been executed by Codex.
-*/
+
 USE [AitoWorkflowAndHuddleGeneratorDb];
 GO
 SET NOCOUNT ON;

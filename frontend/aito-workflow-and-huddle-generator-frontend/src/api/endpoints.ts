@@ -56,6 +56,29 @@ export const apiEndpoints = {
     ): string =>
       `/api/workflows/${workflowId}/favorite`,
   },
+
+  huddles: {
+    root: "/api/huddles",
+
+    byExternalId: (
+      externalId: string,
+    ): string =>
+      `/api/huddles/${encodeURIComponent(externalId)}`,
+
+    recommendedPath:
+      "/api/huddles/recommended-path",
+
+    votes: "/api/huddles/votes",
+
+    vote: (externalId: string): string =>
+      `/api/huddles/${encodeURIComponent(externalId)}/vote`,
+  },
+
+  huddlePlans: {
+    mine: "/api/huddle-plans/me",
+    mineByRole: (roleExternalId: string): string =>
+      `/api/huddle-plans/me/${encodeURIComponent(roleExternalId)}`,
+  },
 } as const;
 
 export const endpoints =

@@ -3,11 +3,15 @@ using AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 using AitoWorkflowAndHuddleGenerator.Domain.Entities;
 using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
+
+//This HuddleMappings file is basically a translator.
+//Its main job is to convert your Domain entities into Response DTO's..that are safe and convenient to send from your API to your React frontend:
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Common;
 
-internal static class HuddleMappings
+internal static class HuddleMappings                //static class means no need to create an object for this
+                                                    //internal means the class is intended to be used only within this assembly/project.
 {
-    public static HuddleCatalogItemResponse ToCatalogItem(HuddleTopic topic)
+    public static HuddleCatalogItemResponse ToCatalogItem(HuddleTopic topic)            //Small summary card information
     {
         return new HuddleCatalogItemResponse(
             topic.ExternalId,
@@ -18,6 +22,7 @@ internal static class HuddleMappings
             topic.HuddleFocusArea?.Name,
             topic.DurationMinutes,
             topic.RecommendationPriority,
+            topic.AudienceDescription,
             topic.DesiredOutcome,
             topic.TopicRoles.OrderBy(x => x.Role.SortOrder).Select(ToRole).ToList(),
             topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Primary).OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList(),
@@ -26,8 +31,9 @@ internal static class HuddleMappings
 
     public static HuddleDetailResponse ToDetail(
         HuddleTopic topic,
-        IReadOnlyDictionary<int, IReadOnlyList<HuddleResourceResponse>> agentResources)
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleResourceResponse>> agentResources)                         //Complete Huddle Information for the Huddle Detail Page..
     {
+
         List<string> missingFields = GetMissingFields(topic);
         return new HuddleDetailResponse(
             topic.ExternalId, topic.Name, topic.Description, topic.Type, topic.PublicationStatus,

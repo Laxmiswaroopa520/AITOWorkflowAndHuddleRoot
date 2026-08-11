@@ -1041,6 +1041,9 @@ namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("HuddleSegmentRoleId");
 
+                    b.HasIndex("OwnerObjectId", "HuddleSegmentRoleId")
+                        .IsUnique();
+
                     b.ToTable("UserHuddlePlans", (string)null);
                 });
 

@@ -2,6 +2,9 @@ using AitoWorkflowAndHuddleGenerator.Api.Authorization;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Queries.GetHuddleById;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Queries.GetHuddleCatalog;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Queries.GetRecommendedPath;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Votes.Commands.RemoveHuddleVote;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Votes.Commands.SetHuddleVote;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Votes.Queries.GetHuddleVotes;
 using AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -41,6 +44,40 @@ public sealed class HuddlesController : ControllerBase
         RecommendedHuddlePathResponse response = await _sender.Send(
             new GetRecommendedPathQuery(roleExternalId), cancellationToken);
         return Ok(response);
+    }
+
+    [HttpGet("votes")]
+    [ProducesResponseType(typeof(IReadOnlyList<HuddleVoteResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<HuddleVoteResponse>>> GetVotes(
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyList<HuddleVoteResponse> response = await _sender.Send(
+            new GetHuddleVotesQuery(), cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpPut("{externalId}/vote")]
+    [ProducesResponseType(typeof(HuddleVoteResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<HuddleVoteResponse>> SetVote(
+        string externalId,
+        [FromBody] SetHuddleVoteRequest request,
+        CancellationToken cancellationToken)
+    {
+        HuddleVoteResponse response = await _sender.Send(new SetHuddleVoteCommand(
+            externalId, request.Value, request.DownvoteReasons, request.Comment), cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpDelete("{externalId}/vote")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> RemoveVote(
+        string externalId,
+        CancellationToken cancellationToken)
+    {
+        await _sender.Send(new RemoveHuddleVoteCommand(externalId), cancellationToken);
+        return NoContent();
     }
 
     [HttpGet("{externalId}")]

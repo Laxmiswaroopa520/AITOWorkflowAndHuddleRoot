@@ -71,3 +71,12 @@ Run the sequence twice in a non-production database to confirm idempotency. On t
 - Activity-resource and agent-resource source relationships are unavailable, so their scripts intentionally contain zero rows.
 - All imported topics remain WorkingDraft; publication must be a separate approved decision.
 - Role path week positions use the ZIP seriesPosition verbatim; validate business meaning before production.
+
+## Current mock-catalog UI enablement
+
+After scripts 01–21 have completed successfully, run these additive scripts:
+
+22. `22_Update_Foundation_Presentation_Data.sql`
+23. `23_Publish_Current_Huddle_Catalog.sql`
+
+Script 23 publishes every currently loaded mock/ZIP topic so participant APIs can expose the complete catalog. It does not populate missing semantic fields. Run script 23 again after rerunning script 09, because script 09 intentionally restores imported source records to `WorkingDraft`.

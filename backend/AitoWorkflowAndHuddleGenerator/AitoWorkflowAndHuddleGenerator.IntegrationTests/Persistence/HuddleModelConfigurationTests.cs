@@ -27,6 +27,14 @@ public sealed class HuddleModelConfigurationTests
     }
 
     [Fact]
+    public void Plans_ShouldBeUniquePerOwnerAndRole()
+    {
+        var entity = CreateModel().FindEntityType(typeof(UserHuddlePlan))!;
+        Assert.Contains(entity.GetIndexes(), index => index.IsUnique &&
+            index.Properties.Select(x => x.Name).SequenceEqual(new[] { nameof(UserHuddlePlan.OwnerObjectId), nameof(UserHuddlePlan.HuddleSegmentRoleId) }));
+    }
+
+    [Fact]
     public void Votes_ShouldBeUniquePerUserAndTopic()
     {
         var entity = CreateModel().FindEntityType(typeof(HuddleVote))!;

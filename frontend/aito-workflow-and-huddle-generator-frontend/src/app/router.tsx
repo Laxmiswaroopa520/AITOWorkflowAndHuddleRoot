@@ -21,6 +21,10 @@ import {
 } from "@/features/saved-workflows";
 
 import {
+  HuddlePage,
+} from "@/features/huddle";
+
+import {
   WorkflowPage,
 } from "@/features/workflow-builder";
 
@@ -62,6 +66,14 @@ export const router =
 
           element: (
             <SavedWorkflowsPage />
+          ),
+        },
+
+        {
+          path: "huddle",
+
+          element: (
+            <HuddlePage />
           ),
         },
       ],
