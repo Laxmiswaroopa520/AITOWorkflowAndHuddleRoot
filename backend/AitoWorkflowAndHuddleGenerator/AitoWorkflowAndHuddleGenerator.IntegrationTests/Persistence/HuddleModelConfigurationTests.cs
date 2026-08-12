@@ -64,6 +64,17 @@ public sealed class HuddleModelConfigurationTests
     }
 
     [Fact]
+    public void Sessions_ShouldBeUniquePerOwnerAndTopicAndPersistStatus()
+    {
+        var entity = CreateModel().FindEntityType(typeof(UserHuddleSession))!;
+        Assert.Contains(entity.GetIndexes(), index => index.IsUnique &&
+            index.Properties.Select(x => x.Name).SequenceEqual(new[] { nameof(UserHuddleSession.OwnerObjectId), nameof(UserHuddleSession.HuddleTopicId) }));
+        Assert.False(entity.FindProperty(nameof(UserHuddleSession.StartedAtUtc))!.IsNullable);
+        Assert.False(entity.FindProperty(nameof(UserHuddleSession.LastSavedAtUtc))!.IsNullable);
+        Assert.Equal(typeof(string), entity.FindProperty(nameof(UserHuddleSession.SessionStatus))!.GetProviderClrType());
+    }
+
+    [Fact]
     public void CatalogReferences_ShouldRestrictDeletes()
     {
         var model = CreateModel();

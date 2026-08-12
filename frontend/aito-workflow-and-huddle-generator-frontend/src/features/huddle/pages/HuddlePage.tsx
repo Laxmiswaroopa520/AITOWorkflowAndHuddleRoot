@@ -4,14 +4,16 @@ import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HuddleAudienceSelect } from "../components/audience";
 import { HuddleCatalog, HuddleDownvoteDialog } from "../components/catalog";
-import { HuddleDetailPanel, HuddleOrientation } from "../components/generated";
+import { HuddleDetailPanel, HuddleOrientation, HuddleWorkspace } from "../components/generated";
+import { MeetCoachDialog } from "../components/coach";
 import { RecommendedPath } from "../components/progress";
-import { useHuddleById, useHuddleCatalog, useHuddleVotes, useLegacyHuddlePlanMigration, useMyHuddlePlan, useResetHuddlePlan, useSaveHuddlePlan, useSetHuddleVote } from "../hooks";
+import { useCompleteHuddleSession, useHuddleById, useHuddleCatalog, useHuddleSession, useHuddleVotes, useIncompleteHuddleSessions, useLegacyHuddlePlanMigration, useMyHuddlePlan, useResetHuddlePlan, useSaveHuddlePlan, useSaveHuddleSession, useSetHuddleActivityCompletion, useSetHuddleVote } from "../hooks";
 import { huddleViewModeAtom, selectedHuddleExternalIdAtom, selectedHuddleRoleExternalIdAtom, type HuddleViewMode } from "../store";
 import type { HuddlePlanResponse, HuddleRoleResponse, HuddleVoteResponse } from "../types";
+import { createHuddlePresentationModel } from "../mappers";
 
 const navigationItems: { id: HuddleViewMode; label: string }[] = [
-  { id: "foundation", label: "Orientation" },
+  { id: "orientation", label: "Orientation" },
   { id: "guided", label: "Role Path" },
   { id: "evergreen", label: "Additional Topics" },
 ];
@@ -24,6 +26,8 @@ export function HuddlePage() {
   const [selectedRoleExternalId, setSelectedRoleExternalId] = useAtom(selectedHuddleRoleExternalIdAtom);
   const [filters, setFilters] = useState(initialFilters);
   const [downvoteTarget, setDownvoteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const [coachContext, setCoachContext] = useState<{ externalId: string; name: string } | null>(null);
 
   const referenceCatalogQuery = useHuddleCatalog({});
   const evergreenQuery = useHuddleCatalog({
@@ -35,6 +39,11 @@ export function HuddlePage() {
     sort: (filters.sort || "default") as "default" | "most-upvoted" | "role-relevance",
   });
   const detailQuery = useHuddleById(selectedExternalId);
+  const sessionQuery = useHuddleSession(selectedExternalId);
+  const incompleteSessionsQuery = useIncompleteHuddleSessions();
+  const saveSessionMutation = useSaveHuddleSession();
+  const activityCompletionMutation = useSetHuddleActivityCompletion();
+  const completeSessionMutation = useCompleteHuddleSession();
   const recommendedPathQuery = useMyHuddlePlan(selectedRoleExternalId);
   const savePlanMutation = useSaveHuddlePlan();
   const resetPlanMutation = useResetHuddlePlan();
@@ -60,6 +69,19 @@ export function HuddlePage() {
   }, [referenceCatalogQuery.data, roles]);
 
   const votes = useMemo(() => new Map<string, HuddleVoteResponse>((votesQuery.data ?? []).map((vote) => [vote.huddleExternalId, vote])), [votesQuery.data]);
+  const presentationAudience = useMemo(() => {
+    const roleExternalId = viewMode === "guided" ? selectedRoleExternalId : filters.role || null;
+    return { roleExternalId, roleName: roles.find((role) => role.externalId === roleExternalId)?.name ?? null };
+  }, [filters.role, roles, selectedRoleExternalId, viewMode]);
+  const presentationModel = useMemo(() => detailQuery.data ? createHuddlePresentationModel(detailQuery.data, presentationAudience) : null, [detailQuery.data, presentationAudience]);
+  const sessionError = sessionQuery.error ?? saveSessionMutation.error ?? activityCompletionMutation.error ?? completeSessionMutation.error;
+  const saveSession = (currentPhaseExternalId: string | null, facilitatorNotes: string | null) => saveSessionMutation.mutateAsync({ externalId: selectedExternalId!, request: { currentPhaseExternalId, facilitatorNotes, rowVersion: sessionQuery.data?.rowVersion ?? null } });
+  const setActivityCompletion = async (activityExternalId: string, isCompleted: boolean, currentPhaseExternalId: string | null, facilitatorNotes: string | null) => {
+    const current = sessionQuery.data ?? await saveSessionMutation.mutateAsync({ externalId: selectedExternalId!, request: { currentPhaseExternalId, facilitatorNotes, rowVersion: null } });
+    return activityCompletionMutation.mutateAsync({ externalId: selectedExternalId!, activityExternalId, request: { isCompleted, rowVersion: current.rowVersion } });
+  };
+  const completeSession = () => completeSessionMutation.mutateAsync({ externalId: selectedExternalId!, request: { rowVersion: sessionQuery.data!.rowVersion } });
+  const continueLearning = (externalId: string) => { setSelectedExternalId(externalId); setWorkspaceOpen(true); };
   const savePlan = (plan: HuddlePlanResponse) => savePlanMutation.mutate({ optimisticPlan: plan, request: { roleExternalId: plan.roleExternalId, rowVersion: recommendedPathQuery.data?.rowVersion ?? null, items: plan.items.map((item) => ({ week: item.week, huddleExternalId: item.huddle.externalId })) } });
   const resetPlan = () => {
     const plan = recommendedPathQuery.data;
@@ -67,7 +89,7 @@ export function HuddlePage() {
     const items = plan.items.map((item) => ({ ...item, isCustomized: false, huddle: referenceCatalogQuery.data?.find((candidate) => candidate.externalId === item.recommendedHuddleExternalId) ?? item.huddle }));
     resetPlanMutation.mutate({ roleExternalId: plan.roleExternalId, optimisticPlan: { ...plan, rowVersion: null, isCustomized: false, items } });
   };
-  const changeViewMode = (mode: HuddleViewMode) => { setViewMode(mode); setSelectedExternalId(null); };
+  const changeViewMode = (mode: HuddleViewMode) => { setViewMode(mode); setSelectedExternalId(null); setWorkspaceOpen(false); };
   const changeFilter = (name: "role" | "focusArea" | "agent" | "sort" | "search", value: string) => setFilters((current) => ({ ...current, [name]: value }));
   const setVote = (externalId: string, value: -1 | 1 | null) => {
     if (value === -1) {
@@ -78,16 +100,18 @@ export function HuddlePage() {
     voteMutation.mutate({ externalId, request: value === null ? null : { value, downvoteReasons: null, comment: null } });
   };
 
-  const detailPanel = <HuddleDetailPanel data={detailQuery.data} isLoading={detailQuery.isLoading} error={detailQuery.error} hasSelection={Boolean(selectedExternalId)} onRetry={() => void detailQuery.refetch()} />;
+  const detailPanel = <HuddleDetailPanel data={detailQuery.data} isLoading={detailQuery.isLoading} error={detailQuery.error} hasSelection={Boolean(selectedExternalId)} onRetry={() => void detailQuery.refetch()} onOpenWorkspace={() => setWorkspaceOpen(true)} />;
 
   return (
     <div className="mx-auto max-w-[1540px] space-y-6 p-4 lg:p-6">
       <header><div className="mb-2 flex items-center gap-3"><span className="rounded-xl bg-[#E8F2FF] p-2"><Users className="h-6 w-6 text-[#0F6CBD]" /></span><h1 className="text-2xl font-bold lg:text-3xl">Run a Huddle</h1></div><p className="text-muted-foreground">Discover and run guided Huddles that help your team apply AI to real workflows.</p></header>
       <div className="space-y-4"><nav aria-label="Huddle sections" className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-border/80 bg-muted/40 p-1.5 shadow-sm">{navigationItems.map((item) => <button key={item.id} type="button" onClick={() => changeViewMode(item.id)} className={cn("rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200", viewMode === item.id ? "border border-[#0F6CBD] bg-[#0F6CBD] text-white shadow-md shadow-[#0F6CBD]/20" : "text-muted-foreground hover:bg-white/80 hover:text-foreground")}>{item.label}</button>)}</nav>{viewMode === "guided" && <HuddleAudienceSelect roles={roles} value={selectedRoleExternalId} onChange={(value) => { setSelectedRoleExternalId(value); setSelectedExternalId(null); }} />}</div>
 
-      {viewMode === "foundation" && <HuddleOrientation onStartRolePath={() => changeViewMode("guided")} />}
-      {viewMode !== "foundation" && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"><div className="min-w-0">{viewMode === "guided" ? <RecommendedPath data={recommendedPathQuery.data} catalog={referenceCatalogQuery.data ?? []} isLoading={recommendedPathQuery.isLoading} error={recommendedPathQuery.error} mutationError={savePlanMutation.error ?? resetPlanMutation.error} selectedExternalId={selectedExternalId} hasRole={Boolean(selectedRoleExternalId)} votes={votes} votePending={voteMutation.isPending} savePending={savePlanMutation.isPending || resetPlanMutation.isPending} onSelect={setSelectedExternalId} onVote={setVote} onSave={savePlan} onReset={resetPlan} onRetry={() => void recommendedPathQuery.refetch()} /> : <HuddleCatalog data={evergreenQuery.data} isLoading={evergreenQuery.isLoading} error={evergreenQuery.error} selectedExternalId={selectedExternalId} filters={filters} options={options} votes={votes} votePending={voteMutation.isPending} onFilterChange={changeFilter} onSelect={setSelectedExternalId} onVote={setVote} onRetry={() => void evergreenQuery.refetch()} />}</div>{detailPanel}</div>}
+      {viewMode === "orientation" && <HuddleOrientation onStartRolePath={() => changeViewMode("guided")} onMeetCoach={() => setCoachContext({ externalId: "frontier-accelerator-orientation", name: "Frontier Accelerator Orientation" })} />}
+      {viewMode !== "orientation" && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"><div className="min-w-0">{viewMode === "guided" ? <RecommendedPath data={recommendedPathQuery.data} catalog={referenceCatalogQuery.data ?? []} isLoading={recommendedPathQuery.isLoading} error={recommendedPathQuery.error} mutationError={savePlanMutation.error ?? resetPlanMutation.error} selectedExternalId={selectedExternalId} hasRole={Boolean(selectedRoleExternalId)} votes={votes} votePending={voteMutation.isPending} savePending={savePlanMutation.isPending || resetPlanMutation.isPending} onSelect={setSelectedExternalId} onVote={setVote} onSave={savePlan} onReset={resetPlan} onRetry={() => void recommendedPathQuery.refetch()} /> : <HuddleCatalog data={evergreenQuery.data} isLoading={evergreenQuery.isLoading} error={evergreenQuery.error} selectedExternalId={selectedExternalId} filters={filters} options={options} votes={votes} votePending={voteMutation.isPending} continueLearning={incompleteSessionsQuery.data?.[0]} onFilterChange={changeFilter} onSelect={setSelectedExternalId} onVote={setVote} onRetry={() => void evergreenQuery.refetch()} onContinue={continueLearning} />}</div>{detailPanel}</div>}
       {downvoteTarget && <HuddleDownvoteDialog huddleName={downvoteTarget.name} onCancel={() => setDownvoteTarget(null)} onSubmit={(downvoteReasons, comment) => { voteMutation.mutate({ externalId: downvoteTarget.id, request: { value: -1, downvoteReasons, comment } }); setDownvoteTarget(null); }} />}
+      {workspaceOpen && presentationModel && !sessionQuery.isLoading && <HuddleWorkspace key={presentationModel.identity.externalId} model={presentationModel} session={sessionQuery.data} sessionLoading={sessionQuery.isLoading} sessionError={sessionError} mutationPending={saveSessionMutation.isPending || activityCompletionMutation.isPending || completeSessionMutation.isPending} onRefreshSession={async () => (await sessionQuery.refetch()).data} onSaveSession={saveSession} onSetActivityCompletion={setActivityCompletion} onCompleteSession={completeSession} onMeetCoach={() => setCoachContext({ externalId: presentationModel.identity.externalId, name: presentationModel.identity.name })} onClose={() => setWorkspaceOpen(false)} />}
+      {coachContext && <MeetCoachDialog open huddleExternalId={coachContext.externalId} huddleName={coachContext.name} onClose={() => setCoachContext(null)} />}
     </div>
   );
 }

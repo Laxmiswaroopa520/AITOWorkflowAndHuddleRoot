@@ -48,7 +48,6 @@ Run the sequence twice in a non-production database to confirm idempotency. On t
   "agents": 11,
   "resources": 8,
   "workflowTopics": 44,
-  "foundationTopics": 5,
   "topicRoles": 54,
   "rolePaths": 49,
   "topicStages": 44,
@@ -67,7 +66,6 @@ Run the sequence twice in a non-production database to confirm idempotency. On t
 ## Intentional gaps
 
 - TodayObjective, UseCase, WhyItMatters, DesiredOutcome, BestFitJob, RequiredContext, AudienceDescription, ReflectionPrompt, CommitmentPrompt, KeyTakeaway and unavailable skills remain NULL.
-- Foundation activities are not imported because the ZIP supplies no exact HuddlePhase parent and the database requires every activity to have a phase.
 - Activity-resource and agent-resource source relationships are unavailable, so their scripts intentionally contain zero rows.
 - All imported topics remain WorkingDraft; publication must be a separate approved decision.
 - Role path week positions use the ZIP seriesPosition verbatim; validate business meaning before production.
@@ -76,7 +74,12 @@ Run the sequence twice in a non-production database to confirm idempotency. On t
 
 After scripts 01–21 have completed successfully, run these additive scripts:
 
-22. `22_Update_Foundation_Presentation_Data.sql`
-23. `23_Publish_Current_Huddle_Catalog.sql`
+22. `23_Publish_Current_Huddle_Catalog.sql`
+
+If the obsolete Required/Foundation rows were imported previously, review and run this cleanup separately after the main import:
+
+23. `24_Remove_Obsolete_Required_Huddles.sql`
+
+The cleanup is idempotent and stops without deleting anything when a user plan, session, or vote references an obsolete topic.
 
 Script 23 publishes every currently loaded mock/ZIP topic so participant APIs can expose the complete catalog. It does not populate missing semantic fields. Run script 23 again after rerunning script 09, because script 09 intentionally restores imported source records to `WorkingDraft`.

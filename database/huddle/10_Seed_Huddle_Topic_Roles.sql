@@ -56,12 +56,7 @@ BEGIN TRY
 (N'WF-VALUE-01',N'ssp-ent'),
 (N'WF-VALUE-TECH-01',N'csa-ces'),
 (N'WF-VTEAM-01',N'ssp-ent'),
-(N'WF-WORKLOAD-01',N'ats-ent'),
-(N'required-researcher',N'all'),
-(N'required-sales-agent',N'all'),
-(N'required-cowork',N'all'),
-(N'required-scout',N'all'),
-(N'required-agent-j',N'all'); SELECT @SourceCount=COUNT(*) FROM @Source;
+(N'WF-WORKLOAD-01',N'ats-ent'); SELECT @SourceCount=COUNT(*) FROM @Source;
     SELECT @MissingRelationshipCount=COUNT(*) FROM @Source s LEFT JOIN dbo.HuddleTopics t ON t.ExternalId=s.TopicExternalId LEFT JOIN dbo.Roles r ON r.ExternalId=s.RoleExternalId WHERE t.Id IS NULL OR r.Id IS NULL;
     
     INSERT dbo.HuddleTopicRoles(HuddleTopicId,RoleId) SELECT t.Id,r.Id FROM @Source s JOIN dbo.HuddleTopics t ON t.ExternalId=s.TopicExternalId JOIN dbo.Roles r ON r.ExternalId=s.RoleExternalId WHERE NOT EXISTS(SELECT 1 FROM dbo.HuddleTopicRoles x WHERE x.HuddleTopicId=t.Id AND x.RoleId=r.Id);

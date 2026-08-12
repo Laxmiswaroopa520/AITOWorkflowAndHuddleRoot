@@ -182,3 +182,48 @@ export interface SaveHuddlePlanRequest {
   rowVersion: string | null;
   items: { week: number; huddleExternalId: string }[];
 }
+
+export interface HuddleSessionActivityProgressResponse {
+  activityExternalId: string;
+  isCompleted: boolean;
+  completedAtUtc: string | null;
+}
+
+export interface HuddleSessionResponse {
+  huddleExternalId: string;
+  currentPhaseExternalId: string | null;
+  facilitatorNotes: string | null;
+  startedAtUtc: string;
+  lastSavedAtUtc: string;
+  completedAtUtc: string | null;
+  sessionStatus: "InProgress" | "Completed";
+  rowVersion: string;
+  activities: HuddleSessionActivityProgressResponse[];
+  removedActivityExternalIds: string[];
+  validActivityCount: number;
+  completedActivityCount: number;
+  canContinue: boolean;
+}
+
+export interface IncompleteHuddleSessionResponse {
+  huddleExternalId: string;
+  huddleName: string;
+  huddleDescription: string | null;
+  huddleType: string;
+  session: HuddleSessionResponse;
+}
+
+export interface SaveHuddleSessionRequest {
+  currentPhaseExternalId: string | null;
+  facilitatorNotes: string | null;
+  rowVersion: string | null;
+}
+
+export interface SetHuddleActivityCompletionRequest {
+  isCompleted: boolean;
+  rowVersion: string;
+}
+
+export interface CompleteHuddleSessionRequest {
+  rowVersion: string;
+}

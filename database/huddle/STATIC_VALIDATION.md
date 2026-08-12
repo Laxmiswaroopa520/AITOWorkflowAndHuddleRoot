@@ -37,4 +37,4 @@ No SQL script was executed and no database connection was opened.
 }
 ```
 
-The five missing topic-role relationships are the Foundation source value `roleIds: ['all']`. No matching dbo.Roles ExternalId is assumed or invented. The ten skipped practices have no exact phase relationship in the ZIP.
+The ten skipped practices have no exact phase relationship in the ZIP.

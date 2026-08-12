@@ -1,0 +1,3 @@
+namespace AitoWorkflowAndHuddleGenerator.Contracts.Huddles.Coaching;
+
+public sealed record BookCoachRequest(string CoachExternalId, string HuddleExternalId, DateTime StartUtc, DateTime EndUtc, string DisplayTimeZone, string? Question, Guid BookingRequestId);

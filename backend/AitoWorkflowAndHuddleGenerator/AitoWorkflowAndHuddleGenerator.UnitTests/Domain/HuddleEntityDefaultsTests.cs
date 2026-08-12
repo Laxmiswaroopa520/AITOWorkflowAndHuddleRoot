@@ -28,6 +28,7 @@ public sealed class HuddleEntityDefaultsTests
         Assert.Empty(plan.Items);
         Assert.Empty(session.RowVersion);
         Assert.Empty(session.ActivityProgress);
+        Assert.Equal(HuddleSessionStatus.InProgress, session.SessionStatus);
     }
 
     [Theory]
@@ -38,4 +39,3 @@ public sealed class HuddleEntityDefaultsTests
         Assert.Equal(expected, (int)value);
     }
 }
-

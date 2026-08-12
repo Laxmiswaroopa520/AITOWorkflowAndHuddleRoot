@@ -15,7 +15,7 @@ public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCata
     public async Task<IReadOnlyList<HuddleCatalogItemResponse>> Handle(GetHuddleCatalogQuery request, CancellationToken cancellationToken)
     {
         IQueryable<HuddleTopic> query = _dbContext.HuddleTopics.AsNoTracking()
-            .Where(x => x.PublicationStatus == "Published");
+            .Where(x => x.PublicationStatus == "Published" && x.Type != "Foundation");
 
         string? role = Normalize(request.RoleExternalId);
         string? focus = Normalize(request.FocusAreaExternalId);
@@ -49,4 +49,3 @@ public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCata
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
-

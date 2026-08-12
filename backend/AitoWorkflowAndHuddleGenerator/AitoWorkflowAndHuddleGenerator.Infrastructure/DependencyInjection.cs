@@ -19,6 +19,9 @@ using AitoWorkflowAndHuddleGenerator
 using AitoWorkflowAndHuddleGenerator
     .Infrastructure
     .Identity;
+using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Coaching;
+using AitoWorkflowAndHuddleGenerator.Infrastructure.Coaching;
+using AitoWorkflowAndHuddleGenerator.Infrastructure.Options;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure;
 
@@ -70,6 +73,15 @@ public static class DependencyInjection
         services.AddScoped<
             ICurrentUserService,
             CurrentUserService>();
+
+        services.AddOptions<CoachSchedulingOptions>()
+            .Bind(configuration.GetSection(CoachSchedulingOptions.SectionName));
+        services.AddHttpClient(GraphCoachSchedulingService.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddScoped<ICoachSchedulingService, GraphCoachSchedulingService>();
 
         return services;
     }

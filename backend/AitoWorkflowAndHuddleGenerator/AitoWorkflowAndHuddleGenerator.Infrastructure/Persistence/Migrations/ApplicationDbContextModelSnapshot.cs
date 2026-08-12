@@ -1085,8 +1085,12 @@ namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Migrations
                     b.Property<int>("HuddleTopicId")
                         .HasColumnType("int");
 
+                    b.Property<DateTimeOffset>("LastSavedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<string>("OwnerObjectId")
                         .IsRequired()
@@ -1099,6 +1103,14 @@ namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("SessionStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("StartedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<DateTimeOffset?>("UpdatedAtUtc")
                         .HasColumnType("datetimeoffset");
 
@@ -1107,6 +1119,9 @@ namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Migrations
                     b.HasIndex("CurrentHuddlePhaseId");
 
                     b.HasIndex("HuddleTopicId");
+
+                    b.HasIndex("OwnerObjectId", "HuddleTopicId")
+                        .IsUnique();
 
                     b.ToTable("UserHuddleSessions", (string)null);
                 });

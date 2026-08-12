@@ -17,6 +17,12 @@ export type {
   RecommendedHuddlePathItemResponse,
   RecommendedHuddlePathResponse,
   SetHuddleVoteRequest,
+  HuddleSessionActivityProgressResponse,
+  HuddleSessionResponse,
+  IncompleteHuddleSessionResponse,
+  SaveHuddleSessionRequest,
+  SetHuddleActivityCompletionRequest,
+  CompleteHuddleSessionRequest,
 } from "./huddleApi.types";
 
 export type {
@@ -38,3 +44,5 @@ export type {
   HuddlePresentationPhase,
   HuddlePresentationResource,
 } from "./huddlePresentation.types";
+
+export type { CoachResponse, CoachAvailabilitySlotResponse, CoachAvailabilityResponse, BookCoachRequest, CoachBookingResponse } from "./coach.types";

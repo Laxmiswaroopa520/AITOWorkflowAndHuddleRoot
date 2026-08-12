@@ -93,18 +93,7 @@ BEGIN TRY
 (N'WF-ESC-01',N'TOOL-001',N'Secondary',2),
 (N'WF-ADOPT-01',N'TOOL-005',N'Primary',1),
 (N'WF-ADOPT-01',N'TOOL-008',N'Secondary',2),
-(N'WF-RENEW-01',N'TOOL-010',N'Secondary',3),
-(N'required-researcher',N'TOOL-005',N'Primary',1),
-(N'required-researcher',N'TOOL-006',N'Secondary',2),
-(N'required-researcher',N'TOOL-003',N'Secondary',3),
-(N'required-sales-agent',N'TOOL-002',N'Primary',1),
-(N'required-sales-agent',N'TOOL-005',N'Secondary',2),
-(N'required-sales-agent',N'TOOL-003',N'Secondary',3),
-(N'required-cowork',N'TOOL-003',N'Primary',1),
-(N'required-scout',N'TOOL-004',N'Primary',1),
-(N'required-scout',N'TOOL-003',N'Secondary',2),
-(N'required-agent-j',N'TOOL-010',N'Primary',1),
-(N'required-agent-j',N'TOOL-002',N'Secondary',2); SELECT @SourceCount=COUNT(*) FROM @Source;
+(N'WF-RENEW-01',N'TOOL-010',N'Secondary',3); SELECT @SourceCount=COUNT(*) FROM @Source;
     SELECT @MissingRelationshipCount=COUNT(*) FROM @Source s LEFT JOIN dbo.HuddleTopics t ON t.ExternalId=s.TopicExternalId LEFT JOIN dbo.HuddleAgents a ON a.ExternalId=s.AgentExternalId WHERE t.Id IS NULL OR a.Id IS NULL;
     
     UPDATE x SET x.DisplayOrder=s.DisplayOrder FROM dbo.HuddleTopicAgents x JOIN dbo.HuddleTopics t ON t.Id=x.HuddleTopicId JOIN dbo.HuddleAgents a ON a.Id=x.HuddleAgentId JOIN @Source s ON s.TopicExternalId=t.ExternalId AND s.AgentExternalId=a.ExternalId AND s.UsageType=x.UsageType; SET @UpdatedCount=@@ROWCOUNT; INSERT dbo.HuddleTopicAgents(HuddleTopicId,HuddleAgentId,UsageType,DisplayLabel,ShowAgentAccessLink,DisplayOrder) SELECT t.Id,a.Id,s.UsageType,NULL,CAST(1 AS bit),s.DisplayOrder FROM @Source s JOIN dbo.HuddleTopics t ON t.ExternalId=s.TopicExternalId JOIN dbo.HuddleAgents a ON a.ExternalId=s.AgentExternalId WHERE NOT EXISTS(SELECT 1 FROM dbo.HuddleTopicAgents x WHERE x.HuddleTopicId=t.Id AND x.HuddleAgentId=a.Id AND x.UsageType=s.UsageType);

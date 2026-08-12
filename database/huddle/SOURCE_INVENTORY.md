@@ -17,7 +17,6 @@
 - agents: 11
 - resources: 8
 - workflowTopics: 44
-- foundationTopics: 5
 - topicRoles: 54
 - rolePaths: 49
 - topicStages: 44

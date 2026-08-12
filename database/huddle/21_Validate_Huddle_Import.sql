@@ -13,7 +13,7 @@ SELECT N'TopicsWithoutPhases' Issue,t.ExternalId FROM dbo.HuddleTopics t WHERE N
 SELECT N'TopicsWithoutActivities' Issue,t.ExternalId FROM dbo.HuddleTopics t WHERE NOT EXISTS(SELECT 1 FROM dbo.HuddleActivities a WHERE a.HuddleTopicId=t.Id);
 SELECT N'ActivitiesWithoutTopicOrPhase' Issue,a.ExternalId FROM dbo.HuddleActivities a LEFT JOIN dbo.HuddleTopics t ON t.Id=a.HuddleTopicId LEFT JOIN dbo.HuddlePhases p ON p.Id=a.HuddlePhaseId WHERE t.Id IS NULL OR p.Id IS NULL;
 SELECT N'TopicsWithoutPrimaryAgent' Issue,t.ExternalId FROM dbo.HuddleTopics t WHERE NOT EXISTS(SELECT 1 FROM dbo.HuddleTopicAgents a WHERE a.HuddleTopicId=t.Id AND a.UsageType=N'Primary');
-SELECT N'TopicsWithoutFocusArea' Issue,t.ExternalId FROM dbo.HuddleTopics t WHERE t.Type<>N'Foundation' AND t.HuddleFocusAreaId IS NULL;
+SELECT N'TopicsWithoutFocusArea' Issue,t.ExternalId FROM dbo.HuddleTopics t WHERE t.HuddleFocusAreaId IS NULL;
 SELECT N'TopicsWithoutMcemStage' Issue,t.ExternalId FROM dbo.HuddleTopics t WHERE NOT EXISTS(SELECT 1 FROM dbo.HuddleTopicMcemStages m WHERE m.HuddleTopicId=t.Id);
 SELECT N'InvalidResourceUrl' Issue,r.ExternalId,r.Url FROM dbo.HuddleResources r WHERE r.Url IS NOT NULL AND r.Url NOT LIKE N'https://%' AND r.Url NOT LIKE N'http://%';
 SELECT N'InvalidAgentUrl' Issue,a.ExternalId,a.AccessUrl FROM dbo.HuddleAgents a WHERE a.AccessUrl IS NOT NULL AND a.AccessUrl NOT LIKE N'https://%' AND a.AccessUrl NOT LIKE N'http://%';

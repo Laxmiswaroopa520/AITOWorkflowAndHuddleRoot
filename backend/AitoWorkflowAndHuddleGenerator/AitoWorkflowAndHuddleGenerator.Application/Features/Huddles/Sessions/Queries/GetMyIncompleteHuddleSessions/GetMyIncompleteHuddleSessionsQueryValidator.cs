@@ -1,0 +1,5 @@
+using FluentValidation;
+
+namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Sessions.Queries.GetMyIncompleteHuddleSessions;
+
+public sealed class GetMyIncompleteHuddleSessionsQueryValidator : AbstractValidator<GetMyIncompleteHuddleSessionsQuery>;

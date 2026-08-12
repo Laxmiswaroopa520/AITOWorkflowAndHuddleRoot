@@ -8,6 +8,7 @@ import {
 
 interface HuddleOrientationProps {
   onStartRolePath: () => void;
+  onMeetCoach: () => void;
 }
 
 interface FeatureItem { icon: LucideIcon; title: string; body: string; accent: string }
@@ -60,8 +61,9 @@ const success = [
 const labelClass = "text-xs font-bold uppercase tracking-[0.18em] text-[#0F6CBD]";
 const titleClass = "mt-2 text-2xl font-semibold tracking-tight text-[#172B4D] md:text-3xl";
 
-export function HuddleOrientation({ onStartRolePath }: HuddleOrientationProps) {
+export function HuddleOrientation({ onStartRolePath, onMeetCoach }: HuddleOrientationProps) {
   return <section className="space-y-10 pb-8">
+    <div className="flex justify-end"><button type="button" onClick={onMeetCoach} className="inline-flex h-10 items-center justify-center rounded-lg border border-[#0F6CBD] bg-white px-4 text-sm font-semibold text-[#0F6CBD] hover:bg-[#E8F2FF]"><Users className="mr-2 h-4 w-4" />Meet with a Coach</button></div>
     <section className="relative isolate overflow-hidden rounded-[32px] border border-[#C7E0F4] bg-[#061B2C] shadow-[0_20px_70px_rgba(15,108,189,0.18)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(0,188,242,0.25),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(92,45,145,0.34),transparent_30%),radial-gradient(circle_at_72%_86%,rgba(15,108,189,0.30),transparent_32%)]" />
       <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,.055)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.055)_1px,transparent_1px)] [background-size:36px_36px]" />

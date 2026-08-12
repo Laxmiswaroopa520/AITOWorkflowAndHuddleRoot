@@ -1,2 +1,2 @@
-// Huddle export adapters are added after API-backed generated sessions are available.
-export {};
+export * from "./html";
+export * from "./powerpoint";

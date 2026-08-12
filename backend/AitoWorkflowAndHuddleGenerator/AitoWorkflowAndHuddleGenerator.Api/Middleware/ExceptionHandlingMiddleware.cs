@@ -240,6 +240,12 @@ public sealed class ExceptionHandlingMiddleware
                     "Concurrency conflict"
                 ),
 
+            ExternalServiceUnavailableException =>
+                (
+                    StatusCodes.Status503ServiceUnavailable,
+                    "External service unavailable"
+                ),
+
             _ =>
                 (
                     StatusCodes

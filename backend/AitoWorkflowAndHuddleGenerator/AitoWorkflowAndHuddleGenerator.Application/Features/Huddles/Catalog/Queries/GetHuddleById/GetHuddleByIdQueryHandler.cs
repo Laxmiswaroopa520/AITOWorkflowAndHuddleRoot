@@ -17,7 +17,7 @@ public sealed class GetHuddleByIdQueryHandler : IRequestHandler<GetHuddleByIdQue
     {
         string externalId = request.ExternalId.Trim();
         HuddleTopic? topic = await _dbContext.HuddleTopics.AsNoTracking()
-            .Where(x => x.ExternalId == externalId && x.PublicationStatus == "Published")
+            .Where(x => x.ExternalId == externalId && x.PublicationStatus == "Published" && x.Type != "Foundation")
             .Include(x => x.HuddleFocusArea)
             .Include(x => x.TopicRoles).ThenInclude(x => x.Role)
             .Include(x => x.McemStages).ThenInclude(x => x.HuddleMcemStage)

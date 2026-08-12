@@ -36,7 +36,9 @@ public static class AuthenticationExtensions
             .AddAuthentication(
                 JwtBearerDefaults.AuthenticationScheme)
             .AddMicrosoftIdentityWebApi(
-                azureAdSection);
+                azureAdSection)
+            .EnableTokenAcquisitionToCallDownstreamApi()
+            .AddInMemoryTokenCaches();
 
         return services;
     }

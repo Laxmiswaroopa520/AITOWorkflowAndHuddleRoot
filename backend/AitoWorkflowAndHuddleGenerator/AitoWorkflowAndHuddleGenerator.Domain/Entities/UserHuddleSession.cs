@@ -1,4 +1,5 @@
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
+using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
@@ -10,7 +11,10 @@ public sealed class UserHuddleSession : AuditableEntity<Guid>
     public int? CurrentHuddlePhaseId { get; set; }
     public HuddlePhase? CurrentHuddlePhase { get; set; }
     public string? Notes { get; set; }
+    public DateTimeOffset StartedAtUtc { get; set; }
+    public DateTimeOffset LastSavedAtUtc { get; set; }
     public DateTimeOffset? CompletedAtUtc { get; set; }
+    public HuddleSessionStatus SessionStatus { get; set; } = HuddleSessionStatus.InProgress;
     public byte[] RowVersion { get; set; } = [];
     public ICollection<UserHuddleActivityProgress> ActivityProgress { get; set; } = new List<UserHuddleActivityProgress>();
 }

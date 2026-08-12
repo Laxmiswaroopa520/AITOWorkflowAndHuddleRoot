@@ -24,7 +24,11 @@ interface RecommendedPathProps {
   onRetry: () => void;
 }
 
-function exportPlan(plan: HuddlePlanResponse): void {
+async function exportPlan(plan: HuddlePlanResponse): Promise<void> {
+  const { exportLearningPlanHtml } = await import("../../exports/html");
+  exportLearningPlanHtml(plan);
+  return;
+  /*
   const rows = plan.items.map((item) => `<tr><td>Week ${item.week}</td><td>${item.huddle.name}</td><td>${item.isCustomized ? "Customized" : "Recommended"}</td><td>30 minutes</td></tr>`).join("");
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Role Path</title><style>body{margin:40px;font-family:Segoe UI,Arial;color:#242424}h1{color:#0f6cbd}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:12px;border:1px solid #d1d1d1;text-align:left}th{background:#f3f6fb}</style></head><body><h1>Role Path</h1><p><strong>Role:</strong> ${plan.roleExternalId}</p><p><strong>Curriculum:</strong> Weeks 6–12 · Seven 30-minute Huddles</p><table><thead><tr><th>Week</th><th>Huddle</th><th>Status</th><th>Duration</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
   const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
@@ -33,6 +37,7 @@ function exportPlan(plan: HuddlePlanResponse): void {
   anchor.download = `${plan.roleExternalId}-recommended-path.html`;
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  */
 }
 
 export function RecommendedPath(props: RecommendedPathProps) {

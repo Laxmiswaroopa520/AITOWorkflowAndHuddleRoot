@@ -20,7 +20,7 @@ public sealed class GetRecommendedPathQueryHandler : IRequestHandler<GetRecommen
         if (!roleExists) throw new NotFoundException($"Active role '{roleExternalId}' was not found.");
 
         List<HuddleRolePathItem> path = await _dbContext.HuddleRolePathItems.AsNoTracking()
-            .Where(x => x.HuddleSegmentRole.Role.ExternalId == roleExternalId && x.HuddleTopic.PublicationStatus == "Published")
+            .Where(x => x.HuddleSegmentRole.Role.ExternalId == roleExternalId && x.HuddleTopic.PublicationStatus == "Published" && x.HuddleTopic.Type != "Foundation")
             .OrderBy(x => x.WeekPosition)
             .Include(x => x.HuddleSegmentRole).ThenInclude(x => x.Role)
             .Include(x => x.HuddleTopic).ThenInclude(x => x.HuddleFocusArea)
