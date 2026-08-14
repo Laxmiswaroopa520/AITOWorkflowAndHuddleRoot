@@ -4,8 +4,14 @@ using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Sessions.Common;
 
+/// <summary>
+/// Maps Huddle Session domain models to API contracts.
+/// </summary>
 public static class HuddleSessionMappings
 {
+    /// <summary>
+    /// Maps a persisted user session to its API response while reconciling current and removed activities.
+    /// </summary>
     public static HuddleSessionResponse ToResponse(UserHuddleSession session, IReadOnlyList<HuddleActivity> validActivities)
     {
         HashSet<int> validIds = validActivities.Select(activity => activity.Id).ToHashSet();

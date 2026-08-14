@@ -10,22 +10,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Votes.Commands.SetHuddleVote;
 
+/// <summary>
+/// Handles the Set Huddle Vote command.
+/// </summary>
 public sealed class SetHuddleVoteCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUserService currentUserService)
     : IRequestHandler<SetHuddleVoteCommand, HuddleVoteResponse>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task<HuddleVoteResponse> Handle(
         SetHuddleVoteCommand request,
         CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
 
         HuddleTopic topic = await dbContext.HuddleTopics.SingleOrDefaultAsync(
             item => item.ExternalId == request.HuddleExternalId && item.PublicationStatus == "Published",
             cancellationToken)
-            ?? throw new NotFoundException("The Huddle was not found.");
+            ?? throw new NotFoundException(HuddleMessages.NotFound);
 
         HuddleVote? vote = await dbContext.HuddleVotes.SingleOrDefaultAsync(
             item => item.OwnerObjectId == ownerObjectId && item.HuddleTopicId == topic.Id,

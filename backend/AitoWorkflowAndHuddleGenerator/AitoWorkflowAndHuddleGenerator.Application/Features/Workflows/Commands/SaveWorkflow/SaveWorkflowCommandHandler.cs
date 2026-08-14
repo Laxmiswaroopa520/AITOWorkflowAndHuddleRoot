@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -31,6 +31,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .SaveWorkflow;
 
+/// <summary>
+/// Handles the Save Workflow command.
+/// </summary>
 public sealed class
     SaveWorkflowCommandHandler
     : IRequestHandler<
@@ -38,21 +41,24 @@ public sealed class
         WorkflowResponse>
 {
     private readonly
-        IApplicationDbContext _dbContext;
+        IApplicationDbContext dbContext;
 
     private readonly
         ICurrentUserService
-            _currentUserService;
+            currentUserService;
 
     public SaveWorkflowCommandHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService
             currentUserService)
     {
-        _dbContext = dbContext;
-        _currentUserService =
-            currentUserService;
+        this.dbContext = dbContext;
+        this.currentUserService = currentUserService;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<WorkflowResponse>
         Handle(
@@ -67,7 +73,7 @@ public sealed class
             request.Name.Trim();
 
         bool duplicateExists =
-            await _dbContext
+            await dbContext
                 .UserWorkflows
                 .AsNoTracking()
                 .AnyAsync(
@@ -82,11 +88,11 @@ public sealed class
         if (duplicateExists)
         {
             throw new ConflictException(
-                $"A workflow named '{normalizedName}' already exists.");
+                WorkflowMessages.DuplicateName(normalizedName));
         }
 
         Role role =
-            await _dbContext
+            await dbContext
                 .Roles
                 .SingleOrDefaultAsync(
                     role =>
@@ -96,7 +102,7 @@ public sealed class
                         role.IsActive,
                     cancellationToken)
             ?? throw new NotFoundException(
-                "The selected role was not found.");
+                WorkflowMessages.SelectedRoleNotFound);
 
         string[] requestedActivityIds =
             request
@@ -111,7 +117,7 @@ public sealed class
                 .ToArray();
 
         List<Activity> activities =
-            await _dbContext
+            await dbContext
                 .Activities
                 .Where(activity =>
                     requestedActivityIds
@@ -127,7 +133,7 @@ public sealed class
             requestedActivityIds.Length)
         {
             throw new NotFoundException(
-                "One or more selected activities no longer exist.");
+                WorkflowMessages.SelectedActivitiesNotFound);
         }
 
         bool invalidRoleActivity =
@@ -138,7 +144,7 @@ public sealed class
         if (invalidRoleActivity)
         {
             throw new ConflictException(
-                "One or more activities do not belong to the selected role.");
+                WorkflowMessages.ActivitiesDoNotBelongToRole);
         }
 
         Dictionary<string, Activity>
@@ -164,16 +170,16 @@ public sealed class
                     ownerObjectId,
 
                 OwnerEmail =
-                    _currentUserService
+                    currentUserService
                         .Email?
                         .Trim()
                     ?? string.Empty,
 
                 OwnerDisplayName =
-                    _currentUserService
+                    currentUserService
                         .DisplayName?
                         .Trim()
-                    ?? _currentUserService
+                    ?? currentUserService
                         .Email?
                         .Trim()
                     ?? "Unknown user",
@@ -223,11 +229,11 @@ public sealed class
                     });
         }
 
-        _dbContext
+        dbContext
             .UserWorkflows
             .Add(workflow);
 
-        await _dbContext
+        await dbContext
             .SaveChangesAsync(
                 cancellationToken);
 
@@ -245,17 +251,17 @@ public sealed class
         GetRequiredOwnerObjectId()
     {
         if (
-            !_currentUserService
+            !currentUserService
                 .IsAuthenticated)
         {
             throw new UnauthorizedAccessException(
-                "The current request is not authenticated.");
+                AuthenticationMessages.RequestNotAuthenticated);
         }
 
-        return _currentUserService
+        return currentUserService
             .ObjectId
             ?? throw new UnauthorizedAccessException(
-                "The authenticated token does not contain an oid claim.");
+                AuthenticationMessages.MissingObjectIdClaim);
     }
 
     private async Task<UserWorkflow>
@@ -265,7 +271,7 @@ public sealed class
             CancellationToken
                 cancellationToken)
     {
-        return await _dbContext
+        return await dbContext
             .UserWorkflows
             .AsNoTracking()
             .Include(

@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Contracts
     .Workflows;
 using MediatR;
@@ -10,6 +10,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .UpdateWorkflow;
 
+/// <summary>
+/// Represents the Update Workflow Command command.
+/// </summary>
 public sealed record UpdateWorkflowCommand(
     Guid WorkflowId,
     string Name,

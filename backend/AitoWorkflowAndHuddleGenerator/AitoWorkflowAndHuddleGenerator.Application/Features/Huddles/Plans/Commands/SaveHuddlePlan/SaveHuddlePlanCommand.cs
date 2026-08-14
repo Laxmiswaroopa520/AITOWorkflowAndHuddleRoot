@@ -3,6 +3,9 @@ using MediatR;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Commands.SaveHuddlePlan;
 
+/// <summary>
+/// Represents the Save Huddle Plan Command command.
+/// </summary>
 public sealed record SaveHuddlePlanCommand(
     string RoleExternalId,
     string? RowVersion,

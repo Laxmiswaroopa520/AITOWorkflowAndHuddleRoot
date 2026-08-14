@@ -7,14 +7,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Queries.GetHuddleCatalog;
 
+/// <summary>
+/// Handles the Get Huddle Catalog query.
+/// </summary>
 public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCatalogQuery, IReadOnlyList<HuddleCatalogItemResponse>>
 {
-    private readonly IApplicationDbContext _dbContext;
-    public GetHuddleCatalogQueryHandler(IApplicationDbContext dbContext) => _dbContext = dbContext;
+    private readonly IApplicationDbContext dbContext;
+    public GetHuddleCatalogQueryHandler(IApplicationDbContext dbContext) => this.dbContext = dbContext;
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<IReadOnlyList<HuddleCatalogItemResponse>> Handle(GetHuddleCatalogQuery request, CancellationToken cancellationToken)
     {
-        IQueryable<HuddleTopic> query = _dbContext.HuddleTopics.AsNoTracking()
+        IQueryable<HuddleTopic> query = dbContext.HuddleTopics.AsNoTracking()
             .Where(x => x.PublicationStatus == "Published" && x.Type != "Foundation");
 
         string? role = Normalize(request.RoleExternalId);
@@ -33,8 +40,8 @@ public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCata
         {
             "name" => query.OrderBy(x => x.Name),
             "priority" => query.OrderBy(x => x.RecommendationPriority ?? int.MaxValue).ThenBy(x => x.Name),
-            "most-upvoted" => query.OrderByDescending(x => _dbContext.HuddleVotes.Count(v => v.HuddleTopicId == x.Id && (int)v.Value == 1) - _dbContext.HuddleVotes.Count(v => v.HuddleTopicId == x.Id && (int)v.Value == -1)).ThenBy(x => x.Name),
-            "role-relevance" when role is not null => query.OrderBy(x => _dbContext.HuddleRolePathItems.Where(p => p.HuddleTopicId == x.Id && p.HuddleSegmentRole.Role.ExternalId == role).Select(p => (int?)p.WeekPosition).Min() ?? int.MaxValue).ThenBy(x => x.Name),
+            "most-upvoted" => query.OrderByDescending(x => dbContext.HuddleVotes.Count(v => v.HuddleTopicId == x.Id && (int)v.Value == 1) - dbContext.HuddleVotes.Count(v => v.HuddleTopicId == x.Id && (int)v.Value == -1)).ThenBy(x => x.Name),
+            "role-relevance" when role is not null => query.OrderBy(x => dbContext.HuddleRolePathItems.Where(p => p.HuddleTopicId == x.Id && p.HuddleSegmentRole.Role.ExternalId == role).Select(p => (int?)p.WeekPosition).Min() ?? int.MaxValue).ThenBy(x => x.Name),
             _ => query.OrderBy(x => x.RecommendationPriority ?? int.MaxValue).ThenBy(x => x.Name)
         };
 

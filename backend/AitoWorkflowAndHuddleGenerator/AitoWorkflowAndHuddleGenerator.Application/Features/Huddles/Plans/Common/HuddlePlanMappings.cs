@@ -4,8 +4,14 @@ using AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Common;
 
+/// <summary>
+/// Maps Huddle Plan domain models to API contracts.
+/// </summary>
 internal static class HuddlePlanMappings
 {
+    /// <summary>
+    /// Maps a persisted or recommended Huddle plan to its ordered Weeks 6–12 response.
+    /// </summary>
     public static HuddlePlanResponse ToResponse(
         string roleExternalId,
         UserHuddlePlan? plan,

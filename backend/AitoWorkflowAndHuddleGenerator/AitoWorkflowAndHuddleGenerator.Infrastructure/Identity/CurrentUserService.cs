@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -8,24 +8,32 @@ using System.Security.Claims;
 namespace AitoWorkflowAndHuddleGenerator
     .Infrastructure
     .Identity;
-
+//This class is used to read the currently logged-in user's info from the authenticated HTTP Request.
+/// <summary>
+/// Provides Current User operations.
+/// </summary>
 public sealed class CurrentUserService
     : ICurrentUserService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    /// <summary>
+    /// HttpContextAccessor is used to access the current HTTP context, which contains information about the authenticated user.
+    /// </summary>
+    private readonly IHttpContextAccessor httpContextAccessor;
 
     public CurrentUserService(
         IHttpContextAccessor httpContextAccessor)
     {
-        _httpContextAccessor = httpContextAccessor;
+        this.httpContextAccessor = httpContextAccessor;
     }
 
     private ClaimsPrincipal? User =>
-        _httpContextAccessor.HttpContext?.User;
+        httpContextAccessor.HttpContext?.User;
 
     public bool IsAuthenticated =>
         User?.Identity?.IsAuthenticated == true;
 
+
+    //gets the user's microsoft entra object id
     public string? ObjectId =>
         FindClaim(
             "oid",
@@ -42,7 +50,7 @@ public sealed class CurrentUserService
         FindClaim(
             "name",
             ClaimTypes.Name);
-
+    //get all roles assigned to the current user.
     public IReadOnlyCollection<string> Roles =>
         User?
             .FindAll("roles")

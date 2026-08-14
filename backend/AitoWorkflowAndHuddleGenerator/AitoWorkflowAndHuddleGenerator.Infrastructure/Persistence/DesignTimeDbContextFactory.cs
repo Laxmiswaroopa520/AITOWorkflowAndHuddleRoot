@@ -1,4 +1,4 @@
-﻿//The design-time factory lets EF Core create ApplicationDbContext while generating migrations.
+//The design-time factory lets EF Core create ApplicationDbContext while generating migrations.
 /*The simple answer is:
 
 ApplicationDbContext is used when your application is running.
@@ -11,9 +11,15 @@ namespace AitoWorkflowAndHuddleGenerator
     .Infrastructure
     .Persistence;
 
+/// <summary>
+/// Creates Design Time Db Context instances.
+/// </summary>
 public sealed class DesignTimeDbContextFactory
     : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
+    /// <summary>
+    /// Creates a configured application database context.
+    /// </summary>
     public ApplicationDbContext CreateDbContext(string[] args)
     {
         string environment =
@@ -28,7 +34,7 @@ public sealed class DesignTimeDbContextFactory
         if (!File.Exists(appSettingsPath))
         {
             throw new FileNotFoundException(
-                $"appsettings.json was not found at: {appSettingsPath}");
+                ConfigurationMessages.AppSettingsNotFound(appSettingsPath));
         }
 
         IConfigurationRoot configuration =
@@ -48,8 +54,7 @@ public sealed class DesignTimeDbContextFactory
         string connectionString =
             configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
-                $"Connection string 'DefaultConnection' was not configured " +
-                $"for environment '{environment}'.");
+                ConfigurationMessages.DefaultConnectionRequiredForEnvironment(environment));
 
         var optionsBuilder =
             new DbContextOptionsBuilder<ApplicationDbContext>();

@@ -80,6 +80,15 @@ If the obsolete Required/Foundation rows were imported previously, review and ru
 
 23. `24_Remove_Obsolete_Required_Huddles.sql`
 
+After applying the manager-approved activity-placement correction, run:
+
+24. `25_Move_Activities_To_Explore_And_Practice.sql`
+
+Script 25 updates the existing activity-to-phase relationships without deleting
+activities or their dependent user progress, agent mappings, or resource mappings.
+Rerunning script 14 also enforces this placement rule. Run script 21 afterward;
+`ActivityOutsideExploreAndPractice` must return zero rows.
+
 The cleanup is idempotent and stops without deleting anything when a user plan, session, or vote references an obsolete topic.
 
 Script 23 publishes every currently loaded mock/ZIP topic so participant APIs can expose the complete catalog. It does not populate missing semantic fields. Run script 23 again after rerunning script 09, because script 09 intentionally restores imported source records to `WorkingDraft`.

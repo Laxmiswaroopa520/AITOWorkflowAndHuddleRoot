@@ -1,7 +1,10 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 
 namespace AitoWorkflowAndHuddleGenerator.Api.Authentication;
 
+/// <summary>
+/// Provides Claims Extensions operations and constants.
+/// </summary>
 public static class ClaimsExtensions
 {
     private const string ObjectIdClaim = "oid";
@@ -17,6 +20,10 @@ public static class ClaimsExtensions
     private const string UpnClaim =
         "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn";
 
+    /// <summary>
+    /// Gets Object Id.
+    /// </summary>
+
     public static string? GetObjectId(
         this ClaimsPrincipal principal)
     {
@@ -25,6 +32,10 @@ public static class ClaimsExtensions
         return principal.FindFirstValue(ObjectIdClaim)
             ?? principal.FindFirstValue(LegacyObjectIdClaim);
     }
+
+    /// <summary>
+    /// Gets Email.
+    /// </summary>
 
     public static string? GetEmail(
         this ClaimsPrincipal principal)
@@ -37,6 +48,10 @@ public static class ClaimsExtensions
             ?? principal.FindFirstValue(UpnClaim);
     }
 
+    /// <summary>
+    /// Gets Display Name.
+    /// </summary>
+
     public static string? GetDisplayName(
         this ClaimsPrincipal principal)
     {
@@ -45,6 +60,10 @@ public static class ClaimsExtensions
         return principal.FindFirstValue("name")
             ?? principal.FindFirstValue(ClaimTypes.Name);
     }
+
+    /// <summary>
+    /// Gets Roles.
+    /// </summary>
 
     public static IReadOnlyCollection<string> GetRoles(
         this ClaimsPrincipal principal)

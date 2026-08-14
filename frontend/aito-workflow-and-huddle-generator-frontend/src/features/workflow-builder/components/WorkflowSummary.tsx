@@ -52,6 +52,12 @@ import {
   DaySchedule,
 } from "./DaySchedule";
 
+import { TimelineBucketView } from "./TimelineBucketView";
+import { TimelineToggle } from "./TimelineToggle";
+import type { TimelineView } from "../types/timeline.types";
+import { TIMELINE_LABELS } from "../types/timeline.types";
+import { filterActivitiesByTimeline } from "../utils/filterActivitiesByTimeline";
+
 import {
   WorkflowNavigation,
 } from "./WorkflowNavigation";
@@ -71,7 +77,6 @@ interface WorkflowSummaryProps {
 export function WorkflowSummary({
   role,
   activities,
-  totalDuration,
   onBack,
   onRestart,
 }: WorkflowSummaryProps) {
@@ -101,6 +106,14 @@ export function WorkflowSummary({
     setSuccessMessage,
   ] = useState<string | null>(
     null,
+  );
+
+  const [timelineView, setTimelineView] = useState<TimelineView>("day");
+
+  const timelineActivities = filterActivitiesByTimeline(activities, timelineView);
+  const timelineDuration = timelineActivities.reduce(
+    (sum, activity) => sum + activity.durationMinutes,
+    0,
   );
 
   const saveMutation =
@@ -152,7 +165,11 @@ export function WorkflowSummary({
       return;
     }
 
-    setSaveDialogMode("save-as");
+    const timeoutId = window.setTimeout(() => {
+      setSaveDialogMode("save-as");
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [saveAsWorkflow]);
 
   const resetMessages =
@@ -446,19 +463,29 @@ export function WorkflowSummary({
           </div>
         )}
 
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{TIMELINE_LABELS[timelineView]}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {timelineActivities.length} activities from {activities.length} selected · {role.name}
+          </p>
+        </div>
+        <TimelineToggle value={timelineView} onChange={setTimelineView} />
+      </div>
+
       <div
         className="
-          mt-6
+          mt-5
           overflow-hidden
-          rounded-3xl
+          rounded-2xl
           border
           border-primary/20
           bg-gradient-to-br
           from-primary/10
           via-card
           to-accent/10
-          p-7
-          shadow-xl
+          p-5
+          shadow-md
         "
       >
         <div
@@ -495,13 +522,13 @@ export function WorkflowSummary({
 
             <h1
               className="
-                mt-4
-                text-3xl
+                mt-3
+                text-2xl
                 font-bold
                 tracking-tight
               "
             >
-              Your day is ready
+              {TIMELINE_LABELS[timelineView]} is ready
             </h1>
 
             <p
@@ -512,7 +539,7 @@ export function WorkflowSummary({
             >
               {role.name}
               {" • "}
-              {activities.length}
+              {timelineActivities.length}
               {" "}
               activities
             </p>
@@ -524,8 +551,8 @@ export function WorkflowSummary({
               border
               border-border
               bg-card/80
-              px-5
-              py-4
+              px-4
+              py-3
               text-center
               backdrop-blur
             "
@@ -548,7 +575,7 @@ export function WorkflowSummary({
               "
             >
               {formatDuration(
-                totalDuration,
+                timelineDuration,
               )}
             </p>
 
@@ -564,8 +591,12 @@ export function WorkflowSummary({
         </div>
       </div>
 
-      <div className="mt-7">
-        <DaySchedule activities={activities} />
+      <div className="mt-5">
+        {timelineView === "day" ? (
+          <DaySchedule activities={timelineActivities} />
+        ) : (
+          <TimelineBucketView activities={timelineActivities} timeline={timelineView} />
+        )}
       </div>
 
       <div className="hidden" aria-hidden="true">
@@ -836,8 +867,13 @@ export function WorkflowSummary({
           saveMutation.error
             instanceof Error
             ? saveMutation.error.message
-            : null
+                : null
         }
+        onNameChange={() => {
+          if (saveMutation.error) {
+            saveMutation.reset();
+          }
+        }}
         onClose={
           closeSaveDialog
         }

@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Persistence;
@@ -18,24 +18,31 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetActivityById;
 
+/// <summary>
+/// Handles the Get Activity By Id query.
+/// </summary>
 public sealed class GetActivityByIdQueryHandler
     : IRequestHandler<
         GetActivityByIdQuery,
         ActivityResponse?>
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext dbContext;
 
     public GetActivityByIdQueryHandler(
         IApplicationDbContext dbContext)
     {
-        _dbContext = dbContext;
+        this.dbContext = dbContext;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<ActivityResponse?> Handle(
         GetActivityByIdQuery request,
         CancellationToken cancellationToken)
     {
-        return await _dbContext.Activities
+        return await dbContext.Activities
             .AsNoTracking()
             .Where(activity =>
                 activity.Id == request.Id &&

@@ -110,6 +110,49 @@ BEGIN TRY
 (N'WF-ADOPT-01-P-CSAM-02',N'WF-ADOPT-01',N'PH-WF-ADOPT-01-01',1,N'Build the value-realization brief',NULL,NULL,N'For [Account] and [period], summarize enabled month-over-month usage and adoption changes by workload. Connect only supported changes to known customer outcomes, identify evidence gaps, and draft a concise value story with the next adoption action.',N'Value-realization brief with supported signals, gaps, story, and next action.',N'CSAM validates the outcome linkage, value claims, customer context, and recommended action.',NULL,NULL),
 (N'WF-RENEW-01-P-CSAM-01',N'WF-RENEW-01',N'PH-WF-RENEW-01-01',3,N'Build the renewal and expansion support view',NULL,NULL,N'For accounts renewing in [period], summarize available ARR, licensing, ACR versus commitment, major usage gaps, recent engagement, open opportunities, expansion signals supported by adoption evidence, and the AE or SSP to align with. Recommend three actions for each account and flag missing context.',N'Renewal and expansion support view with evidence, owners, actions, and gaps.',N'CSAM validates renewal facts, adoption evidence, customer intent, opportunity linkage, and ownership.',NULL,NULL),
 (N'WF-RENEW-01-P-CSAM-02',N'WF-RENEW-01',N'PH-WF-RENEW-01-01',4,N'Rehearse the renewal or value-risk conversation',NULL,NULL,N'Use Agent J.ai to role-play an upcoming [renewal, value, adoption, or risk] conversation for [Account]. Use the approved evidence and plan. Simulate realistic customer questions and objections, coach clarity, evidence, listening, and next-step framing, and identify claims or commitments needing human or SME review. Do not invent customer facts.',N'Role-play, targeted coaching, likely questions or objections, and improvement actions.',N'CSAM validates all facts, commitments, value claims, commercial guidance, and the final conversation approach.',NULL,NULL); SELECT @SourceCount=COUNT(*) FROM @Source; SELECT @DuplicateCount=COUNT(*) FROM (SELECT PhaseExternalId,DisplayOrder FROM @Source GROUP BY PhaseExternalId,DisplayOrder HAVING COUNT(*)>1) d; IF @DuplicateCount>0 THROW 51003,'Duplicate activity phase/display-order source positions.',1; SELECT @MissingRelationshipCount=COUNT(*) FROM @Source s LEFT JOIN dbo.HuddleTopics t ON t.ExternalId=s.TopicExternalId LEFT JOIN dbo.HuddlePhases p ON p.ExternalId=s.PhaseExternalId WHERE t.Id IS NULL OR p.Id IS NULL; SELECT @UpdatedCount=COUNT(*) FROM @Source s JOIN dbo.HuddleActivities a ON a.ExternalId=s.ExternalId; UPDATE a SET a.DisplayOrder=-a.Id FROM dbo.HuddleActivities a JOIN @Source s ON s.ExternalId=a.ExternalId; UPDATE a SET a.HuddleTopicId=t.Id,a.HuddlePhaseId=p.Id,a.DisplayOrder=s.DisplayOrder,a.Name=s.Name,a.Description=NULL,a.DurationMinutes=NULL,a.Prompt=s.Prompt,a.ExpectedOutput=s.ExpectedOutput,a.HumanCheckpoint=s.HumanCheckpoint,a.RequiredContext=NULL,a.BestFitJob=NULL,a.UpdatedAtUtc=SYSUTCDATETIME() FROM dbo.HuddleActivities a JOIN @Source s ON s.ExternalId=a.ExternalId JOIN dbo.HuddleTopics t ON t.ExternalId=s.TopicExternalId JOIN dbo.HuddlePhases p ON p.ExternalId=s.PhaseExternalId; INSERT dbo.HuddleActivities(ExternalId,HuddleTopicId,HuddlePhaseId,DisplayOrder,Name,Description,DurationMinutes,Prompt,ExpectedOutput,HumanCheckpoint,RequiredContext,BestFitJob,CreatedAtUtc) SELECT s.ExternalId,t.Id,p.Id,s.DisplayOrder,s.Name,NULL,NULL,s.Prompt,s.ExpectedOutput,s.HumanCheckpoint,NULL,NULL,SYSUTCDATETIME() FROM @Source s JOIN dbo.HuddleTopics t ON t.ExternalId=s.TopicExternalId JOIN dbo.HuddlePhases p ON p.ExternalId=s.PhaseExternalId WHERE NOT EXISTS(SELECT 1 FROM dbo.HuddleActivities a WHERE a.ExternalId=s.ExternalId); SET @InsertedCount=@@ROWCOUNT; SET @SkippedCount=@SourceCount-@InsertedCount-@UpdatedCount;
+    /*
+        Current catalog rule: all supplied activities belong to Explore and Practice.
+        Normalize after the source upsert so rerunning this seed cannot restore an
+        activity to Preparation. Stable activity IDs and dependent mappings remain intact.
+    */
+    DECLARE @NormalizedActivities TABLE
+    (
+        ActivityId int NOT NULL PRIMARY KEY,
+        TargetPhaseId int NOT NULL,
+        NewDisplayOrder int NOT NULL
+    );
+
+    INSERT @NormalizedActivities (ActivityId, TargetPhaseId, NewDisplayOrder)
+    SELECT
+        activity.Id,
+        targetPhase.Id,
+        ROW_NUMBER() OVER
+        (
+            PARTITION BY activity.HuddleTopicId
+            ORDER BY source.PhaseExternalId, source.DisplayOrder, source.ExternalId
+        )
+    FROM @Source source
+    INNER JOIN dbo.HuddleActivities activity ON activity.ExternalId = source.ExternalId
+    INNER JOIN dbo.HuddlePhases targetPhase
+        ON targetPhase.HuddleTopicId = activity.HuddleTopicId
+       AND targetPhase.Name = N'Explore and Practice';
+
+    IF (SELECT COUNT(*) FROM @NormalizedActivities) <> @SourceCount
+        THROW 51004, 'One or more source activities do not have an Explore and Practice phase.', 1;
+
+    UPDATE activity
+    SET activity.DisplayOrder = -activity.Id
+    FROM dbo.HuddleActivities activity
+    INNER JOIN @NormalizedActivities normalized ON normalized.ActivityId = activity.Id;
+
+    UPDATE activity
+    SET
+        activity.HuddlePhaseId = normalized.TargetPhaseId,
+        activity.DisplayOrder = normalized.NewDisplayOrder,
+        activity.UpdatedAtUtc = SYSUTCDATETIME()
+    FROM dbo.HuddleActivities activity
+    INNER JOIN @NormalizedActivities normalized ON normalized.ActivityId = activity.Id;
+
     SELECT @SourceCount AS SourceCount, @InsertedCount AS InsertedCount, @UpdatedCount AS UpdatedCount, @SkippedCount AS SkippedCount, @DuplicateCount AS DuplicateExternalIds, @MissingRelationshipCount AS MissingRelationships;
     COMMIT TRANSACTION;
 END TRY

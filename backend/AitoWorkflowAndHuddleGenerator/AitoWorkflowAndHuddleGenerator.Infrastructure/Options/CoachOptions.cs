@@ -1,5 +1,8 @@
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Options;
 
+/// <summary>
+/// Defines configuration options for Coach.
+/// </summary>
 public sealed class CoachOptions
 {
     public string ExternalId { get; set; } = string.Empty;

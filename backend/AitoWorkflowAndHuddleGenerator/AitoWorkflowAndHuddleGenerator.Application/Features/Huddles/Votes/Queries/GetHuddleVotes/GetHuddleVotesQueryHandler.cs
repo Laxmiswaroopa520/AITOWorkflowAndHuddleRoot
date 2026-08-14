@@ -7,17 +7,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Votes.Queries.GetHuddleVotes;
 
+/// <summary>
+/// Handles the Get Huddle Votes query.
+/// </summary>
 public sealed class GetHuddleVotesQueryHandler(
     IApplicationDbContext dbContext,
     ICurrentUserService currentUserService)
     : IRequestHandler<GetHuddleVotesQuery, IReadOnlyList<HuddleVoteResponse>>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task<IReadOnlyList<HuddleVoteResponse>> Handle(
         GetHuddleVotesQuery request,
         CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
 
         return await dbContext.HuddleTopics
             .AsNoTracking()

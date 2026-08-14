@@ -1,6 +1,9 @@
-﻿//Adds CreatedAtUtc and UpdatedAtUtc fields for tracking record creation and updates.
+//Adds CreatedAtUtc and UpdatedAtUtc fields for tracking record creation and updates.
 namespace AitoWorkflowAndHuddleGenerator.Domain.Common;
 
+/// <summary>
+/// Represents the Auditable Entity model.
+/// </summary>
 public abstract class AuditableEntity<TKey> : BaseEntity<TKey>
     where TKey : notnull
 {

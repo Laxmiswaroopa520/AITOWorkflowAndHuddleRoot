@@ -1,8 +1,11 @@
-﻿//Stores workflow grouping categories used to organize activities.
+//Stores workflow grouping categories used to organize activities.
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Workflow Bucket model.
+/// </summary>
 public sealed class WorkflowBucket : AuditableEntity<int>
 {
     public string ExternalId { get; set; } = string.Empty;

@@ -1,8 +1,11 @@
-﻿//Stores application roles, abbreviations, segments, descriptions, sort order, and active status.
+//Stores application roles, abbreviations, segments, descriptions, sort order, and active status.
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Role model.
+/// </summary>
 public sealed class Role : AuditableEntity<int>
 {
     public string ExternalId { get; set; } = string.Empty;

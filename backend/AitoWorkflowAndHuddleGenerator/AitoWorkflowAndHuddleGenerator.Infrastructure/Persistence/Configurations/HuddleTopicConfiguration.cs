@@ -4,8 +4,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Configures EF Core persistence for the Huddle Topic entity.
+/// </summary>
 public sealed class HuddleTopicConfiguration : IEntityTypeConfiguration<HuddleTopic>
 {
+    /// <summary>
+    /// Configures the entity mapping and database constraints.
+    /// </summary>
     public void Configure(EntityTypeBuilder<HuddleTopic> builder)
     {
         builder.ToTable("HuddleTopics", t => t.HasCheckConstraint("CK_HuddleTopics_DurationMinutes", "[DurationMinutes] IS NULL OR [DurationMinutes] > 0")); builder.HasKey(x => x.Id);

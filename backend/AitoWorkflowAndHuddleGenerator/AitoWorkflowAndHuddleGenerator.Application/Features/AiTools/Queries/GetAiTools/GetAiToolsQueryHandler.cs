@@ -1,4 +1,4 @@
-﻿//Reads active AI tools from SQL.
+//Reads active AI tools from SQL.
 using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
@@ -14,25 +14,32 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetAiTools;
 
+/// <summary>
+/// Handles the Get Ai Tools query.
+/// </summary>
 public sealed class GetAiToolsQueryHandler
     : IRequestHandler<
         GetAiToolsQuery,
         IReadOnlyList<AiToolResponse>>
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext dbContext;
 
     public GetAiToolsQueryHandler(
         IApplicationDbContext dbContext)
     {
-        _dbContext = dbContext;
+        this.dbContext = dbContext;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<IReadOnlyList<AiToolResponse>> Handle(
         GetAiToolsQuery request,
         CancellationToken cancellationToken)
     {
         IQueryable<Domain.Entities.AiTool> query =
-            _dbContext.AiTools.AsNoTracking();
+            dbContext.AiTools.AsNoTracking();
 
         if (!request.IncludeInactive)
         {

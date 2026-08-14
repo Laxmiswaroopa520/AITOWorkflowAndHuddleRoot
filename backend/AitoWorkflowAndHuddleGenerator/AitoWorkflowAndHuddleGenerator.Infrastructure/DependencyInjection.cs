@@ -1,14 +1,6 @@
-﻿using AitoWorkflowAndHuddleGenerator
-    .Application
-    .Abstractions
-    .Persistence;
-using AitoWorkflowAndHuddleGenerator
-    .Infrastructure
-    .Persistence;
-using AitoWorkflowAndHuddleGenerator
-    .Infrastructure
-    .Persistence
-    .Interceptors;
+using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Persistence;
+using AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence;
+using AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,13 +12,21 @@ using AitoWorkflowAndHuddleGenerator
     .Infrastructure
     .Identity;
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Coaching;
+using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Calendar;
+using AitoWorkflowAndHuddleGenerator.Infrastructure.Calendar;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Coaching;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Options;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure;
 
+/// <summary>
+/// Provides Dependency Injection operations and constants.
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Registers or adds Infrastructure functionality.
+    /// </summary>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -38,8 +38,7 @@ public static class DependencyInjection
             configuration.GetConnectionString(
                 "DefaultConnection")
             ?? throw new InvalidOperationException(
-                "Connection string 'DefaultConnection' " +
-                "was not configured.");
+                ConfigurationMessages.DefaultConnectionRequired);
 
         services.AddSingleton<AuditableEntityInterceptor>();
 
@@ -82,6 +81,12 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         services.AddScoped<ICoachSchedulingService, GraphCoachSchedulingService>();
+        services.AddHttpClient(GraphWorkflowCalendarService.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddScoped<IWorkflowCalendarService, GraphWorkflowCalendarService>();
 
         return services;
     }

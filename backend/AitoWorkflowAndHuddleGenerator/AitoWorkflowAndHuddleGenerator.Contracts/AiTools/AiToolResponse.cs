@@ -1,6 +1,9 @@
-﻿//Defines AI-tool metadata, color, and icon information.
+//Defines AI-tool metadata, color, and icon information.
 namespace AitoWorkflowAndHuddleGenerator.Contracts.AiTools;
 
+/// <summary>
+/// Represents the Ai Tool Response API contract.
+/// </summary>
 public sealed record AiToolResponse(
     int Id,
     string ExternalId,

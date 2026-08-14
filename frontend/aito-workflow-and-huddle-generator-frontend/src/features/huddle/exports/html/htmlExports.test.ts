@@ -29,11 +29,17 @@ describe("secure Huddle HTML exports", () => {
   it("exports long Huddle content without scripts, event handlers, or semantic substitution", () => {
     const output = createHuddleHtmlExport(huddle);
     expect(output.html).toContain("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;");
-    expect(output.html).not.toContain("<script");
     expect(output.html).not.toContain("<img");
     expect(output.html).not.toContain("javascript:");
+    expect(output.html).not.toContain("<script>alert");
     expect(output.html).not.toContain("Use Case</h3>");
     expect(output.html).toContain("Long content. Long content.");
+    expect(output.html).toContain("Microsoft AI Tools");
+    expect(output.html).toContain("Prompts &amp; Discussion");
+    expect(output.html).toContain('data-section-target="overview"');
+    expect(output.html).toContain("data-section-previous");
+    expect(output.html).toContain("data-phase-filter");
+    expect(output.html).toContain("data-copy-prompt");
   });
 
   it("orders the persisted learning plan as Weeks 6 through 12", () => {

@@ -1,7 +1,10 @@
-﻿namespace AitoWorkflowAndHuddleGenerator
+namespace AitoWorkflowAndHuddleGenerator
     .Contracts
     .Workflows;
 
+/// <summary>
+/// Represents the Save Workflow Request API contract.
+/// </summary>
 public sealed record SaveWorkflowRequest(
     string Name,
     string? Description,

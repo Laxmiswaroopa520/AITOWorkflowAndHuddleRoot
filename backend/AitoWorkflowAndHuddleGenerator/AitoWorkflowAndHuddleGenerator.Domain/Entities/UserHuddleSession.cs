@@ -3,6 +3,9 @@ using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the User Huddle Session model.
+/// </summary>
 public sealed class UserHuddleSession : AuditableEntity<Guid>
 {
     public string OwnerObjectId { get; set; } = string.Empty;

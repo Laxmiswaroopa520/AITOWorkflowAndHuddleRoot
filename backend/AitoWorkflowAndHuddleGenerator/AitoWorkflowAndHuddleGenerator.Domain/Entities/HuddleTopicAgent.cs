@@ -2,6 +2,9 @@ using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Huddle Topic Agent model.
+/// </summary>
 public sealed class HuddleTopicAgent
 {
     public int HuddleTopicId { get; set; }

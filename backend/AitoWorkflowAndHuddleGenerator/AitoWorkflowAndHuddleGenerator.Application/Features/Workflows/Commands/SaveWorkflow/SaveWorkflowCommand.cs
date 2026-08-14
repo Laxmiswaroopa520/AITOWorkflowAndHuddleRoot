@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Contracts
     .Workflows;
 using MediatR;
@@ -10,6 +10,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .SaveWorkflow;
 
+/// <summary>
+/// Represents the Save Workflow Command command.
+/// </summary>
 public sealed record SaveWorkflowCommand(
     string Name,
     string? Description,

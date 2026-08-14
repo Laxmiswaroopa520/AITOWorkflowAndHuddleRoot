@@ -20,22 +20,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.18" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.18" />
     <PackageReference Include="Microsoft.Identity.Web" Version="4.14.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Application\AitoWorkflowAndHuddleGenerator.Application.csproj" />
     <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Domain\AitoWorkflowAndHuddleGenerator.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="MicrosoftGraph\" />
-    <Folder Include="Options\" />
-    <Folder Include="Persistence\Migrations\" />
-    <Folder Include="Persistence\Repositories\" />
-    <Folder Include="Persistence\Seed\" />
   </ItemGroup>
 
 </Project>

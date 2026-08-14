@@ -4,8 +4,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Configures EF Core persistence for the Huddle Segment entity.
+/// </summary>
 public sealed class HuddleSegmentConfiguration : IEntityTypeConfiguration<HuddleSegment>
 {
+    /// <summary>
+    /// Configures the entity mapping and database constraints.
+    /// </summary>
     public void Configure(EntityTypeBuilder<HuddleSegment> builder)
     {
         builder.ToTable("HuddleSegments"); builder.HasKey(x => x.Id);

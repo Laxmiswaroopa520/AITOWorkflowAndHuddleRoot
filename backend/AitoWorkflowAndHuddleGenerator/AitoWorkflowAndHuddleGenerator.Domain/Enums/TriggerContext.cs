@@ -1,5 +1,8 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
+namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
+/// <summary>
+/// Defines the supported Trigger Context values.
+/// </summary>
 public enum TriggerContext
 {
     Unspecified = 0,

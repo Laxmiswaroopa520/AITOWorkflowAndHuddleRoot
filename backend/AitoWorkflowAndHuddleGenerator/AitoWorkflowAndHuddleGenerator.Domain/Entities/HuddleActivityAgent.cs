@@ -2,6 +2,9 @@ using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Huddle Activity Agent model.
+/// </summary>
 public sealed class HuddleActivityAgent
 {
     public int HuddleActivityId { get; set; }

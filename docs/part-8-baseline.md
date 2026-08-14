@@ -1,7 +1,5 @@
 # Part 8 baseline and Huddle scope freeze
 
-Date: 2026-08-09
-
 ## Scope
 
 Part 8 establishes the safe baseline for the future Huddle implementation. It does not implement Huddle features and does not authorize Workflow Sharing.

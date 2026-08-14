@@ -1,5 +1,8 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Api.Authentication;
+namespace AitoWorkflowAndHuddleGenerator.Api.Authentication;
 
+/// <summary>
+/// Defines configuration options for Azure Ad.
+/// </summary>
 public sealed class AzureAdOptions
 {
     public const string SectionName = "AzureAd";

@@ -1,4 +1,4 @@
-﻿/*This allows Application services to use the persistence abstraction without depending on Infrastructure.*/
+/*This allows Application services to use the persistence abstraction without depending on Infrastructure.*/
 
 
 //Defines the persistence abstraction used by the Application layer to access database tables.
@@ -11,6 +11,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Abstractions
     .Persistence;
 
+/// <summary>
+/// Defines the contract for IApplication Db Context.
+/// </summary>
 public interface IApplicationDbContext
 {
     DbSet<Role> Roles { get; }

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using AitoWorkflowAndHuddleGenerator
     .Application
     .Common
@@ -9,8 +9,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AitoWorkflowAndHuddleGenerator.Application;
 
+/// <summary>
+/// Provides Dependency Injection operations and constants.
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Registers or adds Application functionality.
+    /// </summary>
     public static IServiceCollection AddApplication(
         this IServiceCollection services)
     {
@@ -35,21 +41,3 @@ public static class DependencyInjection
         return services;
     }
 }
-/*
-using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace AitoWorkflowAndHuddleGenerator.Application;
-
-public static class DependencyInjection
-{
-    public static IServiceCollection AddApplication(
-        this IServiceCollection services)
-    {
-        services.AddAutoMapper(
-            cfg => { },
-            Assembly.GetExecutingAssembly());
-
-        return services;
-    }
-}*/

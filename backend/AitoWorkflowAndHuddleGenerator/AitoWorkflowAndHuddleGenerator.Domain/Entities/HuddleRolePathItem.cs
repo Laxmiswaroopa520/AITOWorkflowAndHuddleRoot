@@ -1,5 +1,8 @@
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Huddle Role Path Item model.
+/// </summary>
 public sealed class HuddleRolePathItem
 {
     public int HuddleSegmentRoleId { get; set; }

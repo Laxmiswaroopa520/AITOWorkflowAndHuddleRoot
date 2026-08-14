@@ -1,7 +1,10 @@
-﻿namespace AitoWorkflowAndHuddleGenerator
+namespace AitoWorkflowAndHuddleGenerator
     .Contracts
     .Activities;
 
+/// <summary>
+/// Represents the Activity Filter Request API contract.
+/// </summary>
 public sealed class ActivityFilterRequest
 {
     public string? RoleId { get; init; }

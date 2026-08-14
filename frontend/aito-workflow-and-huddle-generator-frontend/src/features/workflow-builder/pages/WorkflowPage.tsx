@@ -148,6 +148,18 @@ export function WorkflowPage() {
         currentStep={
           workflow.currentStep
         }
+        canOpenActivities={
+          Boolean(
+            workflow.selectedRoleId,
+          )
+        }
+        canOpenWorkflow={
+          workflow.selectedActivities
+            .length > 0
+        }
+        onStepChange={step => {
+          workflow.goToStep(step);
+        }}
       />
 
       {selectedRoleIsMissing && (

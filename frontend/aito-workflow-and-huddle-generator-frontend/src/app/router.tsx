@@ -13,10 +13,6 @@ import {
 } from "@/components/layout/AppLayout";
 
 import {
-  HealthDiagnosticPage,
-} from "@/features/diagnostics/HealthDiagnosticPage";
-
-import {
   SavedWorkflowsPage,
 } from "@/features/saved-workflows";
 
@@ -29,11 +25,24 @@ import {
 } from "@/features/workflow-builder";
 
 import {
+  HomePage,
+} from "@/features/home";
+
+import {
   ReferenceDataDiagnosticPage,
 } from "@/features/workflow-builder/pages/ReferenceDataDiagnosticPage";
 
 export const router =
   createBrowserRouter([
+    {
+      path: "/",
+      element: (
+        <ProtectedRoute>
+          <HomePage />
+        </ProtectedRoute>
+      ),
+    },
+
     {
       element: (
         <ProtectedRoute>
@@ -42,17 +51,6 @@ export const router =
       ),
 
       children: [
-        {
-          index: true,
-
-          element: (
-            <Navigate
-              to="/workflow"
-              replace
-            />
-          ),
-        },
-
         {
           path: "workflow",
 
@@ -80,19 +78,6 @@ export const router =
     },
 
     /*
-     * Keep diagnostics public only when
-     * you intentionally need unauthenticated
-     * frontend/backend connectivity testing.
-     */
-    {
-      path: "diagnostics",
-
-      element: (
-        <HealthDiagnosticPage />
-      ),
-    },
-
-    /*
      * This contains reference data and should
      * normally remain protected.
      */
@@ -112,7 +97,7 @@ export const router =
 
       element: (
         <Navigate
-          to="/workflow"
+          to="/"
           replace
         />
       ),
@@ -143,10 +128,6 @@ import {
 import {
   AppLayout,
 } from "../components/layout/AppLayout";
-
-import {
-  HealthDiagnosticPage,
-} from "../features/diagnostics/HealthDiagnosticPage";
 
 //optional route
 import {
@@ -195,12 +176,6 @@ export const router =
       ],
     },
 
-    {
-      path: "diagnostics",
-      element: (
-        <HealthDiagnosticPage />
-      ),
-    },
     {
   path: "workflows",
   element: (

@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -31,6 +31,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetWorkflowById;
 
+/// <summary>
+/// Handles the Get Workflow By Id query.
+/// </summary>
 public sealed class
     GetWorkflowByIdQueryHandler
     : IRequestHandler<
@@ -38,21 +41,22 @@ public sealed class
         WorkflowResponse>
 {
     private readonly
-        IApplicationDbContext _dbContext;
+        IApplicationDbContext dbContext;
 
-    private readonly
-        ICurrentUserService
-            _currentUserService;
+    private readonly ICurrentUserService currentUserService;
 
     public GetWorkflowByIdQueryHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService
             currentUserService)
     {
-        _dbContext = dbContext;
-        _currentUserService =
-            currentUserService;
+        this.dbContext = dbContext;
+        this.currentUserService = currentUserService;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<WorkflowResponse>
         Handle(
@@ -61,12 +65,12 @@ public sealed class
                 cancellationToken)
     {
         string ownerObjectId =
-            _currentUserService.ObjectId
+            currentUserService.ObjectId
             ?? throw new UnauthorizedAccessException(
-                "The authenticated token does not contain an oid claim.");
+                AuthenticationMessages.MissingObjectIdClaim);
 
         UserWorkflow workflow =
-            await _dbContext
+            await dbContext
                 .UserWorkflows
                 .AsNoTracking()
                 .Include(
@@ -93,7 +97,7 @@ public sealed class
                             ownerObjectId,
                     cancellationToken)
             ?? throw new NotFoundException(
-                "The workflow was not found.");
+                WorkflowMessages.NotFound);
 
         return WorkflowMappings
             .ToResponse(workflow);

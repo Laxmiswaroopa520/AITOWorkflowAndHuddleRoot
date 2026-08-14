@@ -1,6 +1,9 @@
-﻿//Junction entity that stores the activities selected within a saved user workflow and their display order.
+//Junction entity that stores the activities selected within a saved user workflow and their display order.
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the User Workflow Activity model.
+/// </summary>
 public sealed class UserWorkflowActivity
 {
     public Guid UserWorkflowId { get; set; }

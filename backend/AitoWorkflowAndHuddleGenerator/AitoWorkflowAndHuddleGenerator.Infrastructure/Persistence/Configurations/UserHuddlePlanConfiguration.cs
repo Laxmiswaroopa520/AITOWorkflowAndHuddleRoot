@@ -4,8 +4,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Configures EF Core persistence for the User Huddle Plan entity.
+/// </summary>
 public sealed class UserHuddlePlanConfiguration : IEntityTypeConfiguration<UserHuddlePlan>
 {
+    /// <summary>
+    /// Configures the entity mapping and database constraints.
+    /// </summary>
     public void Configure(EntityTypeBuilder<UserHuddlePlan> builder)
     {
         builder.ToTable("UserHuddlePlans"); builder.HasKey(x => x.Id); builder.Property(x => x.Id).ValueGeneratedNever(); builder.Property(x => x.OwnerObjectId).HasMaxLength(100).IsRequired(); builder.Property(x => x.Name).HasMaxLength(200).IsRequired(); builder.Property(x => x.CreatedAtUtc).IsRequired(); builder.Property(x => x.RowVersion).IsRowVersion().IsConcurrencyToken(); builder.HasIndex(x => new { x.OwnerObjectId, x.HuddleSegmentRoleId }).IsUnique(); builder.HasOne(x => x.HuddleSegmentRole).WithMany().HasForeignKey(x => x.HuddleSegmentRoleId).OnDelete(DeleteBehavior.Restrict);

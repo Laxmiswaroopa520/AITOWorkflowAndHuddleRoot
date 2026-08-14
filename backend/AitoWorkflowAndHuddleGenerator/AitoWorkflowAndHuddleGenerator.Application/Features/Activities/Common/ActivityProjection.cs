@@ -1,4 +1,4 @@
-﻿/*The activity mapping is used by three handlers. Keep it in one reusable projection so every endpoint returns the same structure.*/
+/*The activity mapping is used by three handlers. Keep it in one reusable projection so every endpoint returns the same structure.*/
 //Centralizes EF-to-DTO activity mapping.
 using System.Linq.Expressions;
 using AitoWorkflowAndHuddleGenerator.Contracts.Activities;
@@ -10,6 +10,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Activities
     .Common;
 
+/// <summary>
+/// Provides Activity Projection operations and constants.
+/// </summary>
 internal static class ActivityProjection
 {
     public static readonly Expression<

@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator.Domain.Entities;
+using AitoWorkflowAndHuddleGenerator.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -7,9 +7,15 @@ namespace AitoWorkflowAndHuddleGenerator
     .Persistence
     .Configurations;
 
+/// <summary>
+/// Configures EF Core persistence for the Role entity.
+/// </summary>
 public sealed class RoleConfiguration
     : IEntityTypeConfiguration<Role>
 {
+    /// <summary>
+    /// Configures the entity mapping and database constraints.
+    /// </summary>
     public void Configure(EntityTypeBuilder<Role> builder)
     {
         builder.ToTable("Roles");

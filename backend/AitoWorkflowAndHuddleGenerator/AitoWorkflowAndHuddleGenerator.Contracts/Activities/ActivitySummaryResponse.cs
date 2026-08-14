@@ -1,7 +1,10 @@
-﻿namespace AitoWorkflowAndHuddleGenerator
+namespace AitoWorkflowAndHuddleGenerator
     .Contracts
     .Activities;
 
+/// <summary>
+/// Represents the Activity Summary Response API contract.
+/// </summary>
 public sealed record ActivitySummaryResponse(
     int Id,
     string ExternalId,

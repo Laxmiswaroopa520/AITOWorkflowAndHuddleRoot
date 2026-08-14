@@ -1,8 +1,11 @@
-﻿//Stores workflow-sharing details, recipient and sender information, messages, revocation status, and audit history.
+//Stores workflow-sharing details, recipient and sender information, messages, revocation status, and audit history.
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Workflow Share model.
+/// </summary>
 public sealed class WorkflowShare : AuditableEntity<Guid>
 {
     public Guid UserWorkflowId { get; set; }

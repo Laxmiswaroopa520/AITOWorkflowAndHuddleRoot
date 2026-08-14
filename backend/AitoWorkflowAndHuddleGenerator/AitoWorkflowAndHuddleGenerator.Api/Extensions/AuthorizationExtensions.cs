@@ -1,11 +1,18 @@
-﻿using AitoWorkflowAndHuddleGenerator.Api.Authorization;
+using AitoWorkflowAndHuddleGenerator.Api.Authorization;
 using Microsoft.Identity.Web;
 
 namespace AitoWorkflowAndHuddleGenerator.Api.Extensions;
 
+/// <summary>
+/// Provides Authorization Extensions operations and constants.
+/// </summary>
 public static class AuthorizationExtensions
 {
     private const string RequiredScope = "access_as_user";
+
+    /// <summary>
+    /// Registers or adds Api Authorization functionality.
+    /// </summary>
 
     public static IServiceCollection AddApiAuthorization(
         this IServiceCollection services)

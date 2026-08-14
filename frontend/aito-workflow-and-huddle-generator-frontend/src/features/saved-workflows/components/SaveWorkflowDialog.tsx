@@ -4,6 +4,7 @@ import type {
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -43,6 +44,8 @@ interface SaveWorkflowDialogProps {
   onSave: (
     input: SaveWorkflowInput,
   ) => void;
+
+  onNameChange?: () => void;
 }
 
 export function SaveWorkflowDialog({
@@ -57,6 +60,7 @@ export function SaveWorkflowDialog({
   errorMessage,
   onClose,
   onSave,
+  onNameChange,
 }: SaveWorkflowDialogProps) {
   const [
     name,
@@ -77,6 +81,9 @@ export function SaveWorkflowDialog({
     null,
   );
 
+  const nameInputRef =
+    useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -94,6 +101,13 @@ export function SaveWorkflowDialog({
     initialName,
     open,
   ]);
+
+  useEffect(() => {
+    if (open && errorMessage) {
+      nameInputRef.current?.focus();
+      nameInputRef.current?.select();
+    }
+  }, [errorMessage, open]);
 
   if (!open) {
     return null;
@@ -245,6 +259,7 @@ export function SaveWorkflowDialog({
             </span>
 
             <input
+              ref={nameInputRef}
               value={name}
               maxLength={200}
               autoFocus
@@ -261,13 +276,39 @@ export function SaveWorkflowDialog({
                 focus:ring-2
                 focus:ring-primary/20
               "
-              placeholder="Enter workflow name"
-              onChange={event =>
-                setName(
-                  event.target.value,
+              aria-invalid={
+                Boolean(
+                  validationMessage ||
+                    errorMessage,
                 )
               }
+              aria-describedby={
+                validationMessage ||
+                errorMessage
+                  ? "workflow-name-error"
+                  : undefined
+              }
+              placeholder="Enter workflow name"
+              onChange={event => {
+                setName(
+                  event.target.value,
+                );
+                setValidationMessage(null);
+                onNameChange?.();
+              }}
             />
+
+            {(validationMessage ||
+              errorMessage) && (
+              <p
+                id="workflow-name-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {validationMessage ??
+                  errorMessage}
+              </p>
+            )}
           </label>
 
           <label className="grid gap-2">
@@ -317,25 +358,6 @@ export function SaveWorkflowDialog({
             </span>
           </label>
 
-          {(validationMessage ||
-            errorMessage) && (
-            <div
-              role="alert"
-              className="
-                rounded-lg
-                border
-                border-destructive/30
-                bg-destructive/10
-                px-3
-                py-2
-                text-sm
-                text-destructive
-              "
-            >
-              {validationMessage ??
-                errorMessage}
-            </div>
-          )}
         </div>
 
         <footer

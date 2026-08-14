@@ -1,7 +1,13 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Api.Extensions;
+namespace AitoWorkflowAndHuddleGenerator.Api.Extensions;
 
+/// <summary>
+/// Provides Swagger Extensions operations and constants.
+/// </summary>
 public static class SwaggerExtensions
 {
+    /// <summary>
+    /// Registers or adds Swagger Documentation functionality.
+    /// </summary>
     public static IServiceCollection
         AddSwaggerDocumentation(
             this IServiceCollection services)
@@ -12,6 +18,10 @@ public static class SwaggerExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Executes the Use Swagger Documentation operation.
+    /// </summary>
 
     public static WebApplication
         UseSwaggerDocumentation(

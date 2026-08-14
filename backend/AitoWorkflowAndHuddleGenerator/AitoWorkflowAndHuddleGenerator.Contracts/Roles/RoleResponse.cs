@@ -1,5 +1,8 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Contracts.Roles;
+namespace AitoWorkflowAndHuddleGenerator.Contracts.Roles;
 //Defines the role data returned to React.
+/// <summary>
+/// Represents the Role Response API contract.
+/// </summary>
 public sealed record RoleResponse(
     int Id,
     string ExternalId,

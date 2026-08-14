@@ -2,6 +2,9 @@ using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Huddle Segment Role model.
+/// </summary>
 public sealed class HuddleSegmentRole : AuditableEntity<int>
 {
     public string ExternalId { get; set; } = string.Empty;

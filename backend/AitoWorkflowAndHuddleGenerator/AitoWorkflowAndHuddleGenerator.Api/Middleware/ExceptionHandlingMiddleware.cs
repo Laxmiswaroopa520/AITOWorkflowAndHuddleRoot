@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator.Application.Common.Exceptions;
+using AitoWorkflowAndHuddleGenerator.Application.Common.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,21 +7,28 @@ namespace AitoWorkflowAndHuddleGenerator
     .Api
     .Middleware;
 
+/// <summary>
+/// Represents the Exception Handling Middleware model.
+/// </summary>
 public sealed class ExceptionHandlingMiddleware
 {
-    private readonly RequestDelegate _next;
+    private readonly RequestDelegate next;
 
     private readonly
         ILogger<ExceptionHandlingMiddleware>
-        _logger;
+        logger;
 
     public ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger)
     {
-        _next = next;
-        _logger = logger;
+        this.next = next;
+        this.logger = logger;
     }
+
+    /// <summary>
+    /// Processes the current HTTP request.
+    /// </summary>
 
     public async Task InvokeAsync(
         HttpContext context)
@@ -30,7 +37,7 @@ public sealed class ExceptionHandlingMiddleware
 
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (ValidationException exception)
         {
@@ -47,10 +54,9 @@ public sealed class ExceptionHandlingMiddleware
                 statusCode ==
                 StatusCodes.Status500InternalServerError)
             {
-                _logger.LogError(
+                logger.LogError(
                     exception,
-                    "An unhandled exception occurred. " +
-                    "Correlation ID: {CorrelationId}",
+                    ApiProblemMessages.UnhandledExceptionLog,
                     context.TraceIdentifier);
 
                 await WriteUnexpectedProblemAsync(context);
@@ -58,10 +64,9 @@ public sealed class ExceptionHandlingMiddleware
                 return;
             }
 
-            _logger.LogWarning(
+            logger.LogWarning(
                 exception,
-                "A request failed with status {StatusCode}. " +
-                "Correlation ID: {CorrelationId}",
+                ApiProblemMessages.RequestFailureLog,
                 statusCode,
                 context.TraceIdentifier);
 
@@ -103,7 +108,7 @@ public sealed class ExceptionHandlingMiddleware
                     StatusCodes.Status400BadRequest,
 
                 Title =
-                    "One or more validation errors occurred.",
+                    ApiProblemMessages.ValidationErrorsOccurred,
 
                 Instance =
                     context.Request.Path
@@ -168,12 +173,10 @@ public sealed class ExceptionHandlingMiddleware
                         .Status500InternalServerError,
 
                 Title =
-                    "An unexpected error occurred.",
+                    ApiProblemMessages.UnexpectedErrorOccurred,
 
                 Detail =
-                    "The request could not be completed. " +
-                    "Use the correlation ID when " +
-                    "contacting support.",
+                    ApiProblemMessages.UnexpectedErrorDetail,
 
                 Instance =
                     context.Request.Path
@@ -202,55 +205,55 @@ public sealed class ExceptionHandlingMiddleware
                 (
                     StatusCodes
                         .Status400BadRequest,
-                    "Validation failed"
+                    ApiProblemMessages.ValidationFailed
                 ),
 
             NotFoundException =>
                 (
                     StatusCodes
                         .Status404NotFound,
-                    "Resource not found"
+                    ApiProblemMessages.ResourceNotFound
                 ),
 
             ConflictException =>
                 (
                     StatusCodes
                         .Status409Conflict,
-                    "Conflict"
+                    ApiProblemMessages.Conflict
                 ),
 
             ForbiddenAccessException =>
                 (
                     StatusCodes
                         .Status403Forbidden,
-                    "Forbidden"
+                    ApiProblemMessages.Forbidden
                 ),
 
             UnauthorizedAccessException =>
                 (
                     StatusCodes
                         .Status401Unauthorized,
-                    "Unauthorized"
+                    ApiProblemMessages.Unauthorized
                 ),
 
             DbUpdateConcurrencyException =>
                 (
                     StatusCodes
                         .Status409Conflict,
-                    "Concurrency conflict"
+                    ApiProblemMessages.ConcurrencyConflict
                 ),
 
             ExternalServiceUnavailableException =>
                 (
                     StatusCodes.Status503ServiceUnavailable,
-                    "External service unavailable"
+                    ApiProblemMessages.ExternalServiceUnavailable
                 ),
 
             _ =>
                 (
                     StatusCodes
                         .Status500InternalServerError,
-                    "An unexpected error occurred"
+                    ApiProblemMessages.UnexpectedError
                 ),
         };
     }
@@ -265,18 +268,18 @@ namespace AitoWorkflowAndHuddleGenerator.Api.Middleware;
 
 public sealed class ExceptionHandlingMiddleware
 {
-    private readonly RequestDelegate _next;
+    private readonly RequestDelegate next;
 
     private readonly
         ILogger<ExceptionHandlingMiddleware>
-        _logger;
+        logger;
 
     public ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger)
     {
-        _next = next;
-        _logger = logger;
+        this.next = next;
+        this.logger = logger;
     }
 
     public async Task InvokeAsync(
@@ -286,11 +289,11 @@ public sealed class ExceptionHandlingMiddleware
 
         try
         {
-            await _next(context);
+            await next(context);
         }
         catch (Exception exception)
         {
-            _logger.LogError(
+            logger.LogError(
                 exception,
                 "An unhandled exception occurred. " +
                 "Correlation ID: {CorrelationId}",

@@ -137,9 +137,9 @@ export function WorkflowHistoryList({
     <div
       className="
         grid
-        gap-5
+        gap-4
         md:grid-cols-2
-        xl:grid-cols-3
+        lg:grid-cols-3
       "
     >
       {workflows.map(workflow => (

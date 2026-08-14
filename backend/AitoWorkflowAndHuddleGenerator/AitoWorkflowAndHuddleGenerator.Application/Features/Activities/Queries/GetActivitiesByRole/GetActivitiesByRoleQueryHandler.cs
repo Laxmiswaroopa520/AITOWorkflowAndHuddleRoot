@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Persistence;
@@ -18,17 +18,20 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetActivitiesByRole;
 
+/// <summary>
+/// Handles the Get Activities By Role query.
+/// </summary>
 public sealed class GetActivitiesByRoleQueryHandler
     : IRequestHandler<
         GetActivitiesByRoleQuery,
         IReadOnlyList<ActivityResponse>>
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext dbContext;
 
     public GetActivitiesByRoleQueryHandler(
         IApplicationDbContext dbContext)
     {
-        _dbContext = dbContext;
+        this.dbContext = dbContext;
     }
 
     public async Task<
@@ -39,7 +42,7 @@ public sealed class GetActivitiesByRoleQueryHandler
         string roleExternalId =
             request.RoleExternalId.Trim();
 
-        return await _dbContext.Activities
+        return await dbContext.Activities
             .AsNoTracking()
             .Where(activity =>
                 activity.IsActive &&

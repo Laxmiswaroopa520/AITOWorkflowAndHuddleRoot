@@ -1,5 +1,8 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
+namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
+/// <summary>
+/// Defines the supported Mcem Stage values.
+/// </summary>
 public enum McemStage
 {
     All = 0,

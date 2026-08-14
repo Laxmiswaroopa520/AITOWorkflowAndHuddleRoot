@@ -1,5 +1,8 @@
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Options;
 
+/// <summary>
+/// Defines configuration options for Coach Scheduling.
+/// </summary>
 public sealed class CoachSchedulingOptions
 {
     public const string SectionName = "CoachScheduling";

@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -31,6 +31,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .UpdateWorkflow;
 
+/// <summary>
+/// Handles the Update Workflow command.
+/// </summary>
 public sealed class
     UpdateWorkflowCommandHandler
     : IRequestHandler<
@@ -38,21 +41,24 @@ public sealed class
         WorkflowResponse>
 {
     private readonly
-        IApplicationDbContext _dbContext;
+        IApplicationDbContext dbContext;
 
     private readonly
         ICurrentUserService
-            _currentUserService;
+            currentUserService;
 
     public UpdateWorkflowCommandHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService
             currentUserService)
     {
-        _dbContext = dbContext;
-        _currentUserService =
-            currentUserService;
+        this.dbContext = dbContext;
+        this.currentUserService = currentUserService;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<WorkflowResponse>
         Handle(
@@ -61,12 +67,12 @@ public sealed class
                 cancellationToken)
     {
         string ownerObjectId =
-            _currentUserService.ObjectId
+            currentUserService.ObjectId
             ?? throw new UnauthorizedAccessException(
-                "The authenticated token does not contain an oid claim.");
+                AuthenticationMessages.MissingObjectIdClaim);
 
         UserWorkflow workflow =
-            await _dbContext
+            await dbContext
                 .UserWorkflows
                 .Include(
                     workflow =>
@@ -82,13 +88,13 @@ public sealed class
                             ownerObjectId,
                     cancellationToken)
             ?? throw new NotFoundException(
-                "The workflow was not found.");
+                WorkflowMessages.NotFound);
 
         string normalizedName =
             request.Name.Trim();
 
         bool duplicateExists =
-            await _dbContext
+            await dbContext
                 .UserWorkflows
                 .AsNoTracking()
                 .AnyAsync(
@@ -105,11 +111,11 @@ public sealed class
         if (duplicateExists)
         {
             throw new ConflictException(
-                $"A workflow named '{normalizedName}' already exists.");
+                WorkflowMessages.DuplicateName(normalizedName));
         }
 
         Role role =
-            await _dbContext
+            await dbContext
                 .Roles
                 .SingleOrDefaultAsync(
                     role =>
@@ -119,7 +125,7 @@ public sealed class
                         role.IsActive,
                     cancellationToken)
             ?? throw new NotFoundException(
-                "The selected role was not found.");
+                WorkflowMessages.SelectedRoleNotFound);
 
         string[] activityExternalIds =
             request
@@ -134,7 +140,7 @@ public sealed class
                 .ToArray();
 
         List<Activity> activities =
-            await _dbContext
+            await dbContext
                 .Activities
                 .Where(activity =>
                     activityExternalIds
@@ -150,7 +156,7 @@ public sealed class
             activityExternalIds.Length)
         {
             throw new NotFoundException(
-                "One or more selected activities no longer exist.");
+                WorkflowMessages.SelectedActivitiesNotFound);
         }
 
         if (
@@ -160,14 +166,14 @@ public sealed class
                         role.Id))
         {
             throw new ConflictException(
-                "One or more activities do not belong to the selected role.");
+                WorkflowMessages.ActivitiesDoNotBelongToRole);
         }
 
         byte[] originalRowVersion =
             Convert.FromBase64String(
                 request.RowVersion);
 
-        _dbContext
+        dbContext
             .UserWorkflows
             .Entry(workflow)
             .Property(
@@ -195,7 +201,7 @@ public sealed class
                     activity
                         .DurationMinutes);
 
-        _dbContext
+        dbContext
             .UserWorkflowActivities
             .RemoveRange(
                 workflow
@@ -223,7 +229,7 @@ public sealed class
                     activityExternalIds[
                         index]];
 
-            _dbContext
+            dbContext
                 .UserWorkflowActivities
                 .Add(
                     new UserWorkflowActivity
@@ -243,7 +249,7 @@ public sealed class
 
         try
         {
-            await _dbContext
+            await dbContext
                 .SaveChangesAsync(
                     cancellationToken);
         }
@@ -251,11 +257,11 @@ public sealed class
             DbUpdateConcurrencyException)
         {
             throw new ConflictException(
-                "This workflow was changed by another request. Refresh and try again.");
+                WorkflowMessages.ChangedByAnotherRequest);
         }
 
         UserWorkflow updatedWorkflow =
-            await _dbContext
+            await dbContext
                 .UserWorkflows
                 .AsNoTracking()
                 .Include(

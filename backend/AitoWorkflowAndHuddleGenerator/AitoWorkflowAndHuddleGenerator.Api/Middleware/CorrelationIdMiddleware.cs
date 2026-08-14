@@ -1,21 +1,28 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Api.Middleware;
+namespace AitoWorkflowAndHuddleGenerator.Api.Middleware;
 
+/// <summary>
+/// Represents the Correlation Id Middleware model.
+/// </summary>
 public sealed class CorrelationIdMiddleware
 {
     public const string HeaderName =
         "X-Correlation-ID";
 
-    private readonly RequestDelegate _next;
+    private readonly RequestDelegate next;
     private readonly ILogger<CorrelationIdMiddleware>
-        _logger;
+        logger;
 
     public CorrelationIdMiddleware(
         RequestDelegate next,
         ILogger<CorrelationIdMiddleware> logger)
     {
-        _next = next;
-        _logger = logger;
+        this.next = next;
+        this.logger = logger;
     }
+
+    /// <summary>
+    /// Processes the current HTTP request.
+    /// </summary>
 
     public async Task InvokeAsync(
         HttpContext context)
@@ -37,13 +44,13 @@ public sealed class CorrelationIdMiddleware
             correlationId;
 
         using IDisposable? scope =
-            _logger.BeginScope(
+            logger.BeginScope(
                 new Dictionary<string, object>
                 {
                     ["CorrelationId"] =
                         correlationId
                 });
 
-        await _next(context);
+        await next(context);
     }
 }

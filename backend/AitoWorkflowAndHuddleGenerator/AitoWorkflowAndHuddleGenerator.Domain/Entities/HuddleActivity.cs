@@ -2,6 +2,9 @@ using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Huddle Activity model.
+/// </summary>
 public sealed class HuddleActivity : AuditableEntity<int>
 {
     public string ExternalId { get; set; } = string.Empty;

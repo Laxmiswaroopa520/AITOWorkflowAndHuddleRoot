@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Coffee,
   Copy,
+  CalendarDays,
   MoveRight,
   Sun,
   Sunset,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 import {
+  useMemo,
   useState,
 } from "react";
 
@@ -34,6 +36,8 @@ import type {
   DayZoneId,
   SchedulePosition,
 } from "../types/daySchedule.types";
+import { CalendarReviewDialog } from "./CalendarReviewDialog";
+import type { WorkflowCalendarItem } from "../types/workflowCalendar.types";
 
 interface DayScheduleProps {
   activities: Activity[];
@@ -105,6 +109,27 @@ export function DaySchedule({
     useState<number | null>(null);
   const [copiedActivityId, setCopiedActivityId] =
     useState<number | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const calendarItems = useMemo<WorkflowCalendarItem[]>(() => {
+    const starts: Record<DayZoneId, [number, number]> = { morning: [8, 30], midday: [11, 30], "late-day": [15, 30] };
+    const today = new Date();
+    return DAY_ZONES.flatMap(zone => {
+      const [hour, minute] = starts[zone.id];
+      let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, minute);
+      return schedule[zone.id].map(scheduled => {
+        const start = cursor;
+        const end = new Date(start.getTime() + scheduled.activity.durationMinutes * 60000);
+        cursor = end;
+        return {
+          requestId: crypto.randomUUID(), activityExternalId: scheduled.activity.externalId,
+          subject: scheduled.activity.title,
+          body: [scheduled.activity.description, scheduled.activity.businessOutcome ? `Business Outcome: ${scheduled.activity.businessOutcome}` : null, scheduled.activity.beginnerPrompt ? `Recommended Prompt: ${scheduled.activity.beginnerPrompt}` : null].filter(Boolean).join("\n\n"),
+          start: start.toISOString(), end: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        };
+      });
+    });
+  }, [schedule]);
 
   const isOverDayCapacity =
     totalDuration > 480;
@@ -264,6 +289,7 @@ export function DaySchedule({
               {zone.title}: {schedule[zone.id].length}
             </span>
           ))}
+          <Button type="button" size="sm" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)} className="ml-1 gap-2"><CalendarDays className="h-4 w-4" />Add to my calendar</Button>
         </div>
       </div>
 
@@ -577,6 +603,7 @@ export function DaySchedule({
           </section>
         );
       })}
+      <CalendarReviewDialog open={calendarOpen} onOpenChange={setCalendarOpen} items={calendarItems} />
     </div>
   );
 }

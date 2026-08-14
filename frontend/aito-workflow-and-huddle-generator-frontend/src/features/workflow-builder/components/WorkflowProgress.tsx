@@ -12,6 +12,11 @@ import type {
 
 interface WorkflowProgressProps {
   currentStep: WorkflowStep;
+  canOpenActivities: boolean;
+  canOpenWorkflow: boolean;
+  onStepChange: (
+    step: WorkflowStep,
+  ) => void;
 }
 
 const workflowSteps: Array<{
@@ -38,6 +43,9 @@ const workflowSteps: Array<{
 
 export function WorkflowProgress({
   currentStep,
+  canOpenActivities,
+  canOpenWorkflow,
+  onStepChange,
 }: WorkflowProgressProps) {
   const currentIndex =
     workflowSteps.findIndex(
@@ -72,6 +80,13 @@ export function WorkflowProgress({
             const isCurrent =
               index === currentIndex;
 
+            const isEnabled =
+              step.id === "discover" ||
+              (step.id === "customize" &&
+                canOpenActivities) ||
+              (step.id === "generate" &&
+                canOpenWorkflow);
+
             return (
               <li
                 key={step.id}
@@ -82,12 +97,42 @@ export function WorkflowProgress({
                   last:flex-none
                 "
               >
-                <div
-                  className="
+                <button
+                  type="button"
+                  onClick={() =>
+                    onStepChange(step.id)
+                  }
+                  disabled={!isEnabled}
+                  aria-current={
+                    isCurrent
+                      ? "step"
+                      : undefined
+                  }
+                  className={cn(
+                    `
                     flex
                     items-center
                     gap-2.5
-                  "
+                    rounded-lg
+                    text-left
+                    transition
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-primary/50
+                    focus-visible:ring-offset-2
+                  `,
+                    isEnabled &&
+                      !isCurrent &&
+                      `
+                        cursor-pointer
+                        group
+                      `,
+                    !isEnabled &&
+                      `
+                        cursor-not-allowed
+                        opacity-50
+                      `,
+                  )}
                 >
                   <span
                     className={cn(
@@ -124,6 +169,15 @@ export function WorkflowProgress({
                           bg-background
                           text-muted-foreground
                         `,
+
+                      isEnabled &&
+                        !isCurrent &&
+                        `
+                          transition
+                          group-hover:border-primary
+                          group-hover:ring-2
+                          group-hover:ring-primary/20
+                        `,
                     )}
                   >
                     {isComplete ? (
@@ -145,11 +199,15 @@ export function WorkflowProgress({
                       isCurrent
                         ? "text-foreground"
                         : "text-muted-foreground",
+
+                      isEnabled &&
+                        !isCurrent &&
+                        "group-hover:text-primary",
                     )}
                   >
                     {step.label}
                   </span><span className="block text-[11px] text-muted-foreground">{step.subtitle}</span></span>
-                </div>
+                </button>
 
                 {index <
                   workflowSteps.length -

@@ -1,4 +1,7 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
+namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
+/// <summary>
+/// Defines the supported Activity Priority values.
+/// </summary>
 public enum ActivityPriority
 {
     Unspecified = 0,

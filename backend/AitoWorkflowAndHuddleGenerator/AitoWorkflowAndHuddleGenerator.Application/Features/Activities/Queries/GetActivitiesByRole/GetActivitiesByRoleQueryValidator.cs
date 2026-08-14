@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace AitoWorkflowAndHuddleGenerator
     .Application
@@ -7,6 +7,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetActivitiesByRole;
 
+/// <summary>
+/// Validates Get Activities By Role Query requests.
+/// </summary>
 public sealed class GetActivitiesByRoleQueryValidator
     : AbstractValidator<GetActivitiesByRoleQuery>
 {

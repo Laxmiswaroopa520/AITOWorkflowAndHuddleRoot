@@ -1,4 +1,4 @@
-﻿/*CurrentUserController
+/*CurrentUserController
   ↓
 GetCurrentUserQuery
   ↓
@@ -11,12 +11,7 @@ CurrentUserResponse*/
 
 
 using AitoWorkflowAndHuddleGenerator.Api.Authorization;
-using AitoWorkflowAndHuddleGenerator
-    .Application
-    .Features
-    .Identity
-    .Queries
-    .GetCurrentUser;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Identity.Queries.GetCurrentUser;
 using AitoWorkflowAndHuddleGenerator.Contracts.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -27,15 +22,27 @@ namespace AitoWorkflowAndHuddleGenerator.Api.Controllers;
 [ApiController]
 [Route("api/auth")]
 [Authorize(Policy = Policies.AccessAsUser)]
+/// <summary>
+/// Provides information about the currently authenticated user.
+/// </summary>
 public sealed class CurrentUserController : ControllerBase
 {
-    private readonly ISender _sender;
+    private readonly ISender sender;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CurrentUserController"/> class.
+    /// </summary>
+    /// <param name="sender">The mediator used to dispatch identity queries.</param>
     public CurrentUserController(ISender sender)
     {
-        _sender = sender;
+        this.sender = sender;
     }
 
+    /// <summary>
+    /// Gets the identity and application profile of the current user.
+    /// </summary>
+    /// <param name="cancellationToken">A token used to cancel the request.</param>
+    /// <returns>The current authenticated user.</returns>
     [HttpGet("me")]
     [ProducesResponseType(
         typeof(CurrentUserResponse),
@@ -44,11 +51,14 @@ public sealed class CurrentUserController : ControllerBase
         StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(
         StatusCodes.Status403Forbidden)]
+    /// <summary>
+    /// Gets Me.
+    /// </summary>
     public async Task<ActionResult<CurrentUserResponse>> GetMe(
         CancellationToken cancellationToken)
     {
         CurrentUserResponse response =
-            await _sender.Send(
+            await sender.Send(
                 new GetCurrentUserQuery(),
                 cancellationToken);
 

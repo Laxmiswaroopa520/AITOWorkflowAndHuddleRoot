@@ -1,8 +1,11 @@
-﻿//Stores workflows created and saved by users, including ownership, role, duration, favorite status, and concurrency information.
+//Stores workflows created and saved by users, including ownership, role, duration, favorite status, and concurrency information.
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the User Workflow model.
+/// </summary>
 public sealed class UserWorkflow : AuditableEntity<Guid>
 {
     public string Name { get; set; } = string.Empty;

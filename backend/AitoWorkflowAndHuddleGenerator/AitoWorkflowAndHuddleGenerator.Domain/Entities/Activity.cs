@@ -1,9 +1,12 @@
-﻿//Stores activity details, role and workflow-bucket relationships, prompts, duration, priority, frequency, trigger context, and business outcome.
+//Stores activity details, role and workflow-bucket relationships, prompts, duration, priority, frequency, trigger context, and business outcome.
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
 using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Activity model.
+/// </summary>
 public sealed class Activity : AuditableEntity<int>
 {
     public string ExternalId { get; set; } = string.Empty;

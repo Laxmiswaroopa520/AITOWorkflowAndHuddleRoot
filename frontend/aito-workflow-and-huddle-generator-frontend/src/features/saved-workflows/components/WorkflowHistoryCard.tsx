@@ -3,6 +3,7 @@ import {
   Copy,
   Edit3,
   FolderOpen,
+  Layers3,
   Trash2,
 } from "lucide-react";
 
@@ -43,8 +44,11 @@ export function WorkflowHistoryCard({
   return (
     <article
       className="
+        flex
+        h-full
+        flex-col
         overflow-hidden
-        rounded-2xl
+        rounded-xl
         border
         border-border
         bg-card
@@ -54,7 +58,7 @@ export function WorkflowHistoryCard({
         hover:shadow-md
       "
     >
-      <div className="p-5">
+      <div className="flex-1 p-4 pb-3">
         <div
           className="
             flex
@@ -63,11 +67,16 @@ export function WorkflowHistoryCard({
             gap-4
           "
         >
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p
               className="
                 text-xs
                 font-semibold
+                inline-flex
+                rounded-md
+                bg-[#E8F2FF]
+                px-2
+                py-1
                 uppercase
                 tracking-wide
                 text-primary
@@ -82,8 +91,9 @@ export function WorkflowHistoryCard({
               className="
                 mt-1
                 truncate
-                text-lg
+                text-base
                 font-semibold
+                leading-5
               "
             >
               {workflow.name}
@@ -106,10 +116,10 @@ export function WorkflowHistoryCard({
         {workflow.description && (
           <p
             className="
-              mt-3
+              mt-2
               line-clamp-2
               text-sm
-              leading-6
+              leading-5
               text-muted-foreground
             "
           >
@@ -119,7 +129,7 @@ export function WorkflowHistoryCard({
 
         <div
           className="
-            mt-4
+            mt-3
             flex
             flex-wrap
             gap-2
@@ -127,13 +137,19 @@ export function WorkflowHistoryCard({
         >
           <span
             className="
+              inline-flex
+              items-center
+              gap-1.5
               rounded-full
-              bg-secondary
+              border
+              border-[#DDE7F0]
+              bg-[#F5F9FF]
               px-2.5
               py-1
               text-xs
             "
           >
+            <Layers3 className="h-3 w-3 text-[#0F6CBD]" />
             {
               workflow.activityCount
             }{" "}
@@ -146,7 +162,9 @@ export function WorkflowHistoryCard({
               items-center
               gap-1
               rounded-full
-              bg-secondary
+              border
+              border-[#DDE7F0]
+              bg-[#F5F9FF]
               px-2.5
               py-1
               text-xs
@@ -165,7 +183,10 @@ export function WorkflowHistoryCard({
 
         <p
           className="
-            mt-4
+            mt-3
+            border-t
+            border-border/60
+            pt-2.5
             text-xs
             text-muted-foreground
           "
@@ -180,21 +201,21 @@ export function WorkflowHistoryCard({
 
       <footer
         className="
-          grid
-          grid-cols-2
-          gap-2
+          flex
+          items-center
+          gap-1
           border-t
           border-border
-          bg-muted/20
-          p-3
-          sm:grid-cols-4
+          bg-[#FAFBFC]
+          px-3
+          py-2.5
         "
       >
         <Button
           type="button"
-          variant="ghost"
+          variant="default"
           size="sm"
-          className="gap-1.5"
+          className="mr-auto gap-1.5 bg-[#0F6CBD] px-3 text-white hover:bg-[#115EA3]"
           onClick={onOpen}
         >
           <FolderOpen
@@ -208,7 +229,7 @@ export function WorkflowHistoryCard({
           type="button"
           variant="ghost"
           size="sm"
-          className="gap-1.5"
+          className="gap-1 px-2"
           onClick={onEdit}
         >
           <Edit3
@@ -222,7 +243,7 @@ export function WorkflowHistoryCard({
           type="button"
           variant="ghost"
           size="sm"
-          className="gap-1.5"
+          className="gap-1 px-2"
           onClick={onSaveAs}
         >
           <Copy
@@ -237,7 +258,8 @@ export function WorkflowHistoryCard({
           variant="ghost"
           size="sm"
           className="
-            gap-1.5
+            gap-1
+            px-2
             text-destructive
             hover:text-destructive
           "

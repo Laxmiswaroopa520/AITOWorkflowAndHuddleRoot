@@ -9,32 +9,38 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Commands.SaveHuddlePlan;
 
+/// <summary>
+/// Handles the Save Huddle Plan command.
+/// </summary>
 public sealed class SaveHuddlePlanCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUserService currentUserService)
     : IRequestHandler<SaveHuddlePlanCommand, HuddlePlanResponse>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task<HuddlePlanResponse> Handle(SaveHuddlePlanCommand request, CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
         string roleExternalId = request.RoleExternalId.Trim();
 
         HuddleSegmentRole segmentRole = await dbContext.HuddleSegmentRoles
             .Include(item => item.Role)
             .SingleOrDefaultAsync(item => item.Role.ExternalId == roleExternalId && item.Role.IsActive, cancellationToken)
-            ?? throw new NotFoundException($"Active role '{roleExternalId}' was not found.");
+            ?? throw new NotFoundException(HuddleMessages.ActiveRoleNotFound(roleExternalId));
 
         List<HuddleTopic> recommended = await LoadRecommendedTopics(segmentRole.Id, cancellationToken);
         if (recommended.Count != 7)
-            throw new ConflictException($"Role '{roleExternalId}' does not have exactly seven unique published recommended Huddles.");
+            throw new ConflictException(HuddleMessages.RecommendedPathIncomplete(roleExternalId));
 
         string[] requestedTopicIds = request.Items.Select(item => item.HuddleExternalId.Trim()).ToArray();
         List<HuddleTopic> selectedTopics = await dbContext.HuddleTopics
             .Where(topic => requestedTopicIds.Contains(topic.ExternalId) && topic.PublicationStatus == "Published")
             .ToListAsync(cancellationToken);
         if (selectedTopics.Count != 7)
-            throw new NotFoundException("One or more selected Huddles are unavailable or unpublished.");
+            throw new NotFoundException(HuddleMessages.SelectedHuddlesUnavailable);
 
         UserHuddlePlan? plan = await dbContext.UserHuddlePlans
             .Include(item => item.Items)
@@ -43,7 +49,7 @@ public sealed class SaveHuddlePlanCommandHandler(
         if (plan is null)
         {
             if (!string.IsNullOrWhiteSpace(request.RowVersion))
-                throw new ConflictException("The Huddle plan no longer exists. Refresh and try again.");
+                throw new ConflictException(HuddleMessages.PlanNoLongerExists);
             plan = new UserHuddlePlan
             {
                 Id = Guid.NewGuid(),
@@ -57,7 +63,7 @@ public sealed class SaveHuddlePlanCommandHandler(
         else
         {
             if (string.IsNullOrWhiteSpace(request.RowVersion))
-                throw new ConflictException("The Huddle plan changed. Refresh and try again.");
+                throw new ConflictException(HuddleMessages.PlanChanged);
             dbContext.UserHuddlePlans.Entry(plan).Property(item => item.RowVersion).OriginalValue =
                 Convert.FromBase64String(request.RowVersion);
             dbContext.UserHuddlePlanItems.RemoveRange(plan.Items);
@@ -78,11 +84,11 @@ public sealed class SaveHuddlePlanCommandHandler(
         }
         catch (DbUpdateConcurrencyException)
         {
-            throw new ConflictException("This Huddle plan was changed by another request. Refresh and try again.");
+            throw new ConflictException(HuddleMessages.PlanChangedByAnotherRequest);
         }
         catch (DbUpdateException)
         {
-            throw new ConflictException("A Huddle plan already exists for this user and role. Refresh and try again.");
+            throw new ConflictException(HuddleMessages.PlanAlreadyExists);
         }
 
         UserHuddlePlan savedPlan = await dbContext.UserHuddlePlans.AsNoTracking()

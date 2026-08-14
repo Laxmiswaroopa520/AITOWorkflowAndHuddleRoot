@@ -1,8 +1,11 @@
-﻿//Stores AI tool details such as name, description, color, icon key, sort order, and active status.
+//Stores AI tool details such as name, description, color, icon key, sort order, and active status.
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Ai Tool model.
+/// </summary>
 public sealed class AiTool : AuditableEntity<int>
 {
     public string ExternalId { get; set; } = string.Empty;

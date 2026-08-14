@@ -1,4 +1,4 @@
-﻿//Runs FluentValidation validators before MediatR handlers.
+//Runs FluentValidation validators before MediatR handlers.
 using FluentValidation;
 using MediatR;
 
@@ -7,25 +7,32 @@ namespace AitoWorkflowAndHuddleGenerator
     .Common
     .Behaviors;
 
+/// <summary>
+/// Represents the Validation Behavior model.
+/// </summary>
 public sealed class ValidationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     private readonly IEnumerable<IValidator<TRequest>>
-        _validators;
+        validators;
 
     public ValidationBehavior(
         IEnumerable<IValidator<TRequest>> validators)
     {
-        _validators = validators;
+        this.validators = validators;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        if (!_validators.Any())
+        if (!validators.Any())
         {
             return await next();
         }
@@ -36,7 +43,7 @@ public sealed class ValidationBehavior<TRequest, TResponse>
         FluentValidation.Results.ValidationResult[]
             validationResults =
                 await Task.WhenAll(
-                    _validators.Select(
+                    validators.Select(
                         validator =>
                             validator.ValidateAsync(
                                 context,

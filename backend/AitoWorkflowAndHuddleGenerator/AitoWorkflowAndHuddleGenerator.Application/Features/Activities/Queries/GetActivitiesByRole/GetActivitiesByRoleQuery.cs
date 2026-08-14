@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator.Contracts.Activities;
+using AitoWorkflowAndHuddleGenerator.Contracts.Activities;
 using MediatR;
 
 namespace AitoWorkflowAndHuddleGenerator
@@ -8,6 +8,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetActivitiesByRole;
 
+/// <summary>
+/// Represents the Get Activities By Role Query query.
+/// </summary>
 public sealed record GetActivitiesByRoleQuery(
     string RoleExternalId)
     : IRequest<IReadOnlyList<ActivityResponse>>;

@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator.Domain.Enums;
+using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 using FluentValidation;
 
 namespace AitoWorkflowAndHuddleGenerator
@@ -8,6 +8,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetActivities;
 
+/// <summary>
+/// Validates Get Activities Query requests.
+/// </summary>
 public sealed class GetActivitiesQueryValidator
     : AbstractValidator<GetActivitiesQuery>
 {
@@ -31,7 +34,7 @@ public sealed class GetActivitiesQueryValidator
                 !string.IsNullOrWhiteSpace(
                     query.Category))
             .WithMessage(
-                "Category contains an unsupported value.");
+                ActivityValidationMessages.UnsupportedCategory);
 
         RuleFor(query => query.Frequency)
             .Must(BeValidEnum<ActivityFrequency>)
@@ -39,7 +42,7 @@ public sealed class GetActivitiesQueryValidator
                 !string.IsNullOrWhiteSpace(
                     query.Frequency))
             .WithMessage(
-                "Frequency contains an unsupported value.");
+                ActivityValidationMessages.UnsupportedFrequency);
 
         RuleFor(query => query.Priority)
             .Must(BeValidEnum<ActivityPriority>)
@@ -47,7 +50,7 @@ public sealed class GetActivitiesQueryValidator
                 !string.IsNullOrWhiteSpace(
                     query.Priority))
             .WithMessage(
-                "Priority contains an unsupported value.");
+                ActivityValidationMessages.UnsupportedPriority);
 
         RuleFor(query => query.ToolCoverageLevel)
             .Must(BeValidEnum<ToolCoverageLevel>)
@@ -55,7 +58,7 @@ public sealed class GetActivitiesQueryValidator
                 !string.IsNullOrWhiteSpace(
                     query.ToolCoverageLevel))
             .WithMessage(
-                "ToolCoverageLevel contains an unsupported value.");
+                ActivityValidationMessages.UnsupportedToolCoverageLevel);
 
         RuleFor(query => query.TriggerContext)
             .Must(BeValidEnum<TriggerContext>)
@@ -63,7 +66,7 @@ public sealed class GetActivitiesQueryValidator
                 !string.IsNullOrWhiteSpace(
                     query.TriggerContext))
             .WithMessage(
-                "TriggerContext contains an unsupported value.");
+                ActivityValidationMessages.UnsupportedTriggerContext);
 
         RuleFor(query => query.McemStage)
             .Must(BeValidEnum<McemStage>)
@@ -71,7 +74,7 @@ public sealed class GetActivitiesQueryValidator
                 !string.IsNullOrWhiteSpace(
                     query.McemStage))
             .WithMessage(
-                "McemStage contains an unsupported value.");
+                ActivityValidationMessages.UnsupportedMcemStage);
     }
 
     private static bool BeValidEnum<TEnum>(

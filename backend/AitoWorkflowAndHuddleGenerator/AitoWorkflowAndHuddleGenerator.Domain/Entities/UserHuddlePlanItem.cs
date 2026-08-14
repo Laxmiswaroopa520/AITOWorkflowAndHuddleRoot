@@ -1,5 +1,8 @@
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the User Huddle Plan Item model.
+/// </summary>
 public sealed class UserHuddlePlanItem
 {
     public Guid UserHuddlePlanId { get; set; }

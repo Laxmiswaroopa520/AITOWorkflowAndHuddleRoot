@@ -1,4 +1,4 @@
-﻿/*Think of ApplicationDbContext as the gateway between your application and the database.*/
+/*Think of ApplicationDbContext as the gateway between your application and the database.*/
 //Represents the EF Core database context and exposes all application tables through DbSet properties.
 using AitoWorkflowAndHuddleGenerator
     .Application
@@ -11,6 +11,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Infrastructure
     .Persistence;
 
+/// <summary>
+/// Represents the Application Db Context model.
+/// </summary>
 public sealed class ApplicationDbContext
     : DbContext,
       IApplicationDbContext

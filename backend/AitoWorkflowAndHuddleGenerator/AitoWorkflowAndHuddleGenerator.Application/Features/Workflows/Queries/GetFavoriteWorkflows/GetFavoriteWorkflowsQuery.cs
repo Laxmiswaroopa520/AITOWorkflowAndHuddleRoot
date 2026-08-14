@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Contracts
     .Workflows;
 using MediatR;
@@ -10,6 +10,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetFavoriteWorkflows;
 
+/// <summary>
+/// Represents the Get Favorite Workflows Query query.
+/// </summary>
 public sealed record
     GetFavoriteWorkflowsQuery
     : IRequest<

@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace AitoWorkflowAndHuddleGenerator
     .Application
@@ -7,6 +7,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .SaveWorkflow;
 
+/// <summary>
+/// Validates Save Workflow Command requests.
+/// </summary>
 public sealed class
     SaveWorkflowCommandValidator
     : AbstractValidator<
@@ -45,7 +48,7 @@ public sealed class
                             .OrdinalIgnoreCase)
                     .Any())
             .WithMessage(
-                "At least one activity must be selected.");
+                WorkflowMessages.ActivityRequired);
 
         RuleForEach(
                 command =>

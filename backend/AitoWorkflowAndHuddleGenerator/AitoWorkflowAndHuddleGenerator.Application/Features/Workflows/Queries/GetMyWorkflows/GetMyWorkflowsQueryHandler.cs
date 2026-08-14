@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -27,6 +27,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetMyWorkflows;
 
+/// <summary>
+/// Handles the Get My Workflows query.
+/// </summary>
 public sealed class
     GetMyWorkflowsQueryHandler
     : IRequestHandler<
@@ -35,20 +38,19 @@ public sealed class
             WorkflowSummaryResponse>>
 {
     private readonly
-        IApplicationDbContext _dbContext;
+        IApplicationDbContext dbContext;
 
     private readonly
         ICurrentUserService
-            _currentUserService;
+            currentUserService;
 
     public GetMyWorkflowsQueryHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService
             currentUserService)
     {
-        _dbContext = dbContext;
-        _currentUserService =
-            currentUserService;
+        this.dbContext = dbContext;
+        this.currentUserService = currentUserService;
     }
 
     public async Task<
@@ -60,13 +62,13 @@ public sealed class
                 cancellationToken)
     {
         string ownerObjectId =
-            _currentUserService
+            currentUserService
                 .ObjectId
             ?? throw new UnauthorizedAccessException(
-                "The authenticated token does not contain an oid claim.");
+                AuthenticationMessages.MissingObjectIdClaim);
 
         IQueryable<UserWorkflow> query =
-            _dbContext
+            dbContext
                 .UserWorkflows
                 .AsNoTracking()
                 .Where(workflow =>

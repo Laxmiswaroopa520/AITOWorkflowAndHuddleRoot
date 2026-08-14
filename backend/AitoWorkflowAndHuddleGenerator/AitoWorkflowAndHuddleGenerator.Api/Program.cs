@@ -64,6 +64,9 @@ app.MapControllers();
 app.Run();
 
 // Required for WebApplicationFactory integration tests.
+/// <summary>
+/// Represents the Program model.
+/// </summary>
 public partial class Program;
 
 

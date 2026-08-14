@@ -8,9 +8,15 @@ using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 //Its main job is to convert your Domain entities into Response DTO's..that are safe and convenient to send from your API to your React frontend:
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Common;
 
+/// <summary>
+/// Maps Huddle domain models to API contracts.
+/// </summary>
 internal static class HuddleMappings                //static class means no need to create an object for this
                                                     //internal means the class is intended to be used only within this assembly/project.
 {
+    /// <summary>
+    /// Maps a Huddle topic to the compact catalog-card response.
+    /// </summary>
     public static HuddleCatalogItemResponse ToCatalogItem(HuddleTopic topic)            //Small summary card information
     {
         return new HuddleCatalogItemResponse(
@@ -29,6 +35,9 @@ internal static class HuddleMappings                //static class means no need
             topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Secondary).OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList());
     }
 
+    /// <summary>
+    /// Maps a Huddle topic and governed agent resources to the complete detail response.
+    /// </summary>
     public static HuddleDetailResponse ToDetail(
         HuddleTopic topic,
         IReadOnlyDictionary<int, IReadOnlyList<HuddleResourceResponse>> agentResources)                         //Complete Huddle Information for the Huddle Detail Page..
@@ -109,6 +118,9 @@ internal static class HuddleMappings                //static class means no need
     private static HuddleResourceResponse ToResource(HuddleActivityResource mapping) =>
         ToResource(mapping.HuddleResource, mapping.DisplayOrder);
 
+    /// <summary>
+    /// Maps a Huddle resource and its display order to an API resource response.
+    /// </summary>
     public static HuddleResourceResponse ToResource(HuddleResource resource, int displayOrder) =>
         new(resource.ExternalId, resource.Title, resource.Description, resource.Url,
             resource.Type, resource.LinkLabel, displayOrder);

@@ -1,6 +1,9 @@
-﻿//Junction entity that connects activities with one or more AI tools and identifies primary and secondary tools.
+//Junction entity that connects activities with one or more AI tools and identifies primary and secondary tools.
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Activity Ai Tool model.
+/// </summary>
 public sealed class ActivityAiTool
 {
     public int ActivityId { get; set; }

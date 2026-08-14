@@ -2,6 +2,9 @@ using AitoWorkflowAndHuddleGenerator.Domain.Common;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the User Huddle Plan model.
+/// </summary>
 public sealed class UserHuddlePlan : AuditableEntity<Guid>
 {
     public string OwnerObjectId { get; set; } = string.Empty;

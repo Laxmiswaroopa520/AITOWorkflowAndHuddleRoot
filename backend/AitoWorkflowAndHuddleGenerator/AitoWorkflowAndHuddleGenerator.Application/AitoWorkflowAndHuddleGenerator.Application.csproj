@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.2.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="MediatR" Version="14.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.18" />
@@ -16,12 +15,6 @@
   <ItemGroup>
     <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Contracts\AitoWorkflowAndHuddleGenerator.Contracts.csproj" />
     <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Domain\AitoWorkflowAndHuddleGenerator.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Abstractions\Services\" />
-    <Folder Include="Behaviors\" />
-    <Folder Include="Mappings\" />
   </ItemGroup>
 
 </Project>

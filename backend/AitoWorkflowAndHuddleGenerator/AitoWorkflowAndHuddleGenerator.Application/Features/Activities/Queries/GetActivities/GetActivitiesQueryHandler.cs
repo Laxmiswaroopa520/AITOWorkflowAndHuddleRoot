@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Persistence;
@@ -20,17 +20,20 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetActivities;
 
+/// <summary>
+/// Handles the Get Activities query.
+/// </summary>
 public sealed class GetActivitiesQueryHandler
     : IRequestHandler<
         GetActivitiesQuery,
         IReadOnlyList<ActivityResponse>>
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext dbContext;
 
     public GetActivitiesQueryHandler(
         IApplicationDbContext dbContext)
     {
-        _dbContext = dbContext;
+        this.dbContext = dbContext;
     }
 
     public async Task<
@@ -39,7 +42,7 @@ public sealed class GetActivitiesQueryHandler
             CancellationToken cancellationToken)
     {
         IQueryable<Activity> query =
-            _dbContext.Activities
+            dbContext.Activities
                 .AsNoTracking();
 
         if (!request.IncludeInactive)

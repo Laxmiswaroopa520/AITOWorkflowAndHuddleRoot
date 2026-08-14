@@ -1,6 +1,9 @@
-﻿//Defines valid activity frequencies such as Daily, Weekly, Monthly, Quarterly, and AsNeeded.
+//Defines valid activity frequencies such as Daily, Weekly, Monthly, Quarterly, and AsNeeded.
 namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
+/// <summary>
+/// Defines the supported Activity Frequency values.
+/// </summary>
 public enum ActivityFrequency
 {
     Unspecified = 0,

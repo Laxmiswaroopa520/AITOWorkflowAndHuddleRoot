@@ -34,6 +34,10 @@ import {
   defaultWorkflowFilters,
 } from "../types/workflowBuilder.types";
 
+import type {
+  WorkflowStep,
+} from "../types/workflowBuilder.types";
+
 export type RestoreWorkflowMode =
   | "open"
   | "edit"
@@ -263,6 +267,21 @@ export function useWorkflowSelection() {
     );
   };
 
+  const goToStep = (
+    step: WorkflowStep,
+  ): boolean => {
+    if (step === "discover") {
+      setCurrentStep("discover");
+      return true;
+    }
+
+    if (step === "customize") {
+      return goToActivities();
+    }
+
+    return goToSummary();
+  };
+
   const swapActivities = (
     firstActivityId: number,
     secondActivityId: number,
@@ -442,6 +461,7 @@ export function useWorkflowSelection() {
 
     goToActivities,
     goToSummary,
+    goToStep,
     goBack,
     restartWorkflow,
   };

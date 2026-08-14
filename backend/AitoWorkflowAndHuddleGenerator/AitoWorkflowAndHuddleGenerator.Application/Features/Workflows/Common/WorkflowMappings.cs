@@ -10,9 +10,18 @@ namespace AitoWorkflowAndHuddleGenerator
     .Features
     .Workflows
     .Common;
-
+/// <summary>
+/// It's job is to convert you entit into response objects that are safe and convenient to send back to the frontend.
+/// </summary>
 internal static class WorkflowMappings
 {
+
+    /// <summary>
+    /// this takes one userworkflow entity and converts it into a summary response object that is safe to send back to the frontend.
+    /// </summary>
+    /// <param name="workflow"></param>
+    /// <returns></returns>
+
     public static WorkflowSummaryResponse
         ToSummary(
             UserWorkflow workflow)
@@ -46,6 +55,7 @@ internal static class WorkflowMappings
                     workflow.RowVersion));
     }
 
+    //this creates the full workflow response
     public static WorkflowResponse
         ToResponse(
             UserWorkflow workflow)

@@ -9,17 +9,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Sessions.Queries.GetMyHuddleSession;
 
+/// <summary>
+/// Handles the Get My Huddle Session query.
+/// </summary>
 public sealed class GetMyHuddleSessionQueryHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService)
     : IRequestHandler<GetMyHuddleSessionQuery, HuddleSessionResponse?>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task<HuddleSessionResponse?> Handle(GetMyHuddleSessionQuery request, CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
         string externalId = request.HuddleExternalId.Trim();
         HuddleTopic topic = await dbContext.HuddleTopics.AsNoTracking()
             .SingleOrDefaultAsync(item => item.ExternalId == externalId && item.PublicationStatus == "Published", cancellationToken)
-            ?? throw new NotFoundException($"Published Huddle '{externalId}' was not found.");
+            ?? throw new NotFoundException(HuddleMessages.PublishedNotFound(externalId));
         UserHuddleSession? session = await dbContext.UserHuddleSessions.AsNoTracking()
             .Include(item => item.HuddleTopic)
             .Include(item => item.CurrentHuddlePhase)

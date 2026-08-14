@@ -1,5 +1,8 @@
-﻿//Defines valid activity categories such as Admin, Engagement, Execution, Insight, and Planning.
+//Defines valid activity categories such as Admin, Engagement, Execution, Insight, and Planning.
 namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
+/// <summary>
+/// Defines the supported Activity Category values.
+/// </summary>
 public enum ActivityCategory
 {
     Unspecified = 0,

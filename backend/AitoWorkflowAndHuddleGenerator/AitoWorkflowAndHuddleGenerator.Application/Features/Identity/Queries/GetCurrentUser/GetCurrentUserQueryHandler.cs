@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -12,41 +12,49 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetCurrentUser;
 
+/// <summary>
+/// Handles the Get Current User query.
+/// </summary>
 public sealed class GetCurrentUserQueryHandler
     : IRequestHandler<
         GetCurrentUserQuery,
         CurrentUserResponse>
 {
-    private readonly ICurrentUserService _currentUserService;
+    private readonly ICurrentUserService currentUserService;
 
     public GetCurrentUserQueryHandler(
         ICurrentUserService currentUserService)
     {
-        _currentUserService = currentUserService;
+        this.currentUserService = currentUserService;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public Task<CurrentUserResponse> Handle(
         GetCurrentUserQuery request,
         CancellationToken cancellationToken)
     {
-        if (!_currentUserService.IsAuthenticated)
+        //checks whether the user is authenticated.if not throws an unauthorized exception.
+        if (!currentUserService.IsAuthenticated)
         {
             throw new UnauthorizedAccessException(
-                "The current request is not authenticated.");
+                AuthenticationMessages.RequestNotAuthenticated);
         }
-
+        //gets the user's entra id
         string objectId =
-            _currentUserService.ObjectId
+            currentUserService.ObjectId
             ?? throw new UnauthorizedAccessException(
-                "The authenticated token does not contain an oid claim.");
+                AuthenticationMessages.MissingObjectIdClaim);
 
         var response = new CurrentUserResponse(
             ObjectId: objectId,
-            Email: _currentUserService.Email,
-            DisplayName: _currentUserService.DisplayName,
-            Roles: _currentUserService.Roles,
+            Email: currentUserService.Email,
+            DisplayName: currentUserService.DisplayName,
+            Roles: currentUserService.Roles,
             IsAuthenticated:
-                _currentUserService.IsAuthenticated);
+                currentUserService.IsAuthenticated);
 
         return Task.FromResult(response);
     }

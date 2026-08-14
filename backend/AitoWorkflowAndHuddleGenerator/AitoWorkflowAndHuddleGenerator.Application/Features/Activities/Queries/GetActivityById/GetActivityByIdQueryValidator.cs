@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace AitoWorkflowAndHuddleGenerator
     .Application
@@ -7,6 +7,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetActivityById;
 
+/// <summary>
+/// Validates Get Activity By Id Query requests.
+/// </summary>
 public sealed class GetActivityByIdQueryValidator
     : AbstractValidator<GetActivityByIdQuery>
 {

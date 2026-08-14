@@ -25,6 +25,7 @@ SELECT N'InvalidActivityDuration' Issue,a.ExternalId FROM dbo.HuddleActivities a
 SELECT N'InvalidVoteValue' Issue,CONVERT(nvarchar(36),v.Id) ExternalId FROM dbo.HuddleVotes v WHERE v.Value NOT IN(-1,1);
 SELECT N'DuplicatePhaseOrder' Issue,t.ExternalId,p.DisplayOrder,COUNT(*) DuplicateCount FROM dbo.HuddlePhases p JOIN dbo.HuddleTopics t ON t.Id=p.HuddleTopicId GROUP BY t.ExternalId,p.DisplayOrder HAVING COUNT(*)>1;
 SELECT N'DuplicateActivityOrder' Issue,p.ExternalId,a.DisplayOrder,COUNT(*) DuplicateCount FROM dbo.HuddleActivities a JOIN dbo.HuddlePhases p ON p.Id=a.HuddlePhaseId GROUP BY p.ExternalId,a.DisplayOrder HAVING COUNT(*)>1;
+SELECT N'ActivityOutsideExploreAndPractice' Issue,a.ExternalId,p.ExternalId PhaseExternalId,p.Name PhaseName FROM dbo.HuddleActivities a JOIN dbo.HuddlePhases p ON p.Id=a.HuddlePhaseId WHERE p.Name<>N'Explore and Practice';
 SELECT N'DuplicatePathWeek' Issue,sr.ExternalId,x.WeekPosition,COUNT(*) DuplicateCount FROM dbo.HuddleRolePathItems x JOIN dbo.HuddleSegmentRoles sr ON sr.Id=x.HuddleSegmentRoleId GROUP BY sr.ExternalId,x.WeekPosition HAVING COUNT(*)>1;
 SELECT N'UnpublishedOrIncomplete' Issue,t.ExternalId,t.PublicationStatus FROM dbo.HuddleTopics t WHERE t.PublicationStatus<>N'Published' OR t.TodayObjective IS NULL OR t.DesiredOutcome IS NULL;
 SELECT N'TemporaryZipContent' Classification,t.ExternalId,N'Client semantic fields intentionally remain NULL; replace by ExternalId when approved workbook content arrives.' Notes FROM dbo.HuddleTopics t WHERE t.PublicationStatus=N'WorkingDraft';

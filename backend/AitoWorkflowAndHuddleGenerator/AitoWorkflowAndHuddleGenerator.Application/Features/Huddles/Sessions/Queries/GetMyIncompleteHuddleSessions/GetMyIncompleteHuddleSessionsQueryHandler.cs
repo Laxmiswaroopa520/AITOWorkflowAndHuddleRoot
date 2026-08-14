@@ -9,13 +9,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Sessions.Queries.GetMyIncompleteHuddleSessions;
 
+/// <summary>
+/// Handles the Get My Incomplete Huddle Sessions query.
+/// </summary>
 public sealed class GetMyIncompleteHuddleSessionsQueryHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService)
     : IRequestHandler<GetMyIncompleteHuddleSessionsQuery, IReadOnlyList<IncompleteHuddleSessionResponse>>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task<IReadOnlyList<IncompleteHuddleSessionResponse>> Handle(GetMyIncompleteHuddleSessionsQuery request, CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
         List<UserHuddleSession> sessions = await dbContext.UserHuddleSessions.AsNoTracking()
             .Where(item => item.OwnerObjectId == ownerObjectId
                 && item.SessionStatus == HuddleSessionStatus.InProgress

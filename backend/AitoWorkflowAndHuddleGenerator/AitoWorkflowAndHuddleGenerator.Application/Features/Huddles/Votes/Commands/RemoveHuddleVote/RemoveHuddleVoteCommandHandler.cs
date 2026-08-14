@@ -6,14 +6,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Votes.Commands.RemoveHuddleVote;
 
+/// <summary>
+/// Handles the Remove Huddle Vote command.
+/// </summary>
 public sealed class RemoveHuddleVoteCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUserService currentUserService) : IRequestHandler<RemoveHuddleVoteCommand>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task Handle(RemoveHuddleVoteCommand request, CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
         HuddleVote? vote = await dbContext.HuddleVotes.SingleOrDefaultAsync(
             item => item.OwnerObjectId == ownerObjectId && item.HuddleTopic.ExternalId == request.HuddleExternalId,
             cancellationToken);

@@ -1,5 +1,8 @@
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Huddle Agent Resource model.
+/// </summary>
 public sealed class HuddleAgentResource
 {
     public int HuddleAgentId { get; set; }

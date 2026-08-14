@@ -1,6 +1,6 @@
 import { InteractionStatus } from "@azure/msal-browser";
 import { useMsal } from "@azure/msal-react";
-import { FolderOpen, HeartPulse, LogOut, Menu, Users, Workflow } from "lucide-react";
+import { FolderOpen, LogOut, Menu, Users, Workflow } from "lucide-react";
 import { NavLink } from "react-router";
 import { useState } from "react";
 import { useCurrentUser } from "@/auth/useCurrentUser";
@@ -12,7 +12,6 @@ const navigationItems = [
   { label: "Workflow", path: "/workflow", icon: Workflow },
   { label: "My Workflows", path: "/workflows", icon: FolderOpen },
   { label: "Huddle", path: "/huddle", icon: Users },
-  { label: "API Diagnostics", path: "/diagnostics", icon: HeartPulse },
 ];
 
 export function Header() {
@@ -27,7 +26,7 @@ export function Header() {
 
   return <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur-xl">
     <div className="mx-auto flex h-16 max-w-[1920px] items-center justify-between px-4 lg:px-6">
-      <NavLink to="/workflow" className="flex items-center gap-2.5 text-foreground no-underline">
+      <NavLink to="/" className="flex items-center gap-2.5 text-foreground no-underline">
         <img src={aitoLogo} alt="AITO" className="h-11 w-11 object-contain" />
         <span className="hidden leading-none sm:flex sm:flex-col"><strong className="text-lg tracking-tight">AITO</strong><span className="mt-1 whitespace-nowrap text-[10px] font-medium tracking-wide text-muted-foreground">Workflow &amp; Huddle Generator</span></span>
       </NavLink>

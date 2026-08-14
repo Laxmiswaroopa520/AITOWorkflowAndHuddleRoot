@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator.Contracts.Identity;
+using AitoWorkflowAndHuddleGenerator.Contracts.Identity;
 using MediatR;
 
 namespace AitoWorkflowAndHuddleGenerator
@@ -8,5 +8,8 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetCurrentUser;
 
+/// <summary>
+/// Represents the Get Current User Query query.
+/// </summary>
 public sealed record GetCurrentUserQuery
     : IRequest<CurrentUserResponse>;

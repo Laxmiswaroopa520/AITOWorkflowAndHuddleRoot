@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Persistence;
@@ -15,17 +15,20 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetWorkflowBuckets;
 
+/// <summary>
+/// Handles the Get Workflow Buckets query.
+/// </summary>
 public sealed class GetWorkflowBucketsQueryHandler
     : IRequestHandler<
         GetWorkflowBucketsQuery,
         IReadOnlyList<WorkflowBucketResponse>>
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext dbContext;
 
     public GetWorkflowBucketsQueryHandler(
         IApplicationDbContext dbContext)
     {
-        _dbContext = dbContext;
+        this.dbContext = dbContext;
     }
 
     public async Task<
@@ -34,7 +37,7 @@ public sealed class GetWorkflowBucketsQueryHandler
             CancellationToken cancellationToken)
     {
         IQueryable<Domain.Entities.WorkflowBucket> query =
-            _dbContext.WorkflowBuckets.AsNoTracking();
+            dbContext.WorkflowBuckets.AsNoTracking();
 
         if (!request.IncludeInactive)
         {

@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -31,6 +31,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .ToggleFavorite;
 
+/// <summary>
+/// Handles the Toggle Favorite command.
+/// </summary>
 public sealed class
     ToggleFavoriteCommandHandler
     : IRequestHandler<
@@ -38,20 +41,19 @@ public sealed class
         WorkflowSummaryResponse>
 {
     private readonly
-        IApplicationDbContext _dbContext;
+        IApplicationDbContext dbContext;
 
     private readonly
         ICurrentUserService
-            _currentUserService;
+            currentUserService;
 
     public ToggleFavoriteCommandHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService
             currentUserService)
     {
-        _dbContext = dbContext;
-        _currentUserService =
-            currentUserService;
+        this.dbContext = dbContext;
+        this.currentUserService = currentUserService;
     }
 
     public async Task<
@@ -62,12 +64,12 @@ public sealed class
                 cancellationToken)
     {
         string ownerObjectId =
-            _currentUserService.ObjectId
+            currentUserService.ObjectId
             ?? throw new UnauthorizedAccessException(
-                "The authenticated token does not contain an oid claim.");
+                AuthenticationMessages.MissingObjectIdClaim);
 
         UserWorkflow workflow =
-            await _dbContext
+            await dbContext
                 .UserWorkflows
                 .Include(
                     workflow =>
@@ -86,9 +88,9 @@ public sealed class
                             ownerObjectId,
                     cancellationToken)
             ?? throw new NotFoundException(
-                "The workflow was not found.");
+                WorkflowMessages.NotFound);
 
-        _dbContext
+        dbContext
             .UserWorkflows
             .Entry(workflow)
             .Property(
@@ -103,7 +105,7 @@ public sealed class
 
         try
         {
-            await _dbContext
+            await dbContext
                 .SaveChangesAsync(
                     cancellationToken);
         }
@@ -111,7 +113,7 @@ public sealed class
             DbUpdateConcurrencyException)
         {
             throw new ConflictException(
-                "This workflow was changed by another request. Refresh and try again.");
+                WorkflowMessages.ChangedByAnotherRequest);
         }
 
         return WorkflowMappings

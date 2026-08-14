@@ -8,9 +8,15 @@ using AitoWorkflowAndHuddleGenerator.Contracts.Huddles.Coaching;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
+/*1. Get available coaches
+2. Check coach + current user's calendar availability
+3. Book a Teams meeting with the coach*/
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Coaching;
 
+/// <summary>
+/// Provides Graph Coach Scheduling operations.
+/// </summary>
 public sealed class GraphCoachSchedulingService(
     IHttpClientFactory httpClientFactory,
     ITokenAcquisition tokenAcquisition,
@@ -19,12 +25,16 @@ public sealed class GraphCoachSchedulingService(
 {
     public const string HttpClientName = "CoachMicrosoftGraph";
     private const int AvailabilityIntervalMinutes = 15;
-    private readonly CoachSchedulingOptions _options = options.Value;
+    private readonly CoachSchedulingOptions options = options.Value;
+
+    /// <summary>
+    /// Gets Coaches Async.
+    /// </summary>
 
     public Task<IReadOnlyList<CoachResponse>> GetCoachesAsync(string? huddleExternalId, CancellationToken cancellationToken)
     {
         EnsureDirectoryConfigured();
-        IReadOnlyList<CoachResponse> coaches = _options.Coaches
+        IReadOnlyList<CoachResponse> coaches = options.Coaches
             .Where(x => x.Active && (string.IsNullOrWhiteSpace(huddleExternalId) || x.SupportedHuddleExternalIds.Length == 0 || x.SupportedHuddleExternalIds.Contains(huddleExternalId, StringComparer.OrdinalIgnoreCase)))
             .OrderBy(x => x.DisplayName)
             .Select(ToResponse)
@@ -32,15 +42,23 @@ public sealed class GraphCoachSchedulingService(
         return Task.FromResult(coaches);
     }
 
+    /// <summary>
+    /// Gets Availability Async.
+    /// </summary>
+
     public async Task<CoachAvailabilityResponse> GetAvailabilityAsync(string coachExternalId, DateTime startUtc, DateTime endUtc, int durationMinutes, CancellationToken cancellationToken)
     {
         CoachOptions coach = FindCoach(coachExternalId);
         ValidateWindow(startUtc, endUtc, durationMinutes);
-        string userEmail = currentUser.Email ?? throw new UnauthorizedAccessException("The authenticated token does not contain an email claim.");
+        string userEmail = currentUser.Email ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingEmailClaim);
         IReadOnlyDictionary<string, string> views = await GetScheduleViewsAsync([userEmail, coach.Email], startUtc, endUtc, cancellationToken);
         List<CoachAvailabilitySlotResponse> slots = CreateMutuallyAvailableSlots(coach, views, startUtc, endUtc, durationMinutes);
         return new CoachAvailabilityResponse(coach.ExternalId, coach.TimeZone, slots);
     }
+
+    /// <summary>
+    /// Books Async.
+    /// </summary>
 
     public async Task<CoachBookingResponse> BookAsync(string coachExternalId, string huddleExternalId, string huddleName, DateTime startUtc, DateTime endUtc, string displayTimeZone, string? question, Guid bookingRequestId, CancellationToken cancellationToken)
     {
@@ -48,7 +66,7 @@ public sealed class GraphCoachSchedulingService(
         int duration = checked((int)(endUtc - startUtc).TotalMinutes);
         CoachAvailabilityResponse availability = await GetAvailabilityAsync(coachExternalId, startUtc, endUtc, duration, cancellationToken);
         if (!availability.Slots.Any(x => x.StartUtc == EnsureUtc(startUtc) && x.EndUtc == EnsureUtc(endUtc)))
-            throw new ConflictException("The selected time is no longer available. Refresh availability and choose another time.");
+            throw new ConflictException(CoachingMessages.TimeNoLongerAvailable);
 
         string accessToken = await GetGraphAccessTokenAsync();
         using HttpClient client = CreateClient(accessToken);
@@ -119,8 +137,8 @@ public sealed class GraphCoachSchedulingService(
 
     private async Task<string> GetGraphAccessTokenAsync()
     {
-        try { return await tokenAcquisition.GetAccessTokenForUserAsync(_options.GraphScopes); }
-        catch (Exception) { throw new ExternalServiceUnavailableException("Microsoft Graph authorization is not configured for Coach scheduling."); }
+        try { return await tokenAcquisition.GetAccessTokenForUserAsync(options.GraphScopes); }
+        catch (Exception) { throw new ExternalServiceUnavailableException(MicrosoftGraphMessages.CoachAuthorizationNotConfigured); }
     }
 
     private HttpClient CreateClient(string accessToken)
@@ -134,40 +152,40 @@ public sealed class GraphCoachSchedulingService(
     {
         string content = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
-            throw new ExternalServiceUnavailableException($"Microsoft Graph calendar request failed with status {(int)response.StatusCode}.");
+            throw new ExternalServiceUnavailableException(MicrosoftGraphMessages.CalendarRequestFailed((int)response.StatusCode));
         return content;
     }
 
     private CoachOptions FindCoach(string externalId)
     {
         EnsureDirectoryConfigured();
-        return _options.Coaches.SingleOrDefault(x => x.Active && x.ExternalId.Equals(externalId, StringComparison.OrdinalIgnoreCase))
-            ?? throw new NotFoundException($"Coach '{externalId}' was not found.");
+        return options.Coaches.SingleOrDefault(x => x.Active && x.ExternalId.Equals(externalId, StringComparison.OrdinalIgnoreCase))
+            ?? throw new NotFoundException(CoachingMessages.CoachNotFound(externalId));
     }
 
     private void EnsureDirectoryConfigured()
     {
-        if (_options.Coaches.Count == 0) throw new ExternalServiceUnavailableException("The approved Coach directory has not been configured.");
-        if (_options.Coaches.Any(x => string.IsNullOrWhiteSpace(x.ExternalId) || string.IsNullOrWhiteSpace(x.Email) || string.IsNullOrWhiteSpace(x.DisplayName)))
-            throw new ExternalServiceUnavailableException("The Coach directory contains an incomplete entry.");
+        if (options.Coaches.Count == 0) throw new ExternalServiceUnavailableException(CoachingMessages.DirectoryNotConfigured);
+        if (options.Coaches.Any(x => string.IsNullOrWhiteSpace(x.ExternalId) || string.IsNullOrWhiteSpace(x.Email) || string.IsNullOrWhiteSpace(x.DisplayName)))
+            throw new ExternalServiceUnavailableException(CoachingMessages.DirectoryEntryIncomplete);
     }
 
     private static void ValidateWindow(DateTime startUtc, DateTime endUtc, int durationMinutes)
     {
-        if (durationMinutes is not (30 or 60)) throw new ArgumentException("Duration must be 30 or 60 minutes.");
-        if (EnsureUtc(endUtc) <= EnsureUtc(startUtc) || EnsureUtc(endUtc) - EnsureUtc(startUtc) > TimeSpan.FromDays(31)) throw new ArgumentException("The availability window is invalid.");
+        if (durationMinutes is not (30 or 60)) throw new ArgumentException(CoachingMessages.InvalidDuration);
+        if (EnsureUtc(endUtc) <= EnsureUtc(startUtc) || EnsureUtc(endUtc) - EnsureUtc(startUtc) > TimeSpan.FromDays(31)) throw new ArgumentException(CoachingMessages.InvalidAvailabilityWindow);
     }
 
     private static TimeZoneInfo ResolveTimeZone(string id)
     {
         try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
-        catch (TimeZoneNotFoundException) { throw new ExternalServiceUnavailableException($"Coach time zone '{id}' is not valid on this server."); }
+        catch (TimeZoneNotFoundException) { throw new ExternalServiceUnavailableException(CoachingMessages.InvalidTimeZone(id)); }
     }
 
     private static CoachResponse ToResponse(CoachOptions value) => new(value.ExternalId, value.DisplayName, value.JobTitle, value.Biography, value.Expertise, value.TimeZone);
     private static DateTime EnsureUtc(DateTime value) => value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
     private static string BuildBody(string huddleExternalId, string? question) => string.IsNullOrWhiteSpace(question) ? $"Huddle: {huddleExternalId}" : $"Huddle: {huddleExternalId}\n\nQuestion or context:\n{question.Trim()}";
-    private static string RequiredString(JsonElement element, string name) => element.GetProperty(name).GetString() ?? throw new ExternalServiceUnavailableException($"Microsoft Graph response omitted '{name}'.");
+    private static string RequiredString(JsonElement element, string name) => element.GetProperty(name).GetString() ?? throw new ExternalServiceUnavailableException(MicrosoftGraphMessages.ResponsePropertyMissing(name));
     private static string? OptionalString(JsonElement element, string name) => element.TryGetProperty(name, out JsonElement value) ? value.GetString() : null;
     private static string? NestedString(JsonElement element, string parent, string child) => element.TryGetProperty(parent, out JsonElement value) && value.ValueKind == JsonValueKind.Object ? OptionalString(value, child) : null;
 }

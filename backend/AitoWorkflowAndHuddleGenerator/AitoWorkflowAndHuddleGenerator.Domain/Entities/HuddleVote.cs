@@ -3,6 +3,9 @@ using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the Huddle Vote model.
+/// </summary>
 public sealed class HuddleVote : AuditableEntity<Guid>
 {
     public string OwnerObjectId { get; set; } = string.Empty;

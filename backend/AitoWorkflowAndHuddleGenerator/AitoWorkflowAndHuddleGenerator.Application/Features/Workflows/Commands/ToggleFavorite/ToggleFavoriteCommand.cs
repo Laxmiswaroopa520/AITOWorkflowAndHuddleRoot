@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Contracts
     .Workflows;
 using MediatR;
@@ -10,6 +10,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .ToggleFavorite;
 
+/// <summary>
+/// Represents the Toggle Favorite Command command.
+/// </summary>
 public sealed record ToggleFavoriteCommand(
     Guid WorkflowId,
     bool IsFavorite,

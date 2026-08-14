@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aito-workflow-and-huddle-generator-api-4a7511c4-956d-48f4-ae40-59621f60f94d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

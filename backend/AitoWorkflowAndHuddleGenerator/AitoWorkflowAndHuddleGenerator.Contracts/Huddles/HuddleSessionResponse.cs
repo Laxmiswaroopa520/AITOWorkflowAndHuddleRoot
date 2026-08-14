@@ -1,5 +1,8 @@
 namespace AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 
+/// <summary>
+/// Represents the Huddle Session Response API contract.
+/// </summary>
 public sealed record HuddleSessionResponse(
     string HuddleExternalId,
     string? CurrentPhaseExternalId,

@@ -1,5 +1,6 @@
 import {
   Search,
+  Star,
   X,
 } from "lucide-react";
 
@@ -40,11 +41,11 @@ export function WorkflowHistoryFilters({
         flex-wrap
         items-center
         gap-3
-        rounded-2xl
+        rounded-xl
         border
         border-border
         bg-card
-        p-4
+        p-3
         shadow-sm
       "
     >
@@ -74,7 +75,7 @@ export function WorkflowHistoryFilters({
           className="
             h-10
             w-full
-            rounded-lg
+            rounded-md
             border
             border-input
             bg-background
@@ -94,32 +95,15 @@ export function WorkflowHistoryFilters({
         />
       </label>
 
-      <label
-        className="
-          flex
-          items-center
-          gap-2
-          rounded-lg
-          border
-          border-border
-          bg-background
-          px-3
-          py-2
-          text-sm
-        "
+      <button
+        type="button"
+        aria-pressed={favoritesOnly}
+        className={`flex h-10 items-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors ${favoritesOnly ? "border-amber-300 bg-amber-50 text-amber-700" : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"}`}
+        onClick={() => onFavoritesOnlyChange(!favoritesOnly)}
       >
-        <input
-          type="checkbox"
-          checked={favoritesOnly}
-          onChange={event =>
-            onFavoritesOnlyChange(
-              event.target.checked,
-            )
-          }
-        />
-
+        <Star className="h-4 w-4" fill={favoritesOnly ? "currentColor" : "none"} />
         Favorites only
-      </label>
+      </button>
 
       {hasFilters && (
         <Button

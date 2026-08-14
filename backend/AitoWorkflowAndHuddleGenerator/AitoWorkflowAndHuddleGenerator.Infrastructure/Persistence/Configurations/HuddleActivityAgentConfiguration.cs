@@ -4,8 +4,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Configures EF Core persistence for the Huddle Activity Agent entity.
+/// </summary>
 public sealed class HuddleActivityAgentConfiguration : IEntityTypeConfiguration<HuddleActivityAgent>
 {
+    /// <summary>
+    /// Configures the entity mapping and database constraints.
+    /// </summary>
     public void Configure(EntityTypeBuilder<HuddleActivityAgent> builder)
     {
         builder.ToTable("HuddleActivityAgents");

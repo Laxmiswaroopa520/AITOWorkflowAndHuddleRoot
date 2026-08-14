@@ -9,25 +9,31 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Queries.GetMyHuddlePlan;
 
+/// <summary>
+/// Handles the Get My Huddle Plan query.
+/// </summary>
 public sealed class GetMyHuddlePlanQueryHandler(
     IApplicationDbContext dbContext,
     ICurrentUserService currentUserService)
     : IRequestHandler<GetMyHuddlePlanQuery, HuddlePlanResponse>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task<HuddlePlanResponse> Handle(GetMyHuddlePlanQuery request, CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
         string roleExternalId = request.RoleExternalId.Trim();
 
         HuddleSegmentRole segmentRole = await dbContext.HuddleSegmentRoles.AsNoTracking()
             .Include(item => item.Role)
             .SingleOrDefaultAsync(item => item.Role.ExternalId == roleExternalId && item.Role.IsActive, cancellationToken)
-            ?? throw new NotFoundException($"Active role '{roleExternalId}' was not found.");
+            ?? throw new NotFoundException(HuddleMessages.ActiveRoleNotFound(roleExternalId));
 
         List<HuddleTopic> recommended = await LoadRecommendedTopics(segmentRole.Id, cancellationToken);
         if (recommended.Count != 7)
-            throw new ConflictException($"Role '{roleExternalId}' does not have exactly seven unique published recommended Huddles.");
+            throw new ConflictException(HuddleMessages.RecommendedPathIncomplete(roleExternalId));
 
         UserHuddlePlan? plan = await dbContext.UserHuddlePlans.AsNoTracking()
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.HuddleFocusArea)
@@ -36,7 +42,7 @@ public sealed class GetMyHuddlePlanQueryHandler(
             .SingleOrDefaultAsync(item => item.OwnerObjectId == ownerObjectId && item.HuddleSegmentRoleId == segmentRole.Id, cancellationToken);
 
         if (plan is not null && (plan.Items.Count != 7 || plan.Items.Any(item => item.WeekPosition is < 6 or > 12)))
-            throw new ConflictException("The saved Huddle plan is incomplete or invalid. Reset it to the recommended path.");
+            throw new ConflictException(HuddleMessages.SavedPlanInvalid);
 
         return HuddlePlanMappings.ToResponse(roleExternalId, plan, recommended);
     }

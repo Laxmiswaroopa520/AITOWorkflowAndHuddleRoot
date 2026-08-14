@@ -1,5 +1,8 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Api.Authorization;
+namespace AitoWorkflowAndHuddleGenerator.Api.Authorization;
 
+/// <summary>
+/// Provides Policies operations and constants.
+/// </summary>
 public static class Policies
 {
     public const string AccessAsUser = "AccessAsUser";

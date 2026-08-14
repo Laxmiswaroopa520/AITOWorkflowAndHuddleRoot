@@ -18,6 +18,40 @@ export class ApiError extends Error {
   }
 }
 
+interface ProblemDetailsPayload {
+  title?: string;
+  detail?: string;
+}
+
+function getApiErrorMessage(
+  status: number,
+  details: unknown,
+): string {
+  if (
+    typeof details === "object" &&
+    details !== null
+  ) {
+    const problemDetails =
+      details as ProblemDetailsPayload;
+
+    if (
+      typeof problemDetails.detail === "string" &&
+      problemDetails.detail.trim()
+    ) {
+      return problemDetails.detail;
+    }
+
+    if (
+      typeof problemDetails.title === "string" &&
+      problemDetails.title.trim()
+    ) {
+      return problemDetails.title;
+    }
+  }
+
+  return `API request failed with status ${status}.`;
+}
+
 type AccessTokenProvider =
   () => Promise<string>;
 
@@ -105,7 +139,10 @@ export function createApiClient(
       }
 
       throw new ApiError(
-        `API request failed with status ${response.status}.`,
+        getApiErrorMessage(
+          response.status,
+          details,
+        ),
         response.status,
         details,
       );

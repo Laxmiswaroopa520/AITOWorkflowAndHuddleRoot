@@ -1,4 +1,4 @@
-﻿//Reads active roles from SQL and maps them to DTOs.
+//Reads active roles from SQL and maps them to DTOs.
 using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
@@ -14,25 +14,32 @@ namespace AitoWorkflowAndHuddleGenerator
     .Queries
     .GetRoles;
 
+/// <summary>
+/// Handles the Get Roles query.
+/// </summary>
 public sealed class GetRolesQueryHandler
     : IRequestHandler<
         GetRolesQuery,
         IReadOnlyList<RoleResponse>>
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext dbContext;
 
     public GetRolesQueryHandler(
         IApplicationDbContext dbContext)
     {
-        _dbContext = dbContext;
+        this.dbContext = dbContext;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<IReadOnlyList<RoleResponse>> Handle(
         GetRolesQuery request,
         CancellationToken cancellationToken)
     {
         IQueryable<Domain.Entities.Role> query =
-            _dbContext.Roles.AsNoTracking();
+            dbContext.Roles.AsNoTracking();
 
         if (!request.IncludeInactive)
         {

@@ -1,4 +1,4 @@
-﻿//This prevents the same owner from saving two workflows with the same name.
+//This prevents the same owner from saving two workflows with the same name.
 
 using AitoWorkflowAndHuddleGenerator.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +9,15 @@ namespace AitoWorkflowAndHuddleGenerator
     .Persistence
     .Configurations;
 
+/// <summary>
+/// Configures EF Core persistence for the User Workflow entity.
+/// </summary>
 public sealed class UserWorkflowConfiguration
     : IEntityTypeConfiguration<UserWorkflow>
 {
+    /// <summary>
+    /// Configures the entity mapping and database constraints.
+    /// </summary>
     public void Configure(
         EntityTypeBuilder<UserWorkflow> builder)
     {

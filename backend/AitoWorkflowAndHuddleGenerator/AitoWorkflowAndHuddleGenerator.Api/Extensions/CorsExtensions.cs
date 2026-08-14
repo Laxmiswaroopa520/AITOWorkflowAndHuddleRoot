@@ -1,9 +1,16 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Api.Extensions;
+namespace AitoWorkflowAndHuddleGenerator.Api.Extensions;
 
+/// <summary>
+/// Provides Cors Extensions operations and constants.
+/// </summary>
 public static class CorsExtensions
 {
     public const string FrontendCorsPolicy =
         "FrontendCorsPolicy";
+
+    /// <summary>
+    /// Registers or adds Frontend Cors functionality.
+    /// </summary>
 
     public static IServiceCollection AddFrontendCors(
         this IServiceCollection services,
@@ -21,8 +28,7 @@ public static class CorsExtensions
         if (allowedOrigins.Length == 0)
         {
             throw new InvalidOperationException(
-                "At least one frontend CORS origin " +
-                "must be configured.");
+                ConfigurationMessages.CorsOriginsRequired);
         }
 
         services.AddCors(options =>

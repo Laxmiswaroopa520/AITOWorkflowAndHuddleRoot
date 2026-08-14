@@ -4,8 +4,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence.Configurations;
 
+/// <summary>
+/// Configures EF Core persistence for the User Huddle Session entity.
+/// </summary>
 public sealed class UserHuddleSessionConfiguration : IEntityTypeConfiguration<UserHuddleSession>
 {
+    /// <summary>
+    /// Configures the entity mapping and database constraints.
+    /// </summary>
     public void Configure(EntityTypeBuilder<UserHuddleSession> builder)
     {
         builder.ToTable("UserHuddleSessions");

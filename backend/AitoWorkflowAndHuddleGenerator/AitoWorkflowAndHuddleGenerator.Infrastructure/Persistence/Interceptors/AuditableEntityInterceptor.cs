@@ -1,4 +1,4 @@
-﻿/*This interceptor handles timestamps when records are added or modified through EF Core.*/
+/*This interceptor handles timestamps when records are added or modified through EF Core.*/
 using AitoWorkflowAndHuddleGenerator.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -8,8 +8,14 @@ namespace AitoWorkflowAndHuddleGenerator
     .Persistence
     .Interceptors;
 
+/// <summary>
+/// Represents the Auditable Entity Interceptor model.
+/// </summary>
 public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {
+    /// <summary>
+    /// Executes the Saving Changes operation.
+    /// </summary>
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -18,6 +24,10 @@ public sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 
         return base.SavingChanges(eventData, result);
     }
+
+    /// <summary>
+    /// Executes the Saving Changes Async operation.
+    /// </summary>
 
     public override ValueTask<InterceptionResult<int>>
         SavingChangesAsync(

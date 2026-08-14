@@ -1,4 +1,4 @@
-﻿using AitoWorkflowAndHuddleGenerator
+using AitoWorkflowAndHuddleGenerator
     .Application
     .Abstractions
     .Identity;
@@ -23,27 +23,33 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .DeleteWorkflow;
 
+/// <summary>
+/// Handles the Delete Workflow command.
+/// </summary>
 public sealed class
     DeleteWorkflowCommandHandler
     : IRequestHandler<
         DeleteWorkflowCommand>
 {
     private readonly
-        IApplicationDbContext _dbContext;
+        IApplicationDbContext dbContext;
 
     private readonly
         ICurrentUserService
-            _currentUserService;
+            currentUserService;
 
     public DeleteWorkflowCommandHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService
             currentUserService)
     {
-        _dbContext = dbContext;
-        _currentUserService =
-            currentUserService;
+        this.dbContext = dbContext;
+        this.currentUserService = currentUserService;
     }
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task Handle(
         DeleteWorkflowCommand request,
@@ -51,12 +57,12 @@ public sealed class
             cancellationToken)
     {
         string ownerObjectId =
-            _currentUserService.ObjectId
+            currentUserService.ObjectId
             ?? throw new UnauthorizedAccessException(
-                "The authenticated token does not contain an oid claim.");
+                AuthenticationMessages.MissingObjectIdClaim);
 
         UserWorkflow workflow =
-            await _dbContext
+            await dbContext
                 .UserWorkflows
                 .SingleOrDefaultAsync(
                     workflow =>
@@ -68,13 +74,13 @@ public sealed class
                             ownerObjectId,
                     cancellationToken)
             ?? throw new NotFoundException(
-                "The workflow was not found.");
+                WorkflowMessages.NotFound);
 
-        _dbContext
+        dbContext
             .UserWorkflows
             .Remove(workflow);
 
-        await _dbContext
+        await dbContext
             .SaveChangesAsync(
                 cancellationToken);
     }

@@ -1,5 +1,8 @@
 namespace AitoWorkflowAndHuddleGenerator.Domain.Entities;
 
+/// <summary>
+/// Represents the User Huddle Activity Progress model.
+/// </summary>
 public sealed class UserHuddleActivityProgress
 {
     public Guid UserHuddleSessionId { get; set; }

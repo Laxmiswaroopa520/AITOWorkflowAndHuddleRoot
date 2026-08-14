@@ -9,6 +9,7 @@ import {
   Plus,
   Sparkles,
   Timer,
+  Users,
 } from "lucide-react";
 
 import {
@@ -269,30 +270,27 @@ export function ActivitySelectionStep({
 
   return (
     <section
-      className="mx-auto w-full max-w-[1800px] px-4 pb-10 pt-3 lg:px-10 xl:px-16"
+      className="mx-auto w-full max-w-[1800px] space-y-6 px-4 pb-10 pt-3 lg:pl-16 lg:pr-10"
     >
-      <Button
-        type="button"
-        variant="ghost"
-        className="gap-2"
-        onClick={onBack}
-      >
-        <ArrowLeft
-          className="h-4 w-4"
-          aria-hidden="true"
-        />
-
-        Change role
-      </Button>
-
-      <div className="mt-3 flex flex-col gap-4 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-4"><span className="rounded-xl bg-primary/10 p-3"><Sparkles className="h-6 w-6 text-primary" /></span><div><h1 className="text-lg font-bold">Select Your Activities</h1><p className="text-sm text-muted-foreground">Choose the activities you want to focus on. These will build your personalized schedule.</p></div><button type="button" onClick={toggleAll} className={`ml-2 flex items-center gap-2 rounded-xl border-2 px-4 py-2 text-sm font-semibold shadow-sm transition ${allFilteredSelected ? "border-primary bg-primary text-white" : "border-primary/40 bg-primary/10 text-primary"}`}>{allFilteredSelected ? <><CheckCircle2 className="h-4 w-4" />Deselect All</> : <><Plus className="h-4 w-4" />Select All</>}</button></div>
-        <div className="flex flex-wrap items-center gap-3"><label className="relative"><Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><select aria-label="AI tool filter" value={filters.aiToolId} onChange={event => updateFilter("aiToolId", event.target.value)} className="h-10 w-40 rounded-md border bg-background pl-9 pr-3 text-sm"><option value="all">All AI Tools</option>{aiTools.map(tool => <option key={tool.externalId} value={tool.externalId}>{tool.name}</option>)}</select></label><label className="relative"><Timer className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><select aria-label="Duration filter" value={filters.duration} onChange={event => updateFilter("duration", event.target.value as WorkflowFilters["duration"])} className="h-10 w-36 rounded-md border bg-background pl-9 pr-3 text-sm"><option value="all">Any duration</option><option value="short">15 min or less</option><option value="medium">16–30 min</option><option value="long">Over 30 min</option></select></label></div>
+      <div className="flex flex-wrap items-center gap-4">
+        <Button type="button" variant="ghost" size="sm" className="gap-1" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Change Role
+        </Button>
+        <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1.5 text-sm text-secondary-foreground">
+          <Users className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+          {role.name}
+        </span>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-4"><div className="flex flex-wrap items-center gap-3"><span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm ${selectedActivities.length ? "bg-primary/10 text-primary" : "bg-secondary"}`}><Check className="mr-1.5 h-3.5 w-3.5" />{selectedActivities.length} selected</span>{Object.entries(selectedByCategory).map(([category,count]) => <span key={category} className="rounded-full border px-2.5 py-1 text-xs">{category}: {count}</span>)}</div><div className="flex items-center gap-3"><Link to="/workflows" className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium"><FolderOpen className="h-4 w-4" />My Workflows</Link><Button type="button" size="lg" disabled={!selectedActivities.length} onClick={onBuild} className="gap-2">Build My Day <ArrowRight className="h-4 w-4" /></Button></div></div>
+      <div className="flex flex-col gap-4 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-4"><span className="rounded-xl bg-primary/10 p-3"><Sparkles className="h-6 w-6 text-primary" /></span><div><h1 className="text-lg font-bold">Select Your Activities</h1><p className="text-sm text-muted-foreground">Choose the activities you want to focus on. These will build your personalized schedule.</p></div><button type="button" onClick={toggleAll} className={`ml-2 flex items-center gap-2 rounded-xl border-2 px-4 py-2 text-sm font-semibold shadow-sm transition ${allFilteredSelected ? "border-primary bg-primary text-white" : "border-primary/40 bg-primary/10 text-primary"}`}>{allFilteredSelected ? <><CheckCircle2 className="h-4 w-4" />Deselect All</> : <><Plus className="h-4 w-4" />Select All</>}</button></div>
+        <div className="flex flex-wrap items-center gap-3"><label className="relative"><Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><select aria-label="AI tool filter" value={filters.aiToolId} onChange={event => updateFilter("aiToolId", event.target.value)} className="h-10 w-40 rounded-md border bg-background pl-9 pr-3 text-sm"><option value="all">All AI Tools</option>{aiTools.map(tool => <option key={tool.externalId} value={tool.externalId}>{tool.name}</option>)}</select></label><label className="relative"><Timer className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><select aria-label="Duration filter" value={filters.duration} onChange={event => updateFilter("duration", event.target.value as WorkflowFilters["duration"])} className="h-10 w-40 rounded-md border bg-background pl-9 pr-3 text-sm"><option value="all">Any duration</option><option value="short">15 min or less</option><option value="medium">16–30 min</option><option value="long">Over 30 min</option></select></label></div>
+      </div>
 
-      <div className="mt-5">
+      <div className="flex flex-wrap items-center justify-between gap-4"><div className="flex flex-wrap items-center gap-3"><span className={`inline-flex items-center rounded-full px-3 py-1.5 text-sm ${selectedActivities.length ? "bg-primary/10 text-primary" : "bg-secondary"}`}><Check className="mr-1.5 h-3.5 w-3.5" />{selectedActivities.length} selected</span>{Object.entries(selectedByCategory).map(([category,count]) => <span key={category} className="rounded-full border px-2.5 py-1 text-xs">{category}: {count}</span>)}</div><div className="flex items-center gap-3"><Link to="/workflows" className="inline-flex h-10 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium"><FolderOpen className="h-4 w-4" />My Workflows</Link><Button type="button" size="lg" disabled={!selectedActivities.length} onClick={onBuild} className="gap-2">Build My Day <ArrowRight className="h-4 w-4" /></Button></div></div>
+
+      <div>
         <WorkflowBucketList
           groups={groups}
           selectedActivityIds={

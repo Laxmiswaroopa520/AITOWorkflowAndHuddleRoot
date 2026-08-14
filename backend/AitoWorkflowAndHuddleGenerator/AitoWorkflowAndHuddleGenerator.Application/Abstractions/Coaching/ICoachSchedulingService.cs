@@ -2,6 +2,9 @@ using AitoWorkflowAndHuddleGenerator.Contracts.Huddles.Coaching;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Abstractions.Coaching;
 
+/// <summary>
+/// Provides ICoach Scheduling operations.
+/// </summary>
 public interface ICoachSchedulingService
 {
     Task<IReadOnlyList<CoachResponse>> GetCoachesAsync(string? huddleExternalId, CancellationToken cancellationToken);

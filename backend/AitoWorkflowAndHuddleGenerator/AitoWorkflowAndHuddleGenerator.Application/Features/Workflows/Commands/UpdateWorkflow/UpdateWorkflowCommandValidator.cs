@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace AitoWorkflowAndHuddleGenerator
     .Application
@@ -7,6 +7,9 @@ namespace AitoWorkflowAndHuddleGenerator
     .Commands
     .UpdateWorkflow;
 
+/// <summary>
+/// Validates Update Workflow Command requests.
+/// </summary>
 public sealed class
     UpdateWorkflowCommandValidator
     : AbstractValidator<
@@ -53,7 +56,7 @@ public sealed class
             .NotEmpty()
             .Must(BeValidBase64)
             .WithMessage(
-                "RowVersion must be a valid Base64 value.");
+                ValidationMessages.InvalidRowVersion);
     }
 
     private static bool BeValidBase64(

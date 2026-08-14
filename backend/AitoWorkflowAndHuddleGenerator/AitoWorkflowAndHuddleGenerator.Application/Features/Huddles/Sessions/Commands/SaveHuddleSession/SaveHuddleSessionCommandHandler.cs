@@ -10,22 +10,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Sessions.Commands.SaveHuddleSession;
 
+/// <summary>
+/// Handles the Save Huddle Session command.
+/// </summary>
 public sealed class SaveHuddleSessionCommandHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService)
     : IRequestHandler<SaveHuddleSessionCommand, HuddleSessionResponse>
 {
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
     public async Task<HuddleSessionResponse> Handle(SaveHuddleSessionCommand request, CancellationToken cancellationToken)
     {
         string ownerObjectId = currentUserService.ObjectId
-            ?? throw new UnauthorizedAccessException("The authenticated token does not contain an oid claim.");
+            ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
         string externalId = request.HuddleExternalId.Trim();
         HuddleTopic topic = await dbContext.HuddleTopics
             .SingleOrDefaultAsync(item => item.ExternalId == externalId && item.PublicationStatus == "Published", cancellationToken)
-            ?? throw new NotFoundException($"Published Huddle '{externalId}' was not found.");
+            ?? throw new NotFoundException(HuddleMessages.PublishedNotFound(externalId));
         HuddlePhase? phase = null;
         if (!string.IsNullOrWhiteSpace(request.CurrentPhaseExternalId))
             phase = await dbContext.HuddlePhases.SingleOrDefaultAsync(item =>
                 item.ExternalId == request.CurrentPhaseExternalId.Trim() && item.HuddleTopicId == topic.Id, cancellationToken)
-                ?? throw new NotFoundException("The selected phase does not belong to this Huddle.");
+                ?? throw new NotFoundException(HuddleMessages.PhaseDoesNotBelong);
         UserHuddleSession? session = await dbContext.UserHuddleSessions
             .Include(item => item.ActivityProgress).ThenInclude(item => item.HuddleActivity)
             .Include(item => item.HuddleTopic)
@@ -34,7 +40,7 @@ public sealed class SaveHuddleSessionCommandHandler(IApplicationDbContext dbCont
         DateTimeOffset now = DateTimeOffset.UtcNow;
         if (session is null)
         {
-            if (!string.IsNullOrWhiteSpace(request.RowVersion)) throw new ConflictException("The Huddle session no longer exists. Refresh and try again.");
+            if (!string.IsNullOrWhiteSpace(request.RowVersion)) throw new ConflictException(HuddleMessages.SessionNoLongerExists);
             session = new UserHuddleSession
             {
                 Id = Guid.NewGuid(), OwnerObjectId = ownerObjectId, HuddleTopic = topic,
@@ -46,7 +52,7 @@ public sealed class SaveHuddleSessionCommandHandler(IApplicationDbContext dbCont
         }
         else
         {
-            if (session.SessionStatus == HuddleSessionStatus.Completed) throw new ConflictException("This Huddle session is already complete.");
+            if (session.SessionStatus == HuddleSessionStatus.Completed) throw new ConflictException(HuddleMessages.SessionAlreadyComplete);
             ApplyConcurrency(session, request.RowVersion);
             session.CurrentHuddlePhase = phase;
             session.Notes = request.FacilitatorNotes;
@@ -63,14 +69,14 @@ public sealed class SaveHuddleSessionCommandHandler(IApplicationDbContext dbCont
 
     private void ApplyConcurrency(UserHuddleSession session, string? rowVersion)
     {
-        if (string.IsNullOrWhiteSpace(rowVersion)) throw new ConflictException("The Huddle session changed. Refresh and try again.");
+        if (string.IsNullOrWhiteSpace(rowVersion)) throw new ConflictException(HuddleMessages.SessionChanged);
         dbContext.UserHuddleSessions.Entry(session).Property(item => item.RowVersion).OriginalValue = Convert.FromBase64String(rowVersion);
     }
 
     private async Task Save(CancellationToken cancellationToken)
     {
         try { await dbContext.SaveChangesAsync(cancellationToken); }
-        catch (DbUpdateConcurrencyException) { throw new ConflictException("This Huddle session was changed by another request. Refresh and try again."); }
-        catch (DbUpdateException) { throw new ConflictException("A Huddle session already exists for this user and topic. Refresh and try again."); }
+        catch (DbUpdateConcurrencyException) { throw new ConflictException(HuddleMessages.SessionChangedByAnotherRequest); }
+        catch (DbUpdateException) { throw new ConflictException(HuddleMessages.SessionAlreadyExists); }
     }
 }

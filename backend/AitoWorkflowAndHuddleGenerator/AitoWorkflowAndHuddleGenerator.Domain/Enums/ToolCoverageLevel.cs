@@ -1,5 +1,8 @@
-﻿namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
+namespace AitoWorkflowAndHuddleGenerator.Domain.Enums;
 
+/// <summary>
+/// Defines the supported Tool Coverage Level values.
+/// </summary>
 public enum ToolCoverageLevel
 {
     Unspecified = 0,

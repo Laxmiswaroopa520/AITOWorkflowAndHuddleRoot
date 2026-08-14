@@ -8,15 +8,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Queries.GetHuddleById;
 
+/// <summary>
+/// Handles the Get Huddle By Id query.
+/// </summary>
 public sealed class GetHuddleByIdQueryHandler : IRequestHandler<GetHuddleByIdQuery, HuddleDetailResponse>
 {
-    private readonly IApplicationDbContext _dbContext;
-    public GetHuddleByIdQueryHandler(IApplicationDbContext dbContext) => _dbContext = dbContext;
+    private readonly IApplicationDbContext dbContext;
+    public GetHuddleByIdQueryHandler(IApplicationDbContext dbContext) => this.dbContext = dbContext;
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<HuddleDetailResponse> Handle(GetHuddleByIdQuery request, CancellationToken cancellationToken)
     {
         string externalId = request.ExternalId.Trim();
-        HuddleTopic? topic = await _dbContext.HuddleTopics.AsNoTracking()
+        HuddleTopic? topic = await dbContext.HuddleTopics.AsNoTracking()
             .Where(x => x.ExternalId == externalId && x.PublicationStatus == "Published" && x.Type != "Foundation")
             .Include(x => x.HuddleFocusArea)
             .Include(x => x.TopicRoles).ThenInclude(x => x.Role)
@@ -28,12 +35,12 @@ public sealed class GetHuddleByIdQueryHandler : IRequestHandler<GetHuddleByIdQue
             .Include(x => x.Phases).ThenInclude(x => x.Activities).ThenInclude(x => x.ActivityResources).ThenInclude(x => x.HuddleResource)
             .SingleOrDefaultAsync(cancellationToken);
         if (topic is null)
-            throw new NotFoundException($"Published Huddle '{externalId}' was not found.");
+            throw new NotFoundException(HuddleMessages.PublishedNotFound(externalId));
 
         //it collects all agent ids
         int[] agentIds = topic.TopicAgents.Select(x => x.HuddleAgentId)             //gets agents attached directly to the huddle
             .Concat(topic.Activities.SelectMany(x => x.ActivityAgents).Select(x => x.HuddleAgentId)).Distinct().ToArray();          //also gets agents attached to individual activities     // so conceptually ;((huddle-level agents+ activity-level agetns==== all agent IDs))
-        List<HuddleAgentResource> links = await _dbContext.HuddleAgentResources.AsNoTracking()
+        List<HuddleAgentResource> links = await dbContext.HuddleAgentResources.AsNoTracking()
             .Where(x => agentIds.Contains(x.HuddleAgentId)).Include(x => x.HuddleResource).ToListAsync(cancellationToken);
         IReadOnlyDictionary<int, IReadOnlyList<HuddleResourceResponse>> resources = links.GroupBy(x => x.HuddleAgentId)
             .ToDictionary(x => x.Key, x => (IReadOnlyList<HuddleResourceResponse>)x.OrderBy(y => y.DisplayOrder)

@@ -8,18 +8,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Queries.GetRecommendedPath;
 
+/// <summary>
+/// Handles the Get Recommended Path query.
+/// </summary>
 public sealed class GetRecommendedPathQueryHandler : IRequestHandler<GetRecommendedPathQuery, RecommendedHuddlePathResponse>
 {
-    private readonly IApplicationDbContext _dbContext;
-    public GetRecommendedPathQueryHandler(IApplicationDbContext dbContext) => _dbContext = dbContext;
+    private readonly IApplicationDbContext dbContext;
+    public GetRecommendedPathQueryHandler(IApplicationDbContext dbContext) => this.dbContext = dbContext;
+
+    /// <summary>
+    /// Handles the request through the application pipeline.
+    /// </summary>
 
     public async Task<RecommendedHuddlePathResponse> Handle(GetRecommendedPathQuery request, CancellationToken cancellationToken)
     {
         string roleExternalId = request.RoleExternalId.Trim();
-        bool roleExists = await _dbContext.Roles.AsNoTracking().AnyAsync(x => x.ExternalId == roleExternalId && x.IsActive, cancellationToken);
-        if (!roleExists) throw new NotFoundException($"Active role '{roleExternalId}' was not found.");
+        bool roleExists = await dbContext.Roles.AsNoTracking().AnyAsync(x => x.ExternalId == roleExternalId && x.IsActive, cancellationToken);
+        if (!roleExists) throw new NotFoundException(HuddleMessages.ActiveRoleNotFound(roleExternalId));
 
-        List<HuddleRolePathItem> path = await _dbContext.HuddleRolePathItems.AsNoTracking()
+        List<HuddleRolePathItem> path = await dbContext.HuddleRolePathItems.AsNoTracking()
             .Where(x => x.HuddleSegmentRole.Role.ExternalId == roleExternalId && x.HuddleTopic.PublicationStatus == "Published" && x.HuddleTopic.Type != "Foundation")
             .OrderBy(x => x.WeekPosition)
             .Include(x => x.HuddleSegmentRole).ThenInclude(x => x.Role)
