@@ -45,7 +45,8 @@ public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCata
             _ => query.OrderBy(x => x.RecommendationPriority ?? int.MaxValue).ThenBy(x => x.Name)
         };
 
-        List<HuddleTopic> topics = await AddCatalogIncludes(query).ToListAsync(cancellationToken);
+        List<HuddleTopic> topics = await AddCatalogIncludes(query)
+            .ToListAsync(cancellationToken);
         return topics.Select(HuddleMappings.ToCatalogItem).ToList();
     }
 

@@ -12,7 +12,7 @@ public static class HuddleMessages
     public const string PlanChanged = "The Huddle plan changed. Refresh and try again.";
     public const string PlanChangedByAnotherRequest = "This Huddle plan was changed by another request. Refresh and try again.";
     public const string PlanAlreadyExists = "A Huddle plan already exists for this user and role. Refresh and try again.";
-    public const string PlanWeeksInvalid = "The plan must contain exactly one item for each week from 6 through 12.";
+    public const string PlanWeeksInvalid = "The plan must contain exactly one item for each week from 2 through 8.";
     public const string PlanHuddlesMustBeUnique = "The plan must contain seven unique Huddles.";
     public const string SessionNotFound = "The Huddle session was not found.";
     public const string SessionAlreadyComplete = "This Huddle session is already complete.";
@@ -26,6 +26,10 @@ public static class HuddleMessages
     public const string InvalidVote = "Vote value must be -1 or 1.";
     public const string TooManyDownvoteReasons = "A maximum of 10 downvote reasons is allowed.";
     public const string InvalidCatalogSort = "Sort must be default, name, priority, most-upvoted, or role-relevance.";
+    public const string LaunchPlanNotFound = "The Huddle launch plan was not found.";
+    public const string LaunchPlanChanged = "The Huddle launch plan changed. Refresh and try again.";
+    public const string LaunchPlanChangedByAnotherRequest = "This Huddle launch plan was changed by another request. Refresh and try again.";
+    public const string LaunchPlanAlreadyExists = "A Huddle launch plan already exists for this user. Refresh and try again.";
 
     /// <summary>
     /// Executes the Published Not Found operation.

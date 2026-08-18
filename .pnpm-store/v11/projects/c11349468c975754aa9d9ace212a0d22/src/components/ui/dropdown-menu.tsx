@@ -1,0 +1,8 @@
+import { createContext, useContext, useState, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
+type MenuContextValue = { open: boolean; setOpen: (open: boolean) => void };
+const MenuContext = createContext<MenuContextValue | null>(null);
+export function DropdownMenu({ children }: { children: ReactNode }) { const [open, setOpen] = useState(false); return <MenuContext.Provider value={{ open, setOpen }}><span className="relative inline-flex">{children}</span></MenuContext.Provider>; }
+export function DropdownMenuTrigger({ children, asChild }: { children: ReactNode; asChild?: boolean }) { const context = useContext(MenuContext)!; if (asChild) return <span className="contents" onClick={() => context.setOpen(!context.open)}>{children}</span>; return <button type="button" onClick={() => context.setOpen(!context.open)}>{children}</button>; }
+export function DropdownMenuContent({ className, align = "end", ...props }: HTMLAttributes<HTMLDivElement> & { align?: "start" | "end" }) { const context = useContext(MenuContext)!; if (!context.open) return null; return <div className={cn("absolute top-full z-[120] mt-2 min-w-40 rounded-lg border bg-white p-1 shadow-lg", align === "end" ? "right-0" : "left-0", className)} {...props} />; }
+export function DropdownMenuItem({ className, onClick, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) { const context = useContext(MenuContext)!; return <button type="button" className={cn("flex w-full items-center rounded-md px-3 py-2 text-left text-sm hover:bg-slate-100", className)} onClick={event => { onClick?.(event); context.setOpen(false); }} {...props} />; }

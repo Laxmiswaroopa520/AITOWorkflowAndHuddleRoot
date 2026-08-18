@@ -7,7 +7,7 @@ namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Comm
 /// </summary>
 public sealed class SaveHuddlePlanCommandValidator : AbstractValidator<SaveHuddlePlanCommand>
 {
-    private static readonly int[] RequiredWeeks = [6, 7, 8, 9, 10, 11, 12];
+    private static readonly int[] RequiredWeeks = [2, 3, 4, 5, 6, 7, 8];
 
     public SaveHuddlePlanCommandValidator()
     {
@@ -23,7 +23,7 @@ public sealed class SaveHuddlePlanCommandValidator : AbstractValidator<SaveHuddl
             .WithMessage(HuddleMessages.PlanHuddlesMustBeUnique);
         RuleForEach(command => command.Items).ChildRules(item =>
         {
-            item.RuleFor(value => value.Week).InclusiveBetween(6, 12);
+            item.RuleFor(value => value.Week).InclusiveBetween(2, 8);
             item.RuleFor(value => value.HuddleExternalId).NotEmpty().MaximumLength(100);
         });
     }

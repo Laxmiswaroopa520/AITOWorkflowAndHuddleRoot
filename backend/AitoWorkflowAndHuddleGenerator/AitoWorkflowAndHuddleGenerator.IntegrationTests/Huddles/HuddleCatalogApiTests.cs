@@ -106,7 +106,7 @@ public sealed class HuddleCatalogApiTests
 
         Assert.True(response.IsComplete);
         Assert.Equal(7, response.Items.Count);
-        Assert.Equal(Enumerable.Range(6, 7), response.Items.Select(x => x.Week));
+        Assert.Equal(Enumerable.Range(2, 7), response.Items.Select(x => x.Week));
         Assert.Equal(7, response.Items.Select(x => x.Huddle.ExternalId).Distinct().Count());
     }
 

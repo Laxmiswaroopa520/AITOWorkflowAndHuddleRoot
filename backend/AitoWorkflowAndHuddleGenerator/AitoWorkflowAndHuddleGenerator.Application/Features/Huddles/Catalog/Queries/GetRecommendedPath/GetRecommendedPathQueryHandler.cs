@@ -38,7 +38,7 @@ public sealed class GetRecommendedPathQueryHandler : IRequestHandler<GetRecommen
         List<HuddleRolePathItem> unique = path.GroupBy(x => x.HuddleTopicId).Select(x => x.First()).OrderBy(x => x.WeekPosition).Take(7).ToList();
         bool complete = unique.Count == 7;
         List<RecommendedHuddlePathItemResponse> items = unique.Select((x, index) =>
-            new RecommendedHuddlePathItemResponse(6 + index, index + 1, HuddleMappings.ToCatalogItem(x.HuddleTopic))).ToList();
+            new RecommendedHuddlePathItemResponse(2 + index, index + 1, HuddleMappings.ToCatalogItem(x.HuddleTopic))).ToList();
         string? message = complete ? null : $"Recommended Path requires seven unique published Huddles, but only {unique.Count} eligible Huddles are configured for role '{roleExternalId}'.";
         return new RecommendedHuddlePathResponse(roleExternalId, complete, message, items);
     }

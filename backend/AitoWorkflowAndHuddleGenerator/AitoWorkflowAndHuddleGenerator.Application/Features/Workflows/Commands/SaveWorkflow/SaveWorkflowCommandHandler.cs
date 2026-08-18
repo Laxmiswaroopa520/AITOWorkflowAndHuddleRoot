@@ -233,9 +233,34 @@ public sealed class
             .UserWorkflows
             .Add(workflow);
 
-        await dbContext
-            .SaveChangesAsync(
-                cancellationToken);
+        try
+        {
+            await dbContext
+                .SaveChangesAsync(
+                    cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            bool duplicateCreatedByAnotherRequest =
+                await dbContext
+                    .UserWorkflows
+                    .AsNoTracking()
+                    .AnyAsync(
+                        existingWorkflow =>
+                            existingWorkflow.OwnerObjectId ==
+                                ownerObjectId &&
+                            existingWorkflow.Name ==
+                                normalizedName,
+                        cancellationToken);
+
+            if (duplicateCreatedByAnotherRequest)
+            {
+                throw new ConflictException(
+                    WorkflowMessages.DuplicateName(normalizedName));
+            }
+
+            throw;
+        }
 
         UserWorkflow savedWorkflow =
             await LoadOwnedWorkflowAsync(

@@ -55,6 +55,7 @@ public interface IApplicationDbContext
     DbSet<UserHuddleSession> UserHuddleSessions { get; }
     DbSet<UserHuddleActivityProgress> UserHuddleActivityProgress { get; }
     DbSet<HuddleVote> HuddleVotes { get; }
+    DbSet<UserHuddleLaunchPlan> UserHuddleLaunchPlans { get; }
 
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default);

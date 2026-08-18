@@ -10,7 +10,7 @@ namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Comm
 internal static class HuddlePlanMappings
 {
     /// <summary>
-    /// Maps a persisted or recommended Huddle plan to its ordered Weeks 6–12 response.
+    /// Maps a persisted or recommended Huddle plan to its ordered Weeks 2–8 response.
     /// </summary>
     public static HuddlePlanResponse ToResponse(
         string roleExternalId,
@@ -25,7 +25,7 @@ internal static class HuddlePlanMappings
         {
             string recommendedExternalId = recommendedTopics[index].ExternalId;
             return new HuddlePlanItemResponse(
-                6 + index,
+                2 + index,
                 recommendedExternalId,
                 !string.Equals(topic.ExternalId, recommendedExternalId, StringComparison.OrdinalIgnoreCase),
                 HuddleMappings.ToCatalogItem(topic));

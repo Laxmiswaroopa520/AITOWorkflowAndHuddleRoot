@@ -1,3 +1,5 @@
+using Microsoft.OpenApi.Models;
+
 namespace AitoWorkflowAndHuddleGenerator.Api.Extensions;
 
 /// <summary>
@@ -14,7 +16,40 @@ public static class SwaggerExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddOpenApi();
+        services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer((document, _, _) =>
+            {
+                const string bearerScheme = "Bearer";
+
+                document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes[bearerScheme] =
+                    new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
+                        Description =
+                            "Enter a Microsoft Entra access token. " +
+                            "Swagger adds the Bearer prefix automatically."
+                    };
+
+                document.SecurityRequirements.Add(
+                    new OpenApiSecurityRequirement
+                    {
+                        [new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = bearerScheme
+                            }
+                        }] = Array.Empty<string>()
+                    });
+
+                return Task.CompletedTask;
+            });
+        });
 
         return services;
     }

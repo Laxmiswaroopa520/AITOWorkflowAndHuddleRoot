@@ -97,6 +97,37 @@ public sealed class ExceptionHandlingMiddlewareTests
         Assert.DoesNotContain("Sensitive detail", body.ToString());
     }
 
+    [Fact]
+    public async Task InvokeAsync_DoesNotWriteAnErrorForClientCancelledRequest()
+    {
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
+
+        DefaultHttpContext context = CreateContext();
+        context.RequestAborted = cancellationTokenSource.Token;
+
+        var middleware = CreateMiddleware(
+            new OperationCanceledException(cancellationTokenSource.Token));
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        Assert.Equal(0, context.Response.Body.Length);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_DoesNotHideUnrelatedOperationCancellation()
+    {
+        DefaultHttpContext context = CreateContext();
+        var middleware = CreateMiddleware(new OperationCanceledException());
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(
+            StatusCodes.Status500InternalServerError,
+            context.Response.StatusCode);
+    }
+
     private static ExceptionHandlingMiddleware CreateMiddleware(
         Exception exception)
     {

@@ -18,4 +18,5 @@ public static class ApiProblemMessages
     public const string UnexpectedError = "An unexpected error occurred";
     public const string UnhandledExceptionLog = "An unhandled exception occurred. Correlation ID: {CorrelationId}";
     public const string RequestFailureLog = "A request failed with status {StatusCode}. Correlation ID: {CorrelationId}";
+    public const string ClientCancellationLog = "Request {TraceIdentifier} was cancelled by the client.";
 }

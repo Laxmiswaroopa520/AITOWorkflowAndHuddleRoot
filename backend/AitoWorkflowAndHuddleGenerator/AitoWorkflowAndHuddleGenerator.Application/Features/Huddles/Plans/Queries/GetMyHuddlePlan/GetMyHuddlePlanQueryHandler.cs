@@ -41,7 +41,7 @@ public sealed class GetMyHuddlePlanQueryHandler(
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.TopicAgents).ThenInclude(item => item.HuddleAgent)
             .SingleOrDefaultAsync(item => item.OwnerObjectId == ownerObjectId && item.HuddleSegmentRoleId == segmentRole.Id, cancellationToken);
 
-        if (plan is not null && (plan.Items.Count != 7 || plan.Items.Any(item => item.WeekPosition is < 6 or > 12)))
+        if (plan is not null && (plan.Items.Count != 7 || !HasSupportedWeekRange(plan.Items)))
             throw new ConflictException(HuddleMessages.SavedPlanInvalid);
 
         return HuddlePlanMappings.ToResponse(roleExternalId, plan, recommended);
@@ -56,4 +56,11 @@ public sealed class GetMyHuddlePlanQueryHandler(
             .Include(item => item.HuddleTopic).ThenInclude(item => item.TopicAgents).ThenInclude(item => item.HuddleAgent)
             .ToListAsync(cancellationToken))
         .GroupBy(item => item.HuddleTopicId).Select(group => group.First().HuddleTopic).Take(7).ToList();
+
+    private static bool HasSupportedWeekRange(IEnumerable<UserHuddlePlanItem> items)
+    {
+        int[] weeks = items.Select(item => item.WeekPosition).Order().ToArray();
+        return weeks.SequenceEqual([2, 3, 4, 5, 6, 7, 8])
+            || weeks.SequenceEqual([6, 7, 8, 9, 10, 11, 12]);
+    }
 }

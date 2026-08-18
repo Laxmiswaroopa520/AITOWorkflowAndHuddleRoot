@@ -29,13 +29,18 @@ public sealed class SetHuddleActivityCompletionCommandHandler(IApplicationDbCont
             .SingleOrDefaultAsync(item => item.OwnerObjectId == ownerObjectId
                 && item.HuddleTopic.ExternalId == request.HuddleExternalId.Trim(), cancellationToken)
             ?? throw new NotFoundException(HuddleMessages.SessionNotFound);
-        if (session.SessionStatus == HuddleSessionStatus.Completed) throw new ConflictException(HuddleMessages.SessionAlreadyComplete);
         HuddleActivity activity = await dbContext.HuddleActivities.SingleOrDefaultAsync(item =>
             item.ExternalId == request.ActivityExternalId.Trim() && item.HuddleTopicId == session.HuddleTopicId, cancellationToken)
             ?? throw new NotFoundException(HuddleMessages.ActivityDoesNotBelong);
         dbContext.UserHuddleSessions.Entry(session).Property(item => item.RowVersion).OriginalValue = Convert.FromBase64String(request.RowVersion);
         UserHuddleActivityProgress? progress = session.ActivityProgress.SingleOrDefault(item => item.HuddleActivityId == activity.Id);
         DateTimeOffset now = DateTimeOffset.UtcNow;
+        bool sessionReopened = session.SessionStatus == HuddleSessionStatus.Completed && !request.IsCompleted;
+        if (sessionReopened)
+        {
+            session.SessionStatus = HuddleSessionStatus.InProgress;
+            session.CompletedAtUtc = null;
+        }
         if (progress is null && request.IsCompleted)
         {
             progress = new UserHuddleActivityProgress { UserHuddleSession = session, HuddleActivity = activity };
@@ -45,6 +50,11 @@ public sealed class SetHuddleActivityCompletionCommandHandler(IApplicationDbCont
         {
             progress.IsCompleted = request.IsCompleted;
             progress.CompletedAtUtc = request.IsCompleted ? now : null;
+            session.LastSavedAtUtc = now;
+            session.UpdatedAtUtc = now;
+        }
+        else if (sessionReopened)
+        {
             session.LastSavedAtUtc = now;
             session.UpdatedAtUtc = now;
         }

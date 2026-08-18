@@ -72,6 +72,80 @@ public sealed class HuddleSessionApiTests
     }
 
     [Fact]
+    public async Task ActivityCompletion_ShouldReopenCompletedSessionWhenActivityIsMarkedIncomplete()
+    {
+        await using ApplicationDbContext db = CreateContext();
+        HuddleTopic topic = await SeedCatalog(db);
+        UserHuddleSession session = CreateSession(topic, "user-1");
+        DateTimeOffset completedAtUtc = DateTimeOffset.UtcNow;
+        session.SessionStatus = HuddleSessionStatus.Completed;
+        session.CompletedAtUtc = completedAtUtc;
+        foreach (HuddleActivity activity in topic.Phases.Single().Activities)
+        {
+            session.ActivityProgress.Add(new UserHuddleActivityProgress
+            {
+                HuddleActivity = activity,
+                IsCompleted = true,
+                CompletedAtUtc = completedAtUtc
+            });
+        }
+        db.UserHuddleSessions.Add(session);
+        await db.SaveChangesAsync();
+
+        HuddleSessionResponse response = await new SetHuddleActivityCompletionCommandHandler(
+                db,
+                new TestCurrentUserService("user-1"))
+            .Handle(new SetHuddleActivityCompletionCommand(
+                topic.ExternalId,
+                "activity-1",
+                false,
+                Convert.ToBase64String(session.RowVersion)), default);
+
+        Assert.Equal(HuddleSessionStatus.InProgress.ToString(), response.SessionStatus);
+        Assert.Null(response.CompletedAtUtc);
+        Assert.Equal(1, response.CompletedActivityCount);
+        Assert.True(response.CanContinue);
+        Assert.False(response.Activities.Single(item => item.ActivityExternalId == "activity-1").IsCompleted);
+        Assert.Equal(HuddleSessionStatus.InProgress, session.SessionStatus);
+        Assert.Null(session.CompletedAtUtc);
+    }
+
+    [Fact]
+    public async Task ActivityCompletion_ShouldRemainIdempotentWhenCompletedActivityIsMarkedCompleteAgain()
+    {
+        await using ApplicationDbContext db = CreateContext();
+        HuddleTopic topic = await SeedCatalog(db);
+        UserHuddleSession session = CreateSession(topic, "user-1");
+        DateTimeOffset completedAtUtc = DateTimeOffset.UtcNow;
+        session.SessionStatus = HuddleSessionStatus.Completed;
+        session.CompletedAtUtc = completedAtUtc;
+        foreach (HuddleActivity activity in topic.Phases.Single().Activities)
+        {
+            session.ActivityProgress.Add(new UserHuddleActivityProgress
+            {
+                HuddleActivity = activity,
+                IsCompleted = true,
+                CompletedAtUtc = completedAtUtc
+            });
+        }
+        db.UserHuddleSessions.Add(session);
+        await db.SaveChangesAsync();
+
+        HuddleSessionResponse response = await new SetHuddleActivityCompletionCommandHandler(
+                db,
+                new TestCurrentUserService("user-1"))
+            .Handle(new SetHuddleActivityCompletionCommand(
+                topic.ExternalId,
+                "activity-1",
+                true,
+                Convert.ToBase64String(session.RowVersion)), default);
+
+        Assert.Equal(HuddleSessionStatus.Completed.ToString(), response.SessionStatus);
+        Assert.Equal(completedAtUtc, response.CompletedAtUtc);
+        Assert.Equal(2, response.CompletedActivityCount);
+    }
+
+    [Fact]
     public async Task IncompleteSessions_ShouldPreserveValidProgressReportRemovedAndLeaveNewActivitiesIncomplete()
     {
         await using ApplicationDbContext db = CreateContext();

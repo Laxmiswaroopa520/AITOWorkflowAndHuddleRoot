@@ -1,5 +1,6 @@
 using AitoWorkflowAndHuddleGenerator.Application.Common.Exceptions;
 using FluentValidation;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,6 +46,16 @@ public sealed class ExceptionHandlingMiddleware
                 context,
                 exception);
         }
+        catch (OperationCanceledException exception)
+            when (context.RequestAborted.IsCancellationRequested)
+        {
+            LogClientCancellation(context, exception);
+        }
+        catch (SqlException exception)
+            when (context.RequestAborted.IsCancellationRequested)
+        {
+            LogClientCancellation(context, exception);
+        }
         catch (Exception exception)
         {
             (int statusCode, string title) =
@@ -76,6 +87,16 @@ public sealed class ExceptionHandlingMiddleware
                 statusCode,
                 title);
         }
+    }
+
+    private void LogClientCancellation(
+        HttpContext context,
+        Exception exception)
+    {
+        logger.LogDebug(
+            exception,
+            ApiProblemMessages.ClientCancellationLog,
+            context.TraceIdentifier);
     }
 
     private static async Task

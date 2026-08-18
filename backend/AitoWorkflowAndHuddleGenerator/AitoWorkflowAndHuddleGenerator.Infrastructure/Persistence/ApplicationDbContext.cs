@@ -67,7 +67,8 @@ public sealed class ApplicationDbContext
     public DbSet<UserHuddlePlanItem> UserHuddlePlanItems => Set<UserHuddlePlanItem>();
     public DbSet<UserHuddleSession> UserHuddleSessions => Set<UserHuddleSession>();
     public DbSet<UserHuddleActivityProgress> UserHuddleActivityProgress => Set<UserHuddleActivityProgress>();
-    public DbSet<HuddleVote> HuddleVotes => Set<HuddleVote>();
+      public DbSet<HuddleVote> HuddleVotes => Set<HuddleVote>();
+      public DbSet<UserHuddleLaunchPlan> UserHuddleLaunchPlans => Set<UserHuddleLaunchPlan>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

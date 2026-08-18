@@ -21,7 +21,7 @@ public sealed class HuddlePlanApiTests
         HuddlePlanResponse initial = await query.Handle(new GetMyHuddlePlanQuery("role-1"), default);
 
         SaveHuddlePlanItemRequest[] reversed = initial.Items.Reverse()
-            .Select((item, index) => new SaveHuddlePlanItemRequest(6 + index, item.Huddle.ExternalId)).ToArray();
+            .Select((item, index) => new SaveHuddlePlanItemRequest(2 + index, item.Huddle.ExternalId)).ToArray();
         HuddlePlanResponse saved = await new SaveHuddlePlanCommandHandler(db, user)
             .Handle(new SaveHuddlePlanCommand("role-1", null, reversed), default);
 
@@ -44,7 +44,7 @@ public sealed class HuddlePlanApiTests
         HuddlePlanResponse initial = await new GetMyHuddlePlanQueryHandler(db, new TestCurrentUserService("user-1"))
             .Handle(new GetMyHuddlePlanQuery("role-1"), default);
         SaveHuddlePlanItemRequest[] reversed = initial.Items.Reverse()
-            .Select((item, index) => new SaveHuddlePlanItemRequest(6 + index, item.Huddle.ExternalId)).ToArray();
+            .Select((item, index) => new SaveHuddlePlanItemRequest(2 + index, item.Huddle.ExternalId)).ToArray();
         await new SaveHuddlePlanCommandHandler(db, new TestCurrentUserService("user-1"))
             .Handle(new SaveHuddlePlanCommand("role-1", null, reversed), default);
 
@@ -61,7 +61,7 @@ public sealed class HuddlePlanApiTests
         for (int index = 0; index < 7; index++)
         {
             HuddleTopic topic = new() { ExternalId = $"topic-{index + 1}", Name = $"Topic {index + 1}", Type = "Evergreen", PublicationStatus = "Published" };
-            db.HuddleRolePathItems.Add(new HuddleRolePathItem { HuddleSegmentRole = segmentRole, WeekPosition = 6 + index, HuddleTopic = topic });
+            db.HuddleRolePathItems.Add(new HuddleRolePathItem { HuddleSegmentRole = segmentRole, WeekPosition = 2 + index, HuddleTopic = topic });
         }
         await db.SaveChangesAsync();
     }
