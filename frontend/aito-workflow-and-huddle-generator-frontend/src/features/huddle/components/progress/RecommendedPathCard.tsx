@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Bot, CalendarDays, Clock } from "lucide-react";
+import { Bot, CalendarDays, Clock, ListChecks, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mapHuddleCatalogItemToCard } from "../../mappers";
 import type { HuddleCatalogItemResponse, HuddleVoteResponse } from "../../types";
@@ -13,6 +13,8 @@ interface RecommendedPathCardProps {
   vote?: HuddleVoteResponse;
   votePending: boolean;
   managementMenu: ReactNode;
+  /** Lifts this card's action layer above the sibling cards while its menu is open. */
+  managementMenuOpen?: boolean;
   onSelect: (externalId: string) => void;
   onVote: (externalId: string, value: -1 | 1 | null) => void;
 }
@@ -29,6 +31,7 @@ export function RecommendedPathCard({
   vote,
   votePending,
   managementMenu,
+  managementMenuOpen = false,
   onSelect,
   onVote,
 }: RecommendedPathCardProps) {
@@ -38,6 +41,7 @@ export function RecommendedPathCard({
     <article
       className={cn(
         "group relative grid grid-cols-[58px_minmax(0,1fr)] gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all duration-200 before:absolute before:-bottom-4 before:left-[39px] before:top-8 before:w-px before:bg-[#C7E0F4] last:before:hidden",
+        managementMenuOpen && "z-50",
         selected
           ? "border-[#0F6CBD] bg-[#0F6CBD]/[0.035] ring-2 ring-[#0F6CBD]/15"
           : "border-[#E1DFDD] hover:-translate-y-0.5 hover:border-[#0F6CBD]/60 hover:bg-[#F5F9FF] hover:shadow-md",
@@ -75,7 +79,14 @@ export function RecommendedPathCard({
             <Clock className="h-3.5 w-3.5" />
             {card.durationMinutes === null ? "Duration unavailable" : `${card.durationMinutes} minutes`}
           </span>
-          <span>{huddle.roles.map((role) => role.abbreviation || role.name).join(", ") || "Audience unavailable"}</span>
+          <span className="flex items-center gap-1">
+            <ListChecks className="h-3.5 w-3.5" />{card.activityCount} {card.activityCount === 1 ? "activity" : "activities"}
+          </span>
+          {card.mcemStageLabel && (
+            <span className="flex items-center gap-1">
+              <Target className="h-3.5 w-3.5" />{card.mcemStageLabel}
+            </span>
+          )}
         </span>
 
         <span className="mt-3 block rounded-lg border border-[#C7E0F4] bg-[#F5F9FF] px-3 py-2.5">

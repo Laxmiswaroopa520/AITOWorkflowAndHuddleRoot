@@ -102,10 +102,10 @@ export function createApiClient(
     path: string,
     init: RequestInit,
   ): Promise<TResponse> {
-    const accessToken = await getAccessToken();
+    const accessToken = await getAccessToken();         //gets the logged-in user's access token
 
     const headers = new Headers(init.headers);
-
+    //adds the token to every API request to the backend, so the backend can verify the user's identity and permissions
     headers.set(
       "Authorization",
       `Bearer ${accessToken}`,
@@ -154,7 +154,7 @@ export function createApiClient(
 
     return await response.json() as TResponse;
   }
-
+//provides all common http methods
   return {
     get: <TResponse>(
       path: string,

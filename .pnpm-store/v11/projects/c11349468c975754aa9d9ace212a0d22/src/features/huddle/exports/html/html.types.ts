@@ -12,6 +12,14 @@ export interface HuddleHtmlExportOptions {
 
 export interface LearningPlanHtmlExportOptions {
   fileName?: string;
+  /** Human-readable audience role shown instead of the external ID. */
+  roleName?: string | null;
+}
+
+export interface CustomLearningPlanHtmlExportOptions {
+  fileName?: string;
+  /** Persona label shown in the exported plan header. */
+  personaLabel?: string | null;
 }
 
 export type HuddleHtmlInput = HuddlePresentationModel;

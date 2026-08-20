@@ -17,7 +17,6 @@ import {
   Mail,
   MessageSquareText,
   List,
-  MoreHorizontal,
   RotateCcw,
   Send,
   Sparkles,
@@ -37,12 +36,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   emptyLaunchConfiguration as DEFAULT_LAUNCH_CONFIG,
   launchMilestones as FRONTIER_LAUNCH_MILESTONES,
   formatLaunchDate,
@@ -56,7 +49,7 @@ import type {
   LaunchTaskStatus,
 } from '../types/launchPlanner.types';
 import { exportLaunchPackage as downloadLaunchPackage } from '../exports/launch-package/exportLaunchPackage';
-import { useMyHuddleLaunchPlan, useResetHuddleLaunchPlan, useSaveHuddleLaunchPlan } from '../hooks';
+import { useCreateHuddleLaunchEmailDraft, useMyHuddleLaunchPlan, useResetHuddleLaunchPlan, useSaveHuddleLaunchPlan } from '../hooks';
 import { cn } from '@/lib/utils';
 
 const defaultTaskState = () => Object.fromEntries(
@@ -123,8 +116,39 @@ function buildCalendarMonths(configuration: LaunchConfiguration) {
 }
 
 function outlookDraftUrl(subject: string, body: string) {
-  const params = new URLSearchParams({ subject, body });
-  return `https://outlook.office.com/mail/deeplink/compose?${params.toString()}`;
+  // Not URLSearchParams: it uses form encoding, which turns spaces into "+". The Outlook
+  // compose deeplink does not decode "+" back to a space, so the draft arrives full of
+  // literal plus signs. encodeURIComponent emits %20, which Outlook decodes correctly.
+  const query = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `https://outlook.office.com/mail/deeplink/compose?${query}`;
+}
+
+type LaunchFieldErrors = Partial<Record<keyof LaunchConfiguration, string>>;
+
+const REQUIRED_LAUNCH_FIELDS: { field: keyof LaunchConfiguration; label: string }[] = [
+  { field: 'teamName', label: 'Organization / team name' },
+  { field: 'cohortName', label: 'Cohort name' },
+  { field: 'startDate', label: 'Huddle start date' },
+  { field: 'sponsorName', label: 'Sponsor name' },
+  { field: 'programLead', label: 'Program owner / lead' },
+];
+
+/**
+ * Mirrors SaveHuddleLaunchPlanCommandValidator on the API. These must stay in step:
+ * the API rejects the whole save when any required field is empty, and a status or
+ * checklist change re-sends the entire configuration, so a gap here silently loses work.
+ */
+function validateLaunchConfiguration(configuration: LaunchConfiguration): LaunchFieldErrors {
+  const errors: LaunchFieldErrors = {};
+  REQUIRED_LAUNCH_FIELDS.forEach(({ field, label }) => {
+    if (!configuration[field]?.trim()) errors[field] = `${label} is required.`;
+  });
+  // Both values are yyyy-mm-dd from <input type="date">, so a string compare is
+  // ordering-correct and avoids the timezone drift of parsing to Date.
+  if (configuration.startDate && configuration.endDate && configuration.endDate < configuration.startDate) {
+    errors.endDate = 'Program end date must be on or after the Huddle start date.';
+  }
+  return errors;
 }
 
 export function LaunchPlannerPage() {
@@ -132,6 +156,7 @@ export function LaunchPlannerPage() {
   const launchPlanQuery = useMyHuddleLaunchPlan();
   const saveLaunchPlan = useSaveHuddleLaunchPlan();
   const resetLaunchPlan = useResetHuddleLaunchPlan();
+  const createEmailDraft = useCreateHuddleLaunchEmailDraft();
   const [configurationDraft, setConfigurationDraft] = useState<LaunchConfiguration | null>(null);
   const [taskStateDraft, setTaskStateDraft] = useState<Record<string, LaunchTaskState> | null>(null);
   const [generatedDraft, setGeneratedDraft] = useState<boolean | null>(null);
@@ -140,6 +165,9 @@ export function LaunchPlannerPage() {
   const [planView, setPlanView] = useState<'timeline' | 'calendar'>('timeline');
   const [activeCalendarMonthIndex, setActiveCalendarMonthIndex] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [feedbackTone, setFeedbackTone] = useState<'info' | 'error'>('info');
 
   const persistedConfiguration: LaunchConfiguration | null = launchPlanQuery.data
     ? {
@@ -165,9 +193,16 @@ export function LaunchPlannerPage() {
   const configuration = configurationDraft ?? persistedConfiguration ?? DEFAULT_LAUNCH_CONFIG;
   const taskState = taskStateDraft ?? persistedTaskState ?? defaultTaskState();
   const generated = generatedDraft ?? Boolean(launchPlanQuery.data);
-  const rowVersion = saveLaunchPlan.data?.rowVersion ?? launchPlanQuery.data?.rowVersion ?? null;
+  const rowVersion = launchPlanQuery.data?.rowVersion ?? null;
 
   const persist = (nextConfiguration: LaunchConfiguration, nextState: Record<string, LaunchTaskState>) => {
+    // Status and checklist changes re-send the whole configuration, so without this
+    // guard each of those calls fails validation on the API and the change is lost.
+    if (Object.keys(validateLaunchConfiguration(nextConfiguration)).length > 0) {
+      setShowValidation(true);
+      notify('Complete the required launch details before saving changes.', 'error');
+      return;
+    }
     saveLaunchPlan.mutate({
       ...nextConfiguration,
       taskStateJson: JSON.stringify(nextState),
@@ -197,22 +232,28 @@ export function LaunchPlannerPage() {
   const safeCalendarMonthIndex = Math.min(activeCalendarMonthIndex, Math.max(calendarMonths.length - 1, 0));
   const activeCalendarMonth = calendarMonths[safeCalendarMonthIndex] ?? calendarMonths[0];
 
+  const notify = (message: string, tone: 'info' | 'error' = 'info') => {
+    setFeedback(message);
+    setFeedbackTone(tone);
+  };
+
+  const validationErrors = validateLaunchConfiguration(configuration);
+  const fieldError = (field: keyof LaunchConfiguration) => (showValidation ? validationErrors[field] : undefined);
+
   const updateConfig = (field: keyof LaunchConfiguration, value: string) => {
     setConfigurationDraft({ ...configuration, [field]: value });
   };
 
   const generatePlan = () => {
-    if (!configuration.startDate) {
-      setFeedback('Select a Huddle start date to generate the launch plan.');
+    if (Object.keys(validationErrors).length > 0) {
+      setShowValidation(true);
+      notify('Complete the required launch details before generating the plan.', 'error');
       return;
     }
-    if (!configuration.teamName.trim()) {
-      setFeedback('Enter the organization or team name.');
-      return;
-    }
+    setShowValidation(false);
     setGeneratedDraft(true);
     persist(configuration, taskState);
-    setFeedback('Launch plan generated.');
+    notify('Launch plan generated.');
   };
 
   const setStatus = (milestoneId: string, status: LaunchTaskStatus) => {
@@ -242,22 +283,40 @@ export function LaunchPlannerPage() {
     setSelectedTemplateId(milestone.templates[0]?.id ?? '');
   };
 
+  /**
+   * Creates the branded draft (banner embedded) through Graph and opens it. Falls back to the
+   * plain-text compose deeplink when Graph is unavailable, so the button always does something.
+   */
+  const openOutlookDraft = async (subject: string, body: string) => {
+    notify('Preparing your Outlook draft...');
+    try {
+      const draft = await createEmailDraft.mutateAsync({ subject, bodyText: body });
+      window.open(draft.webLink, '_blank', 'noopener,noreferrer');
+      notify('Branded Outlook draft created. Add recipients and send.');
+    } catch {
+      window.open(outlookDraftUrl(subject, body), '_blank', 'noopener,noreferrer');
+      notify('Opened a plain-text draft. The branded version needs Outlook access to be enabled.', 'error');
+    }
+  };
+
   const resetPlanner = () => {
+    setResetConfirmOpen(false);
     if (launchPlanQuery.data) resetLaunchPlan.mutate();
+    saveLaunchPlan.reset();
     setConfigurationDraft(DEFAULT_LAUNCH_CONFIG);
     setTaskStateDraft(defaultTaskState());
     setGeneratedDraft(false);
     setSelectedMilestone(null);
-    setFeedback('Launch Planner reset.');
+    notify('Launch Planner reset.');
   };
 
   const exportPackage = () => {
     if (!configuration.startDate || !generated) {
-      setFeedback('Generate the launch plan before exporting the package.');
+      notify('Generate the launch plan before exporting the package.', 'error');
       return;
     }
     downloadLaunchPackage(configuration, FRONTIER_LAUNCH_MILESTONES, taskState);
-    setFeedback('Launch package exported. Open the HTML file to review or print to PDF.');
+    notify('Launch package exported. Open the HTML file to review or print to PDF.');
   };
 
   const selectedTemplate = selectedMilestone?.templates.find((template) => template.id === selectedTemplateId) ?? selectedMilestone?.templates[0];
@@ -271,7 +330,7 @@ export function LaunchPlannerPage() {
           </div>
         )}
         {feedback && (
-          <div role="status" className="rounded-xl border border-[#92D3C6] bg-[#E3F1ED] px-4 py-3 text-sm text-[#184448]">{feedback}</div>
+          <div role="status" className={cn('rounded-xl border px-4 py-3 text-sm', feedbackTone === 'error' ? 'border-[#F0BFBA] bg-[#FDF3F2] text-[#B42318]' : 'border-[#92D3C6] bg-[#E3F1ED] text-[#184448]')}>{feedback}</div>
         )}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-start gap-3">
@@ -305,18 +364,6 @@ export function LaunchPlannerPage() {
               <Download className="mr-2 h-4 w-4" />
               Export launch package
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="border-[#CFDEE8] bg-white" aria-label="Launch Planner actions">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={resetPlanner}>
-                  <RotateCcw className="mr-2 h-4 w-4" /> Reset planner
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
@@ -335,29 +382,35 @@ export function LaunchPlannerPage() {
               <CardContent className="grid gap-5 p-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="teamName">Organization / team name <span className="text-[#B42318]">*</span></Label>
-                  <Input id="teamName" value={configuration.teamName} onChange={(event) => updateConfig('teamName', event.target.value)} placeholder="e.g., US Enterprise Sales" className="h-11" />
+                  <Input id="teamName" value={configuration.teamName} onChange={(event) => updateConfig('teamName', event.target.value)} placeholder="e.g., US Enterprise Sales" aria-invalid={Boolean(fieldError('teamName'))} className={cn('h-11', fieldError('teamName') && 'border-[#B42318] focus-visible:ring-[#B42318]/30')} />
+                  {fieldError('teamName') && <p className="text-xs text-[#B42318]">{fieldError('teamName')}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cohortName">Cohort name</Label>
-                  <Input id="cohortName" value={configuration.cohortName} onChange={(event) => updateConfig('cohortName', event.target.value)} placeholder="e.g., FY27 Cohort 1" className="h-11" />
+                  <Label htmlFor="cohortName">Cohort name <span className="text-[#B42318]">*</span></Label>
+                  <Input id="cohortName" value={configuration.cohortName} onChange={(event) => updateConfig('cohortName', event.target.value)} placeholder="e.g., FY27 Cohort 1" aria-invalid={Boolean(fieldError('cohortName'))} className={cn('h-11', fieldError('cohortName') && 'border-[#B42318] focus-visible:ring-[#B42318]/30')} />
+                  {fieldError('cohortName') && <p className="text-xs text-[#B42318]">{fieldError('cohortName')}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Huddle start date <span className="text-[#B42318]">*</span></Label>
-                  <Input id="startDate" type="date" value={configuration.startDate} onChange={(event) => updateConfig('startDate', event.target.value)} className="h-11" />
+                  <Input id="startDate" type="date" value={configuration.startDate} onChange={(event) => updateConfig('startDate', event.target.value)} aria-invalid={Boolean(fieldError('startDate'))} className={cn('h-11', fieldError('startDate') && 'border-[#B42318] focus-visible:ring-[#B42318]/30')} />
+                  {fieldError('startDate') && <p className="text-xs text-[#B42318]">{fieldError('startDate')}</p>}
                   <p className="text-xs text-[#73869A]">All launch milestones are calculated relative to this date.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endDate">Program end date <span className="font-normal text-[#73869A]">(optional)</span></Label>
-                  <Input id="endDate" type="date" value={configuration.endDate ?? ''} onChange={(event) => updateConfig('endDate', event.target.value)} className="h-11" />
+                  <Input id="endDate" type="date" min={configuration.startDate || undefined} value={configuration.endDate ?? ''} onChange={(event) => updateConfig('endDate', event.target.value)} aria-invalid={Boolean(fieldError('endDate'))} className={cn('h-11', fieldError('endDate') && 'border-[#B42318] focus-visible:ring-[#B42318]/30')} />
+                  {fieldError('endDate') && <p className="text-xs text-[#B42318]">{fieldError('endDate')}</p>}
                   <p className="text-xs text-[#73869A]">If blank, completion defaults to T+8 weeks.</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sponsorName">Sponsor name</Label>
-                  <Input id="sponsorName" value={configuration.sponsorName} onChange={(event) => updateConfig('sponsorName', event.target.value)} placeholder="Sponsor name" className="h-11" />
+                  <Label htmlFor="sponsorName">Sponsor name <span className="text-[#B42318]">*</span></Label>
+                  <Input id="sponsorName" value={configuration.sponsorName} onChange={(event) => updateConfig('sponsorName', event.target.value)} placeholder="Sponsor name" aria-invalid={Boolean(fieldError('sponsorName'))} className={cn('h-11', fieldError('sponsorName') && 'border-[#B42318] focus-visible:ring-[#B42318]/30')} />
+                  {fieldError('sponsorName') && <p className="text-xs text-[#B42318]">{fieldError('sponsorName')}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="programLead">Program owner / lead</Label>
-                  <Input id="programLead" value={configuration.programLead} onChange={(event) => updateConfig('programLead', event.target.value)} placeholder="Program lead name" className="h-11" />
+                  <Label htmlFor="programLead">Program owner / lead <span className="text-[#B42318]">*</span></Label>
+                  <Input id="programLead" value={configuration.programLead} onChange={(event) => updateConfig('programLead', event.target.value)} placeholder="Program lead name" aria-invalid={Boolean(fieldError('programLead'))} className={cn('h-11', fieldError('programLead') && 'border-[#B42318] focus-visible:ring-[#B42318]/30')} />
+                  {fieldError('programLead') && <p className="text-xs text-[#B42318]">{fieldError('programLead')}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="managers">Manager(s)</Label>
@@ -417,10 +470,13 @@ export function LaunchPlannerPage() {
                   </div>
                   <div className="flex min-w-[280px] items-center gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="mb-1.5 flex items-center justify-between text-xs"><span className="font-medium text-[#5B6E82]">Launch readiness</span><span className="font-semibold text-[#1E3252]">{progress}%</span></div>
+                      <div className="mb-1.5 flex items-center justify-between gap-2 text-xs"><span className="font-medium text-[#5B6E82]">Launch readiness</span><span className="font-semibold text-[#1E3252]">{progress}%</span></div>
                       <Progress value={progress} className="h-2" />
                     </div>
                     <Button variant="outline" className="border-[#CFDEE8] bg-white" onClick={() => setGeneratedDraft(false)}>Edit setup</Button>
+                    <Button variant="outline" className="border-[#F0BFBA] bg-white text-[#B42318] hover:bg-[#FDF3F2] hover:text-[#8F1D14]" onClick={() => setResetConfirmOpen(true)}>
+                      <RotateCcw className="mr-2 h-4 w-4" />Reset planner
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -697,7 +753,7 @@ export function LaunchPlannerPage() {
                   <div className="min-w-0 bg-[#F8FBFD] p-6 pb-8">
                     {selectedTemplate ? (
                       <div className="rounded-2xl border border-[#D7E4EC] bg-white shadow-[0_5px_20px_rgba(42,68,111,0.05)]">
-                        <div className="flex min-w-0 items-start justify-between gap-4 border-b border-[#E3EAF0] px-5 py-4"><div className="min-w-0 flex-1"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#0A6BBA]">{selectedTemplate.type}</p><h3 className="mt-0.5 font-semibold text-[#1E3252]">{selectedTemplate.title}</h3></div><Button variant="outline" size="sm" className="shrink-0 border-[#0A6BBA] text-[#0A6BBA]" onClick={async () => { const content = `${selectedTemplate.subject ? `Subject: ${personalizeTemplate(selectedTemplate.subject, configuration)}\n\n` : ''}${personalizeTemplate(selectedTemplate.body, configuration)}`; await navigator.clipboard.writeText(content); setFeedback('Template copied.'); }}><Copy className="mr-2 h-3.5 w-3.5" />Copy</Button></div>
+                        <div className="flex min-w-0 items-start justify-between gap-4 border-b border-[#E3EAF0] px-5 py-4"><div className="min-w-0 flex-1"><p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#0A6BBA]">{selectedTemplate.type}</p><h3 className="mt-0.5 font-semibold text-[#1E3252]">{selectedTemplate.title}</h3></div><Button variant="outline" size="sm" className="shrink-0 border-[#0A6BBA] text-[#0A6BBA]" onClick={async () => { const content = `${selectedTemplate.subject ? `Subject: ${personalizeTemplate(selectedTemplate.subject, configuration)}\n\n` : ''}${personalizeTemplate(selectedTemplate.body, configuration)}`; await navigator.clipboard.writeText(content); notify('Template copied.'); }}><Copy className="mr-2 h-3.5 w-3.5" />Copy</Button></div>
                         <div className="space-y-4 p-5">
                           {selectedTemplate.subject && <div><p className="mb-1.5 text-xs font-semibold text-[#66798C]">Subject</p><div className="rounded-lg border border-[#DCE6ED] bg-[#F8FBFD] px-4 py-3 text-sm font-medium text-[#1E3252]">{personalizeTemplate(selectedTemplate.subject, configuration)}</div></div>}
                           <div>
@@ -712,8 +768,7 @@ export function LaunchPlannerPage() {
                                   onClick={() => {
                                     const subject = personalizeTemplate(selectedTemplate.subject ?? selectedTemplate.title, configuration);
                                     const body = personalizeTemplate(selectedTemplate.body, configuration);
-                                    window.open(outlookDraftUrl(subject, body), '_blank', 'noopener,noreferrer');
-                                    setFeedback('Opening a personalized Outlook draft.');
+                                    void openOutlookDraft(subject, body);
                                   }}
                                 >
                                   <Send className="mr-2 h-3.5 w-3.5" /> Open Outlook draft
@@ -750,6 +805,23 @@ export function LaunchPlannerPage() {
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-[#1E3252]">Reset launch planner?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm leading-6 text-[#66798C]">
+            This permanently deletes the saved launch plan, including every milestone status and checklist tick. The launch details you entered are cleared and cannot be recovered.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setResetConfirmOpen(false)}>Cancel</Button>
+            <Button className="bg-[#B42318] text-white hover:bg-[#8F1D14]" disabled={resetLaunchPlan.isPending} onClick={resetPlanner}>
+              {resetLaunchPlan.isPending ? 'Resetting...' : 'Reset planner'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

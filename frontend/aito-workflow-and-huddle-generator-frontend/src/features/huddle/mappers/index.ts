@@ -1,4 +1,5 @@
 export {
+  formatMcemStageLabel,
   mapHuddleCatalogItemToCard,
   mapRecommendedPath,
 } from "./huddleMappers";

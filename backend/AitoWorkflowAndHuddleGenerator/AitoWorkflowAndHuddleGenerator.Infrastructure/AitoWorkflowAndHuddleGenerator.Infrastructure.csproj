@@ -24,6 +24,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Banner shipped inside the assembly so the launch email embeds it inline, with no
+         file-copy or hosting dependency at runtime. Taken byte-for-byte from the approved
+         Frontier Accelerator email template. -->
+    <EmbeddedResource Include="Mail\Assets\frontier-huddle-banner.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Application\AitoWorkflowAndHuddleGenerator.Application.csproj" />
     <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Domain\AitoWorkflowAndHuddleGenerator.Domain.csproj" />
   </ItemGroup>

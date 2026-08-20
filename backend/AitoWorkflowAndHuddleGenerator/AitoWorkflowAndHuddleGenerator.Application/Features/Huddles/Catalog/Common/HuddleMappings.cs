@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 using AitoWorkflowAndHuddleGenerator.Domain.Entities;
 using AitoWorkflowAndHuddleGenerator.Domain.Enums;
@@ -17,7 +17,7 @@ internal static class HuddleMappings                //static class means no need
     /// <summary>
     /// Maps a Huddle topic to the compact catalog-card response.
     /// </summary>
-    public static HuddleCatalogItemResponse ToCatalogItem(HuddleTopic topic)            //Small summary card information
+    public static HuddleCatalogItemResponse ToCatalogItem(HuddleTopic topic, IReadOnlyDictionary<int, int> activityCounts)            //Small summary card information
     {
         return new HuddleCatalogItemResponse(
             topic.ExternalId,
@@ -32,7 +32,11 @@ internal static class HuddleMappings                //static class means no need
             topic.DesiredOutcome,
             topic.TopicRoles.OrderBy(x => x.Role.SortOrder).Select(ToRole).ToList(),
             topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Primary).OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList(),
-            topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Secondary).OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList());
+            topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Secondary).OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList(),
+            topic.McemStages.OrderBy(x => x.HuddleMcemStage.ExternalId).Select(x => new HuddleMcemStageResponse(
+                x.HuddleMcemStage.ExternalId, x.HuddleMcemStage.Name,
+                x.HuddleMcemStage.Description, x.DisplayOrder)).ToList(),
+            activityCounts.TryGetValue(topic.Id, out int activityCount) ? activityCount : 0);
     }
 
     /// <summary>
@@ -88,7 +92,7 @@ internal static class HuddleMappings                //static class means no need
     }
 
     private static HuddleRoleResponse ToRole(HuddleTopicRole mapping) =>
-        new(mapping.Role.ExternalId, mapping.Role.Name, mapping.Role.Abbreviation, mapping.Role.Segment);
+        new(mapping.Role.ExternalId, mapping.Role.Name, mapping.Role.Abbreviation, mapping.Role.Segment, mapping.Role.Description);
 
     private static HuddleAgentResponse ToAgent(HuddleTopicAgent mapping) =>
         ToAgent(mapping.HuddleAgent, mapping.UsageType.ToString(), mapping.DisplayLabel,

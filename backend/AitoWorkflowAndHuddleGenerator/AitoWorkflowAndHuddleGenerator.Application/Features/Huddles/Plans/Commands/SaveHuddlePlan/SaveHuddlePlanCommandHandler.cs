@@ -1,6 +1,7 @@
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Identity;
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Persistence;
 using AitoWorkflowAndHuddleGenerator.Application.Common.Exceptions;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Common;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Common;
 using AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 using AitoWorkflowAndHuddleGenerator.Domain.Entities;
@@ -55,7 +56,7 @@ public sealed class SaveHuddlePlanCommandHandler(
                 Id = Guid.NewGuid(),
                 OwnerObjectId = ownerObjectId,
                 HuddleSegmentRoleId = segmentRole.Id,
-                Name = $"{segmentRole.DisplayName} Recommended Path",
+                Name = $"{segmentRole.DisplayName} Role Path",
                 CreatedAtUtc = DateTimeOffset.UtcNow
             };
             dbContext.UserHuddlePlans.Add(plan);
@@ -95,8 +96,15 @@ public sealed class SaveHuddlePlanCommandHandler(
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.HuddleFocusArea)
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.TopicRoles).ThenInclude(item => item.Role)
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.TopicAgents).ThenInclude(item => item.HuddleAgent)
+            .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.McemStages).ThenInclude(item => item.HuddleMcemStage)
             .SingleAsync(item => item.Id == plan.Id && item.OwnerObjectId == ownerObjectId, cancellationToken);
-        return HuddlePlanMappings.ToResponse(roleExternalId, savedPlan, recommended);
+        IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
+            dbContext,
+            recommended.Select(item => item.Id)
+                .Concat(savedPlan.Items.Select(item => item.HuddleTopicId))
+                .Distinct().ToList(),
+            cancellationToken);
+        return HuddlePlanMappings.ToResponse(roleExternalId, savedPlan, recommended, activityCounts);
     }
 
     private async Task<List<HuddleTopic>> LoadRecommendedTopics(int segmentRoleId, CancellationToken cancellationToken) =>
@@ -106,6 +114,7 @@ public sealed class SaveHuddlePlanCommandHandler(
             .Include(item => item.HuddleTopic).ThenInclude(item => item.HuddleFocusArea)
             .Include(item => item.HuddleTopic).ThenInclude(item => item.TopicRoles).ThenInclude(item => item.Role)
             .Include(item => item.HuddleTopic).ThenInclude(item => item.TopicAgents).ThenInclude(item => item.HuddleAgent)
+            .Include(item => item.HuddleTopic).ThenInclude(item => item.McemStages).ThenInclude(item => item.HuddleMcemStage)
             .ToListAsync(cancellationToken))
         .GroupBy(item => item.HuddleTopicId).Select(group => group.First().HuddleTopic).Take(7).ToList();
 }

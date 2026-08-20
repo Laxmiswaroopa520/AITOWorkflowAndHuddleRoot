@@ -1,71 +1,302 @@
-import type { HuddlePresentationAgent, HuddlePresentationModel, HuddlePresentationResource } from "../../types";
+import type { HuddlePresentationActivity, HuddlePresentationAgent, HuddlePresentationModel, HuddlePresentationPhase, HuddlePresentationResource } from "../../types";
 import { downloadHtmlFile, createHtmlDocument } from "./htmlTemplate";
 import { escapeHtml, safeExternalUrl, safeHtmlFileName } from "./htmlSanitizer";
 import type { HtmlExportFile, HuddleHtmlExportOptions } from "./html.types";
-import { huddleHtmlInteractions } from "./htmlInteractions";
+import { huddleGuideInteractions } from "./huddleGuideInteractions";
+import { huddleGuideStyles } from "./huddleGuideStyles";
+import { agentArtwork, frontierAcceleratorLogo } from "./huddleGuideAssets";
 
 const text = (value: string | number) => escapeHtml(value);
-const unavailable = '<p class="empty-state">Content unavailable</p>';
-const list = (values: readonly string[]) => values.length
-  ? `<ul class="governed-list">${values.map((value) => `<li>${text(value)}</li>`).join("")}</ul>`
-  : unavailable;
-const tags = (values: readonly string[]) => values.length
-  ? `<div class="tag-list">${values.map((value) => `<span class="tag">${text(value)}</span>`).join("")}</div>`
-  : unavailable;
-const field = (label: string, value: string | null, featured = false) => value
-  ? `<div class="field${featured ? " prompt" : ""}"><span class="label">${text(label)}</span><p>${text(value)}</p></div>`
-  : "";
 
-function agentNames(agents: readonly HuddlePresentationAgent[]): string {
-  return tags(agents.map((agent) => agent.name));
+/** Dashed placeholder used wherever the content model has no value yet. */
+const placeholder = (message: string) => `<div class="empty-state">${text(message)}</div>`;
+
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const activityLetter = (index: number) => (index < LETTERS.length ? LETTERS[index] : String(index + 1));
+
+const CHEVRON_SVG = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+const COPY_SVG = '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"></rect><rect x="4" y="4" width="11" height="11" rx="2"></rect></svg>';
+/** Pure-CSS Copilot glyph, used when an agent has no inlined logo. */
+const COPILOT_MARK = '<span class="copilot-mark" aria-hidden="true"><span class="copilot-loop copilot-loop-a"></span><span class="copilot-loop copilot-loop-b"></span></span>';
+
+/**
+ * Copy that belongs to the guide template rather than to any Huddle record. The
+ * reference export renders these identical strings for every Huddle, so they are
+ * layout furniture and not database content. If the content model gains fields for
+ * them, read them from the model here instead.
+ */
+const TEMPLATE = {
+  agenda: [
+    { label: "Overview", minutes: 2 },
+    { label: "Share Your Experience", minutes: 10 },
+    { label: "AI-in-Action (Stages 1-3)", minutes: 15 },
+    { label: "Closing & Next Steps", minutes: 3 },
+  ],
+  flow: [
+    { key: "preparation", title: "Preparation", copy: "Bring a real scenario, share the context and friction, and align on what matters before using AI." },
+    { key: "practice", title: "Explore & Practice", copy: "Use AI on real work, compare approaches, and validate the output together." },
+    { key: "commit", title: "Commit to Action", copy: "Choose one action to try after the Huddle and decide what you will bring back next time." },
+  ],
+  thinkFeelDo: [
+    { label: "THINK", copy: (topic: string) => `See where AI can improve ${topic.toLowerCase()} in your work.` },
+    { label: "FEEL", copy: (_topic: string) => "Build confidence using AI while keeping your judgment in the loop." },
+    { label: "DO", copy: (_topic: string) => "Apply the workflow to a real scenario and leave with one action to try." },
+  ],
+  shareYourExperience: [
+    { title: "What did you try with AI since the last Huddle?", copy: "Share a real task, prompt, workflow, or moment where you used AI." },
+    { title: "What worked well, and what did not?", copy: "Compare useful approaches with outputs, dead ends, or situations where AI was less helpful." },
+    { title: "What did you learn, and where did you run into friction?", copy: "Share a discovery others can reuse and any process, data, tool, access, or confidence blockers you encountered." },
+  ],
+  bringIntoTheConversation: [
+    "One real customer, account, opportunity, or work scenario",
+    "Relevant source context and current signals",
+    "Known constraints, risks, and decision owners",
+    "A clear definition of what a useful outcome looks like",
+  ],
+  closeTheHuddle: [
+    "What is the next best action the team should take after this Huddle?",
+    "What will you bring back to the next Huddle as evidence of progress?",
+  ],
+} as const;
+
+function agentNames(agents: readonly HuddlePresentationAgent[]): string[] {
+  return agents.map((agent) => agent.displayLabel?.trim() || agent.name).filter((name) => name.length > 0);
 }
 
-function discussionGuide(questions: readonly string[]): string {
-  if (!questions.length) return "";
-  return `<section class="discussion-guide"><span class="label">Discussion guide</span>${list(questions)}</section>`;
+function questionList(values: readonly string[], fallback: string): string {
+  if (!values.length) return placeholder(fallback);
+  return `<ul class="question-list">${values.map((value) => `<li>${text(value)}</li>`).join("")}</ul>`;
 }
 
-function resourceMarkup(resources: readonly HuddlePresentationResource[]): string {
-  if (!resources.length) return unavailable;
-  return `<ul class="resource-list">${resources.map((resource) => {
-    const copy = `<strong>${text(resource.title)}</strong>${resource.description ? `<small>${text(resource.description)}</small>` : ""}`;
+function checkList(values: readonly string[]): string {
+  return `<ul class="check-list">${values.map((value) => `<li>${text(value)}</li>`).join("")}</ul>`;
+}
+
+function resourceRows(resources: readonly HuddlePresentationResource[]): string {
+  return `<ul>${resources.map((resource) => {
+    const copy = `<span class="resource-copy"><strong>${text(resource.title)}</strong>${resource.description ? `<small>${text(resource.description)}</small>` : ""}</span><span class="resource-arrow">→</span>`;
     const url = safeExternalUrl(resource.url);
-    return `<li>${url ? `<a class="resource" href="${text(url)}" target="_blank" rel="noopener noreferrer">${copy}<span>→</span></a>` : `<div class="resource">${copy}</div>`}</li>`;
+    const inner = url
+      ? `<a href="${text(url)}" target="_blank" rel="noopener noreferrer">${copy}</a>`
+      : `<span>${copy}</span>`;
+    return `<li class="resource-row">${inner}</li>`;
   }).join("")}</ul>`;
 }
 
-function agentCards(agents: readonly HuddlePresentationAgent[]): string {
-  if (!agents.length) return unavailable;
-  return `<div class="tool-grid">${agents.map((agent) => `<article class="tool-card"><div class="tool-mark">✦</div><div><span class="label">${text(agent.usageType)}</span><h3>${text(agent.displayLabel || agent.name)}</h3>${agent.shortDescription ? `<p>${text(agent.shortDescription)}</p>` : ""}${field("What it is", agent.whatItIs)}${field("What it helps you do", agent.whatItHelpsYouDo)}${field("When to use it", agent.whenToUseIt)}${agent.keyBenefits.length ? `<div class="field"><span class="label">Key benefits</span>${list(agent.keyBenefits)}</div>` : ""}${agent.showAccessLink && safeExternalUrl(agent.accessUrl) ? `<a class="primary-link" href="${text(safeExternalUrl(agent.accessUrl) ?? "")}" target="_blank" rel="noopener noreferrer">${text(agent.accessLinkLabel || "Open agent")} →</a>` : ""}</div></article>`).join("")}</div>`;
+function activityCard(activity: HuddlePresentationActivity, index: number, tier: "featured" | "optional", discussionWhilePracticing: readonly string[]): string {
+  const tools = agentNames(activity.agents);
+  const toolRow = tools.length
+    ? `<div class="activity-tool-row"><div><span class="activity-eyebrow">Use</span><strong>${text(tools.join(" + "))}</strong></div></div>`
+    : "";
+  const promptTarget = tools[0] ?? "your AI tool";
+  const promptBlock = activity.prompt
+    ? `<div class="activity-prompt-block"><div class="prompt-label-row"><span class="prompt-label">Try this prompt in ${text(promptTarget)}.</span><button type="button" class="copy-button scenario-copy-button" data-copy="${text(activity.prompt)}" aria-label="Copy prompt" title="Copy prompt">${COPY_SVG}</button></div><div class="scenario-prompt-scroll">${text(activity.prompt)}</div></div>`
+    : placeholder("No recommended prompt is configured for this activity yet.");
+
+  return `<details class="practice-activity-card" data-practice-tier="${tier}"${index === 0 && tier === "featured" ? " open" : ""}>`
+    + `<summary class="practice-activity-summary"><span class="activity-letter">${text(activityLetter(index))}</span>`
+    + `<span class="practice-activity-heading"><strong>${text(activity.name)}</strong>${activity.description ? `<small>${text(activity.description)}</small>` : ""}</span>`
+    + `<span class="scenario-chevron">${CHEVRON_SVG}</span></summary>`
+    + `<div class="practice-activity-body">${toolRow}${promptBlock}`
+    + `<div class="activity-practice-grid">`
+    + `<section class="activity-detail-card"><h3>How to practice</h3>${activity.requiredContext ? `<ol class="numbered-steps compact-steps"><li><span>1</span><p>${text(activity.requiredContext)}</p></li></ol>` : placeholder("Step-by-step practice guidance is not configured for this activity yet.")}</section>`
+    + `<section class="activity-detail-card"><h3>Discuss while practicing</h3>${questionList(discussionWhilePracticing, "No discussion prompts are configured for this activity yet.")}</section>`
+    + `</div>`
+    + `<div class="activity-output-grid">`
+    + `<section class="activity-output-card expected-output-card"><span class="activity-eyebrow">Expected output</span>${activity.expectedOutput ? `<p>${text(activity.expectedOutput)}</p>` : placeholder("Not configured yet.")}</section>`
+    + `<section class="activity-output-card human-checkpoint-card"><span class="activity-eyebrow">Human checkpoint</span>${activity.humanCheckpoint ? `<p>${text(activity.humanCheckpoint)}</p>` : placeholder("Not configured yet.")}</section>`
+    + `</div>`
+    + `${activity.bestFitJob ? `<section class="activity-output-card"><span class="activity-eyebrow">Best-fit job</span><p>${text(activity.bestFitJob)}</p></section>` : ""}`
+    + `${activity.resources.length ? `<section class="resources-card"><div class="bottom-title blue-title"><span>▤</span><h2>Activity resources</h2></div>${resourceRows(activity.resources)}</section>` : ""}`
+    + `</div></details>`;
+}
+
+function toolCard(agent: HuddlePresentationAgent): string {
+  const label = agent.displayLabel?.trim() || agent.name;
+  const artwork = agentArtwork(agent.name);
+  const brandMark = artwork
+    ? `<img class="${artwork.className}" src="${artwork.source}" alt="${text(label)}">`
+    : COPILOT_MARK;
+  const info = (icon: string, tone: string, heading: string, value: string | null) => value
+    ? `<div class="tool-divider"></div><div class="tool-info"><span class="mini-icon ${tone}">${icon}</span><div><h3>${text(heading)}</h3><p>${text(value)}</p></div></div>`
+    : "";
+  const accessUrl = agent.showAccessLink ? safeExternalUrl(agent.accessUrl) : null;
+
+  return `<section class="tool-card card multi-tool-card">`
+    + `<div class="tool-card-title"><span>✦</span><h2>${text(label)}</h2></div>`
+    + `<div class="tool-grid">`
+    + `<div class="tool-brand">${brandMark}<div><strong>${text(label)}</strong><span>${text(agent.shortDescription?.trim() || "Microsoft AI experience")}</span></div></div>`
+    + info("♙", "green", "What it is", agent.whatItIs)
+    + info("◎", "green", "What it helps you do", agent.whatItHelpsYouDo)
+    + info("▣", "purple", "When to use it", agent.whenToUseIt)
+    + `</div>`
+    + `${agent.keyBenefits.length ? `<ul class="benefit-strip">${agent.keyBenefits.map((benefit) => `<li><span class="check-dot">✓</span>${text(benefit)}</li>`).join("")}</ul>` : ""}`
+    + `${accessUrl ? `<a class="launch-agent-button" href="${text(accessUrl)}" target="_blank" rel="noopener noreferrer">${text(agent.accessLinkLabel?.trim() || `Open ${label}`)} →</a>` : ""}`
+    + `</section>`;
+}
+
+function stageShell(topicName: string, stageNumber: number, title: string, description: string | null, inner: string, badge = ""): string {
+  return `<section class="card stage-shell">`
+    + `<div class="stage-topic-context"><span>TODAY’S TOPIC</span><strong>${text(topicName)}</strong></div>`
+    + `<div class="stage-header"><span class="stage-number">${stageNumber}</span>`
+    + `<div><span class="stage-kicker">AI in Action</span><h2>${text(title)}</h2>${description ? `<p>${text(description)}</p>` : ""}</div>${badge}</div>`
+    + inner
+    + `</section>`;
 }
 
 export function createHuddleHtmlExport(model: HuddlePresentationModel, options: HuddleHtmlExportOptions = {}): HtmlExportFile {
-  const phases = [...model.phases].sort((a, b) => a.displayOrder - b.displayOrder || a.externalId.localeCompare(b.externalId));
-  const activities = phases.flatMap((phase) => [...phase.activities].sort((a, b) => a.displayOrder - b.displayOrder || a.externalId.localeCompare(b.externalId)).map((activity) => ({ activity, phase })));
-  const activityResources = activities.flatMap(({ activity }) => activity.resources);
-  const resources = [...model.resources, ...activityResources]
-    .filter((resource, index, all) => all.findIndex((candidate) => candidate.externalId === resource.externalId) === index)
-    .sort((a, b) => a.displayOrder - b.displayOrder || a.externalId.localeCompare(b.externalId));
-  const allAgents = [...model.agents.primary, ...model.agents.secondary]
+  const phases: readonly HuddlePresentationPhase[] = [...model.phases]
+    .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId));
+
+  // Every activity is listed under Explore & Practice, matching the reference guide,
+  // so no activity is dropped when a Huddle keeps activities on another phase.
+  const allActivities = phases.flatMap((phase) => [...phase.activities]
+    .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId)));
+
+  // The content model has no featured/optional discriminator yet, so every current
+  // activity is a featured activity. Split here once the column exists.
+  const featuredActivities = allActivities;
+  const optionalActivities: readonly HuddlePresentationActivity[] = [];
+
+  const agents = [...model.agents.primary, ...model.agents.secondary]
     .filter((agent, index, all) => all.findIndex((candidate) => candidate.externalId === agent.externalId) === index)
-    .sort((a, b) => a.displayOrder - b.displayOrder || a.externalId.localeCompare(b.externalId));
+    .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId));
+
+  const resources = [...model.resources, ...allActivities.flatMap((activity) => activity.resources), ...agents.flatMap((agent) => agent.resources)]
+    .filter((resource, index, all) => all.findIndex((candidate) => candidate.externalId === resource.externalId) === index)
+    .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId));
+
   const guide = model.facilitatorGuide;
   const facilitatorNotes = options.facilitatorNotes?.trim() || null;
+  const topicName = model.identity.name;
+  const toolNames = agentNames(agents);
+  const stageName = (index: number, fallback: string) => phases[index]?.name?.trim() || fallback;
+  const stageDescription = (index: number) => phases[index]?.description ?? null;
 
-  const body = `<article class="page huddle-page v5-export segmented-huddle-page">
-    <header class="page-topbar"><div class="brand-left"><div class="microsoft-brand"><span class="ms-grid"><i></i><i></i><i></i><i></i></span><span>Microsoft</span></div><small>Frontier Accelerator · Huddle guide</small></div><div class="ribbon-art" aria-hidden="true"><i class="wave wave-one"></i><i class="wave wave-two"></i><i class="wave wave-three"></i></div></header>
-    <nav class="section-nav" aria-label="Huddle sections"><div class="section-tabs"><button type="button" class="is-active" data-section-target="overview">Overview</button><button type="button" data-section-target="workflow">Workflow</button><button type="button" data-section-target="discussion">Prompts &amp; Discussion</button><button type="button" data-section-target="tools">Microsoft AI Tools</button><button type="button" data-section-target="notes">Facilitator Notes</button><button type="button" data-section-target="commit">Reflect &amp; Commit</button></div><div class="section-status"><small>Huddle section</small><strong><span data-section-index>1</span> of 6 · <span data-section-name>Overview</span></strong></div></nav>
-    <div class="content">
-      <section class="panel is-active overview-panel" data-section-panel="overview"><div class="hero-grid"><div class="hero-copy"><p class="eyebrow">${text(model.identity.type)} Huddle</p><h1>${text(model.identity.name)}</h1>${model.identity.description ? `<p class="hero-description">${text(model.identity.description)}</p>` : ""}<div class="meta-strip"><div class="meta-item"><span class="round-icon">◎</span><span><small>Role</small><strong>${model.audience.roleName ? text(model.audience.roleName) : "Not specified"}</strong></span></div><span class="meta-divider"></span><div class="meta-item"><span class="round-icon">✦</span><span><small>AI Tools</small>${agentNames(allAgents)}</span></div><span class="meta-divider"></span><div class="meta-item"><span class="round-icon">▤</span><span><small>MCEM stages</small>${tags(model.mcemStages.map((stage) => stage.name))}</span></div></div></div><aside class="objective-card"><span class="objective-icon">◎</span><div><h2>Today’s Objective</h2>${model.narrative.todayObjective ? `<p>${text(model.narrative.todayObjective)}</p>` : unavailable}</div></aside></div>${model.audience.audienceDescription ? `<div class="audience-card"><span class="label">Audience</span><p>${text(model.audience.audienceDescription)}</p></div>` : ""}<section class="three-column-summary card"><div class="summary-column"><span class="summary-icon blue">◉</span><div><h3>Use Case / Activity</h3>${model.narrative.useCase ? `<p>${text(model.narrative.useCase)}</p>` : unavailable}</div></div><div class="vertical-rule"></div><div class="summary-column"><span class="summary-icon green">✓</span><div><h3>Why it matters</h3>${model.narrative.whyItMatters ? `<p>${text(model.narrative.whyItMatters)}</p>` : unavailable}</div></div><div class="vertical-rule"></div><div class="summary-column"><span class="summary-icon purple">♛</span><div><h3>Desired Outcome</h3>${model.narrative.desiredOutcome ? `<p>${text(model.narrative.desiredOutcome)}</p>` : unavailable}</div></div></section></section>
-      <section class="panel workflow-panel" data-section-panel="workflow"><div class="panel-heading"><span>01</span><div><p class="eyebrow">Huddle flow</p><h2>Business workflow</h2></div></div>${phases.length ? `<div class="workflow-grid">${phases.map((phase, index) => `<article class="workflow-card"><span class="workflow-number">${index + 1}</span><div><h3>${text(phase.name)}</h3>${phase.description ? `<p>${text(phase.description)}</p>` : ""}<small>${phase.durationMinutes === null ? "Duration unavailable" : `${text(phase.durationMinutes)} min`} · ${phase.activities.length} ${phase.activities.length === 1 ? "activity" : "activities"}</small></div></article>`).join("")}</div>` : unavailable}</section>
-      <section class="panel discussion-panel" data-section-panel="discussion"><div class="required-section-heading"><div><p class="eyebrow">Huddle Activities</p><h2>Activities &amp; Recommended Prompts</h2><p>Select a Huddle phase, then open an activity to review its governed content and copy its prompt.</p></div><span class="scenario-count" data-visible-activity-count>${activities.length} activities</span></div>${phases.length ? `<div class="phase-filter">${phases.map((phase, index) => `<button type="button" class="${index === 0 ? "is-active" : ""}" data-phase-filter="${text(phase.externalId)}" data-phase-name="${text(phase.name)}" data-phase-description="${text(phase.description || "")}"><span>${index + 1}</span><strong>${text(phase.name)}</strong><small>${phase.activities.length} ${phase.activities.length === 1 ? "activity" : "activities"}</small></button>`).join("")}</div><div class="selected-phase"><span>1</span><div><small>Selected phase</small><h3 data-selected-phase-title></h3><p data-selected-phase-description></p></div></div>` : ""}<div class="activity-stack">${activities.length ? activities.map(({ activity, phase }, index) => `<details class="activity" data-activity-phase="${text(phase.externalId)}"${index === 0 ? " open" : ""}><summary><span class="activity-index">${index + 1}</span><span><small>${text(phase.name)}</small><strong>${text(activity.name)}</strong></span><b>⌄</b></summary><div class="activity-body">${activity.description ? `<p class="activity-copy">${text(activity.description)}</p>` : ""}${activity.prompt ? `<div class="prompt-label-row"><span class="label">Recommended prompt</span><button type="button" class="copy-button" data-copy-prompt="${text(activity.prompt)}" aria-label="Copy prompt" title="Copy prompt">▣</button></div><div class="prompt-scroll">${text(activity.prompt)}</div>` : unavailable}<div class="activity-grid">${field("Expected output", activity.expectedOutput)}${field("Human checkpoint", activity.humanCheckpoint)}${field("Required context", activity.requiredContext)}${field("Best-fit job", activity.bestFitJob)}</div>${activity.agents.length ? `<section class="recommended-tool"><span class="label">Recommended Microsoft tool</span>${agentNames(activity.agents)}</section>` : ""}${activity.resources.length ? `<div class="subsection"><span class="label">Activity resources</span>${resourceMarkup(activity.resources)}</div>` : ""}</div></details>`).join("") : unavailable}<div class="empty-state" data-phase-empty hidden>No activities are mapped to this phase.</div></div>${discussionGuide(guide?.discussionQuestions ?? [])}</section>
-      <section class="panel tools-panel" data-section-panel="tools"><div class="panel-heading"><span>03</span><div><p class="eyebrow">Approved assistants</p><h2>Microsoft AI Tools</h2></div></div>${agentCards(allAgents)}${resources.length ? `<div class="resources-card"><h2>Resources</h2>${resourceMarkup(resources)}</div>` : ""}</section>
-      <section class="panel notes-panel" data-section-panel="notes"><div class="panel-heading"><span>04</span><div><p class="eyebrow">Facilitation package</p><h2>Facilitator Notes</h2></div></div>${facilitatorNotes ? `<div class="field prompt"><span class="label">Your facilitator notes</span><p>${text(facilitatorNotes)}</p></div>` : ""}${guide ? `<div class="guide-grid">${field("Session introduction", guide.sessionIntroduction, true)}<div class="field"><span class="label">Key talking points</span>${list(guide.keyTalkingPoints)}</div><div class="field"><span class="label">Discussion questions</span>${list(guide.discussionQuestions)}</div><div class="field"><span class="label">Suggested transitions</span>${list(guide.suggestedTransitions)}</div>${field("Wrap-up guidance", guide.wrapUpGuidance, true)}</div>` : facilitatorNotes ? "" : unavailable}</section>
-      <section class="panel commit-panel" data-section-panel="commit"><div class="panel-heading"><span>05</span><div><p class="eyebrow">Close the Huddle</p><h2>Reflect &amp; Commit</h2></div></div><div class="commit-grid">${model.reflectionPrompt ? `<article class="reflect-card"><span>↻</span><h3>Reflection</h3><p>${text(model.reflectionPrompt)}</p></article>` : ""}${model.commitmentPrompt ? `<article class="commit-card"><span>✓</span><h3>Commitment</h3><p>${text(model.commitmentPrompt)}</p></article>` : ""}${model.keyTakeaway ? `<article class="takeaway-card"><span>✦</span><h3>Key takeaway</h3><p>${text(model.keyTakeaway)}</p></article>` : ""}</div>${!model.reflectionPrompt && !model.commitmentPrompt && !model.keyTakeaway ? unavailable : ""}</section>
-    </div><div class="section-actions"><button type="button" data-section-previous>← Previous</button><button type="button" class="next" data-section-next>Next →</button></div><footer class="footer"><span>Generated from the AITO Workflow &amp; Huddle Generator</span><span>${text(model.identity.name)}</span></footer><div class="copy-toast" data-copy-toast>Prompt copied</div>
-  </article>${huddleHtmlInteractions}`;
+  const tabs = [
+    { key: "overview", label: "Overview" },
+    { key: "best-practices", label: "Share Your Experience" },
+    { key: "preparation", label: stageName(0, "Preparation") },
+    { key: "practice", label: stageName(1, "Explore & Practice") },
+    { key: "commit", label: stageName(2, "Commit to Action") },
+    { key: "tool", label: "AI Tools" },
+    { key: "resources", label: "Resources" },
+    { key: "notes", label: "Facilitator Notes" },
+  ];
 
-  return { html: createHtmlDocument(`${model.identity.name} Huddle`, body), fileName: options.fileName ?? safeHtmlFileName(`${model.identity.name} - Huddle`, "Huddle") };
+  const generated = new Date();
+  const generatedDate = generated.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const generatedTime = generated.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+  const overviewPanel = `<section class="huddle-section-panel is-active" data-section-panel="overview">`
+    + `<div class="overview-timing-band" aria-label="Today’s Huddle"><div class="overview-timing-title">Today’s Huddle</div><div class="overview-timing-steps">`
+    + TEMPLATE.agenda.map((step, index) => `${index > 0 ? '<div class="overview-timing-arrow">→</div>' : ""}<div class="overview-timing-step"><strong>${text(step.label)}</strong><span>· ${step.minutes} min</span></div>`).join("")
+    + `</div></div>`
+    + `<section class="hero-grid"><div class="hero-copy"><h1>${text(topicName)}</h1>${model.identity.description ? `<p class="hero-description">${text(model.identity.description)}</p>` : ""}`
+    + `<div class="meta-strip">`
+    + `<div class="meta-item"><span class="round-icon">◎</span><span><small>Role</small><strong>${text(model.audience.roleName?.trim() || "Not specified")}</strong></span></div>`
+    + `<span class="meta-divider"></span>`
+    + `<div class="meta-item"><span class="round-icon">✦</span><span><small>AI Tools</small><strong>${text(toolNames.length ? toolNames.join(", ") : "Not configured")}</strong></span></div>`
+    + `<span class="meta-divider"></span>`
+    + `<div class="meta-item"><span class="round-icon">▤</span><span><small>MCEM Stages</small><strong>${text(model.mcemStages.length ? model.mcemStages.map((stage) => stage.name).join(", ") : "Not configured")}</strong></span></div>`
+    + `</div></div>`
+    + `<aside class="objective-card"><span class="objective-icon">◎</span><div><h2>Today’s Objective</h2>${model.narrative.todayObjective ? `<p>${text(model.narrative.todayObjective)}</p>` : placeholder("No objective is configured for this Huddle yet.")}</div></aside></section>`
+    + `<section class="overview-two-column">`
+    + `<div class="card overview-summary-card"><div class="section-heading"><span class="sparkle-icon">✦</span><h2>Why this Huddle matters</h2></div>`
+    + `${model.narrative.whyItMatters ? `<p>${text(model.narrative.whyItMatters)}</p>` : placeholder("Not configured yet.")}`
+    + `<div class="overview-outcome"><span>Desired outcome</span><strong>${text(model.narrative.desiredOutcome?.trim() || "Not configured yet.")}</strong></div></div>`
+    + `<div class="card activity-preview-card"><div class="section-heading"><span class="line-icon">◉</span><h2>What you’ll practice</h2></div>`
+    + `${featuredActivities.length ? `<div class="activity-preview-list">${featuredActivities.map((activity, index) => `<div class="activity-preview-row"><span class="activity-letter">${text(activityLetter(index))}</span><div><strong>${text(activity.name)}</strong>${activity.description ? `<p>${text(activity.description)}</p>` : ""}</div></div>`).join("")}</div>` : placeholder("No activities are configured for this Huddle yet.")}</div>`
+    + `</section>`
+    + `<section class="card huddle-flow-card"><div class="business-workflow-heading"><span class="sparkle-icon">✦</span><div><h2>AI in Action</h2><p>Each workflow moves through 3 stages: prepare the context, practice with AI on real work, and commit to a next action.</p></div></div>`
+    + `<div class="three-stage-flow">`
+    + TEMPLATE.flow.map((stage, index) => `${index > 0 ? '<div class="flow-arrow">→</div>' : ""}<article class="flow-stage-card" role="button" tabindex="0" data-flow-target="${stage.key}" aria-label="Go to ${text(stageName(index, stage.title))}"><span>${index + 1}</span><div><h3>${text(stageName(index, stage.title))}</h3><p>${text(stageDescription(index) ?? stage.copy)}</p></div></article>`).join("")
+    + `</div></section>`
+    + `<div class="tfd-section-heading"><h2>Accelerating AI Confidence and Capability through real work</h2></div>`
+    + `<section class="think-feel-do-grid">${TEMPLATE.thinkFeelDo.map((entry) => `<div class="card tfd-card"><span>${entry.label}</span><p>${text(entry.copy(topicName))}</p></div>`).join("")}</section>`
+    + `<div class="overview-next-note"><span class="transition-kicker">Up next</span><div><strong>Share Your Experience</strong><span>Before we practice with AI, share what you’ve tried, what worked, and where you ran into friction.</span></div></div>`
+    + `</section>`;
+
+  const sharePanel = `<section class="huddle-section-panel" data-section-panel="best-practices">`
+    + `<section class="card best-practices-shell"><div class="section-heading"><span class="sparkle-icon">✦</span><h2>Share Your Experience</h2></div>`
+    + `<p class="best-practices-intro">Use this time to share what you tried with AI since the last Huddle. Compare what worked, what did not, what you learned, and where you ran into friction.</p>`
+    + `<div class="discussion-question-grid">${TEMPLATE.shareYourExperience.map((entry, index) => `<div class="discussion-question-card"><span>${String(index + 1).padStart(2, "0")}</span><div><strong>${text(entry.title)}</strong><p>${text(entry.copy)}</p></div></div>`).join("")}</div>`
+    + `</section></section>`;
+
+  const preparationPanel = `<section class="huddle-section-panel" data-section-panel="preparation">`
+    + stageShell(topicName, 1, stageName(0, "Preparation"), stageDescription(0) ?? "Set the context before opening an AI tool. Align on the workflow, people, evidence, and friction that matter.",
+      `<div class="stage-content-grid">`
+      + `<section class="stage-content-card"><h3>Discuss before practicing</h3>${questionList(guide?.discussionQuestions ?? [], "No discussion questions are configured for this Huddle yet.")}</section>`
+      + `<section class="stage-content-card preparation-checklist"><h3>Bring into the conversation</h3>${checkList(TEMPLATE.bringIntoTheConversation)}</section>`
+      + `</div>`)
+    + `</section>`;
+
+  const practicePanel = `<section class="huddle-section-panel" data-section-panel="practice">`
+    + stageShell(topicName, 2, stageName(1, "Explore & Practice"), stageDescription(1) ?? "Work through the Huddle activities using a real scenario. Adapt the prompt, inspect the output, and keep human judgment explicit.",
+      `<div class="featured-activities-header"><div><h3>Featured activities</h3><p>Start with these priority activities for today’s Huddle.</p></div><span class="activity-tier-badge">Featured</span></div>`
+      + `<div class="practice-activity-stack" data-activity-tier="featured">${featuredActivities.length
+        ? featuredActivities.map((activity, index) => activityCard(activity, index, "featured", guide?.keyTalkingPoints ?? [])).join("")
+        : placeholder("No featured activities are configured for this Huddle yet.")}</div>`
+      + `<details class="additional-activities"><summary><span class="additional-activities-copy"><strong>Additional activities to explore</strong><small>Optional activities are available here when you want to go beyond the featured practice.</small></span><span class="scenario-chevron" aria-hidden="true">${CHEVRON_SVG}</span></summary>`
+      + `<div class="optional-activity-stack" data-activity-tier="optional">${optionalActivities.length
+        ? optionalActivities.map((activity, index) => activityCard(activity, index, "optional", guide?.keyTalkingPoints ?? [])).join("")
+        : `<div class="optional-activities-empty">No additional activities are configured for this Huddle yet.</div>`}</div></details>`,
+      `<span class="scenario-count">${featuredActivities.length} featured ${featuredActivities.length === 1 ? "activity" : "activities"}</span>`)
+    + `</section>`;
+
+  const commitPanel = `<section class="huddle-section-panel" data-section-panel="commit">`
+    + stageShell(topicName, 3, stageName(2, "Commit to Action"), stageDescription(2) ?? "Turn the practice into a concrete behavior. Reflect on what changed, agree on the next action, and define what to bring back.",
+      `<div class="commit-layout">`
+      + `<section class="reflection-card card nested-card"><div class="bottom-title green-title"><span>♧</span><h2>Reflect</h2></div><h3>What did you learn today?</h3>${model.reflectionPrompt ? `<p>${text(model.reflectionPrompt)}</p>` : placeholder("No reflection prompt is configured yet.")}</section>`
+      + `<section class="commit-card card nested-card"><div class="bottom-title orange-title"><span>◎</span><h2>Commit</h2></div><h3>What will you do this week?</h3>${model.commitmentPrompt ? `<p>${text(model.commitmentPrompt)}</p>` : placeholder("No commitment prompt is configured yet.")}</section>`
+      + `</div>`
+      + `<section class="commit-discussion-card"><h3>Close the Huddle</h3>${questionList(TEMPLATE.closeTheHuddle, "")}</section>`
+      + `${model.keyTakeaway ? `<section class="commit-discussion-card"><h3>Key takeaway</h3><p>${text(model.keyTakeaway)}</p></section>` : ""}`)
+    + `</section>`;
+
+  const toolPanel = `<section class="huddle-section-panel" data-section-panel="tool">`
+    + `<section class="tool-section-intro card"><div class="section-heading"><span class="sparkle-icon">✦</span><h2>AI Tools</h2></div><p>These are the tools used across the ${text(stageName(1, "Explore & Practice"))} activities.</p></section>`
+    + `${agents.length ? `<div class="multi-tool-stack">${agents.map(toolCard).join("")}</div>` : placeholder("No AI tools are configured for this Huddle yet.")}`
+    + `</section>`;
+
+  const resourcesPanel = `<section class="huddle-section-panel" data-section-panel="resources">`
+    + `<section class="resources-card card resources-tab-card"><div class="bottom-title blue-title"><span>▤</span><h2>Resources</h2></div>`
+    + `<p class="resources-intro">Use portfolio, role, topic, activity, and agent resources that support this Huddle.</p>`
+    + `${resources.length ? resourceRows(resources) : placeholder("No resources are configured for this Huddle yet.")}`
+    + `</section></section>`;
+
+  const notesPanel = `<section class="huddle-section-panel" data-section-panel="notes">`
+    + `<section class="facilitator-notes-card card"><div class="section-heading"><span class="sparkle-icon">✦</span><h2>Facilitator Notes</h2></div>`
+    + `<p class="facilitator-notes-intro">These notes were added by the facilitator before downloading the Huddle.</p>`
+    + `<div class="facilitator-notes-content">${facilitatorNotes ? text(facilitatorNotes) : "No facilitator notes were added for this Huddle."}</div>`
+    + `</section>`
+    + `${guide ? `<section class="facilitator-guidance-summary card"><div class="section-heading"><span class="sparkle-icon">✦</span><h2>Facilitation guidance</h2></div>`
+      + `<div class="facilitator-stage-summary-grid">`
+      + `<div class="guide-card"><span class="activity-eyebrow">Session introduction</span>${guide.sessionIntroduction ? `<p>${text(guide.sessionIntroduction)}</p>` : placeholder("Not configured yet.")}</div>`
+      + `<div class="guide-card"><span class="activity-eyebrow">Key talking points</span>${questionList(guide.keyTalkingPoints, "Not configured yet.")}</div>`
+      + `<div class="guide-card"><span class="activity-eyebrow">Suggested transitions</span>${questionList(guide.suggestedTransitions, "Not configured yet.")}</div>`
+      + `<div class="guide-card"><span class="activity-eyebrow">Wrap-up guidance</span>${guide.wrapUpGuidance ? `<p>${text(guide.wrapUpGuidance)}</p>` : placeholder("Not configured yet.")}</div>`
+      + `</div></section>` : ""}`
+    + `<footer class="page-footer"><div class="generated-badge">${COPILOT_MARK}<span>Generated from the AITO Workflow &amp; Huddle Generator</span><i></i><span>${text(generatedDate)}</span><b>•</b><span>${text(generatedTime)}</span></div><span class="page-number">1</span></footer>`
+    + `</section>`;
+
+  const body = `<article class="huddle-page segmented-huddle-page workflow-huddle-page" id="huddle-1">`
+    + `<header class="page-topbar">`
+    + `<div class="frontier-brand" aria-label="Frontier Accelerator"><img src="${frontierAcceleratorLogo}" alt="Frontier Accelerator"></div>`
+    + `<div class="brand-right"><div class="microsoft-brand" aria-label="Microsoft"><span class="ms-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Microsoft</span></div></div>`
+    + `<div class="ribbon-art" aria-hidden="true"><span class="wave wave-one"></span><span class="wave wave-two"></span><span class="wave wave-three"></span></div>`
+    + `</header>`
+    + `<nav class="huddle-section-nav" aria-label="Huddle sections"><div class="huddle-section-tabs">`
+    + tabs.map((tab, index) => `<button type="button" class="huddle-section-tab${index === 0 ? " is-active" : ""}" data-section-target="${tab.key}">${text(tab.label)}</button>`).join("")
+    + `</div><div class="huddle-section-status"><small>Huddle section</small><strong><span data-section-index>1</span> of ${tabs.length} · <span data-section-name>Overview</span></strong></div></nav>`
+    + `<main class="page-content">${overviewPanel}${sharePanel}${preparationPanel}${practicePanel}${commitPanel}${toolPanel}${resourcesPanel}${notesPanel}</main>`
+    + `<div class="huddle-section-actions"><button type="button" class="section-action-button section-previous" data-section-previous>← Previous</button><button type="button" class="section-action-button section-next" data-section-next>Next →</button></div>`
+    + `</article><div class="toast" id="copyToast">Prompt copied</div>`;
+
+  return {
+    html: createHtmlDocument(`${topicName} Huddle`, `${body}${huddleGuideInteractions}`, huddleGuideStyles),
+    fileName: options.fileName ?? safeHtmlFileName(`${topicName} - Huddle`, "Huddle"),
+  };
 }
 
 export function exportHuddleHtml(model: HuddlePresentationModel, options: HuddleHtmlExportOptions = {}): HtmlExportFile {

@@ -4,6 +4,9 @@ export interface HuddleCatalogCardViewModel {
   description: string | null;
   category: string;
   focusArea: string | null;
+  /** Pre-formatted `MCEM Stage: Name (n)` label, or null when the topic has no stages. */
+  mcemStageLabel: string | null;
+  activityCount: number;
   durationMinutes: number | null;
   desiredOutcome: string | null;
   audienceDescription: string | null;

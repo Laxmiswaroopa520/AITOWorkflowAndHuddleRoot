@@ -20,6 +20,8 @@ export type {
   HuddleSessionActivityProgressResponse,
   HuddleSessionResponse,
   IncompleteHuddleSessionResponse,
+  CreateHuddleLaunchEmailDraftRequest,
+  HuddleLaunchEmailDraftResponse,
   SaveHuddleSessionRequest,
   SetHuddleActivityCompletionRequest,
   CompleteHuddleSessionRequest,

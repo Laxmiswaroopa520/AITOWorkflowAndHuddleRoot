@@ -120,10 +120,10 @@ const personaOnboarding = {
     primary: 'Open Role Path',
   },
   'team-member': {
-    title: 'Team Member Onboarding', subtitle: 'Build confidence with AI by practising on real workflows and learning with your team.',
+    title: 'Team Member Orientation', subtitle: 'Build confidence with AI by practising on real workflows and learning with your team.',
     role: 'As a Team Member, join Huddles, practise with AI, share what works, and bring learning back into daily work. Follow your role path and explore additional topics when you are ready.',
     cards: [
-      ['Understand the journey', ['Start with onboarding', 'Follow the role path', 'Continue through additional topics']],
+      ['Understand the journey', ['Start with orientation', 'Follow the role path', 'Continue through additional topics']],
       ['Join Huddles', ['Take part in weekly discussions', 'Share wins and friction points', 'Learn from team examples']],
       ['Practise AI in real work', ['Try recommended prompts', 'Apply AI to common workflows', 'Bring back examples and outcomes']],
       ['Build lasting habits', ['Repeat what works', 'Save useful prompts', 'Use AI as part of everyday work']],
@@ -227,7 +227,7 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
 
         {/* Immediate quick-start panel keeps a meaningful action above the fold. */}
         <div className="flex items-center border-t border-[#E1E9EF] bg-gradient-to-br from-[#F7FBFD]/90 to-[#EAF5F1]/90 p-6 md:p-8 lg:border-l lg:border-t-0 lg:p-9">
-          <div className="w-full rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_16px_40px_rgba(42,68,111,.10)] backdrop-blur md:p-6">
+          <div data-tour="huddle-experience" className="w-full rounded-[24px] border border-white/80 bg-white/90 p-5 shadow-[0_16px_40px_rgba(42,68,111,.10)] backdrop-blur md:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Start your path</p>

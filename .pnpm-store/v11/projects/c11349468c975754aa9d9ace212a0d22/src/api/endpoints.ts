@@ -91,6 +91,7 @@ export const apiEndpoints = {
 
   huddleLaunchPlans: {
     mine: "/api/huddle-launch-plans/me",
+    emailDrafts: "/api/huddle-launch-plans/me/email-drafts",
   },
 
   huddleSessions: {

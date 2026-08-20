@@ -19,7 +19,9 @@ import {
 import {
   HuddlePage,
   LaunchPlannerPage,
-} from "@/features/huddle";
+} from "@/features/huddle";             // here you didn't mention specific page.. You did not specify a filename.
+
+//When the module resolver sees a folder import  (feature/huddles) like this, it resolves the folder's entry module—commonly its index.ts.
 
 import {
   WorkflowPage,

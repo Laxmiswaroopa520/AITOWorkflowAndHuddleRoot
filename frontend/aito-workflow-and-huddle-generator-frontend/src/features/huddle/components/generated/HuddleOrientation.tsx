@@ -37,7 +37,7 @@ const weeklySteps = [
 ];
 
 const roles = [
-  { icon: Target, title: "Manager", subtitle: "Sets direction", accent: "#0F6CBD", items: ["Selects the recommended path", "Adjusts priorities when needed", "Encourages adoption within the team"] },
+  { icon: Target, title: "Manager", subtitle: "Sets direction", accent: "#0F6CBD", items: ["Selects the role path", "Adjusts priorities when needed", "Encourages adoption within the team"] },
   { icon: GraduationCap, title: "Facilitator", subtitle: "Guides the experience", accent: "#5C2D91", items: ["Guides weekly Huddles", "Uses the facilitator workspace", "Leads discussion and practice"] },
   { icon: Users, title: "Participant", subtitle: "Applies the learning", accent: "#008272", items: ["Attends Huddles", "Practices AI in daily work", "Shares outcomes and learnings"] },
 ];

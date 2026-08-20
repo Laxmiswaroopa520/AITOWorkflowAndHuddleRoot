@@ -1,6 +1,7 @@
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Identity;
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Persistence;
 using AitoWorkflowAndHuddleGenerator.Application.Common.Exceptions;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Common;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Common;
 using AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 using AitoWorkflowAndHuddleGenerator.Domain.Entities;
@@ -39,12 +40,19 @@ public sealed class GetMyHuddlePlanQueryHandler(
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.HuddleFocusArea)
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.TopicRoles).ThenInclude(item => item.Role)
             .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.TopicAgents).ThenInclude(item => item.HuddleAgent)
+            .Include(item => item.Items).ThenInclude(item => item.HuddleTopic).ThenInclude(item => item.McemStages).ThenInclude(item => item.HuddleMcemStage)
             .SingleOrDefaultAsync(item => item.OwnerObjectId == ownerObjectId && item.HuddleSegmentRoleId == segmentRole.Id, cancellationToken);
 
         if (plan is not null && (plan.Items.Count != 7 || !HasSupportedWeekRange(plan.Items)))
             throw new ConflictException(HuddleMessages.SavedPlanInvalid);
 
-        return HuddlePlanMappings.ToResponse(roleExternalId, plan, recommended);
+        IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
+            dbContext,
+            recommended.Select(item => item.Id)
+                .Concat(plan?.Items.Select(item => item.HuddleTopicId) ?? Array.Empty<int>())
+                .Distinct().ToList(),
+            cancellationToken);
+        return HuddlePlanMappings.ToResponse(roleExternalId, plan, recommended, activityCounts);
     }
 
     private async Task<List<HuddleTopic>> LoadRecommendedTopics(int segmentRoleId, CancellationToken cancellationToken) =>
@@ -54,6 +62,7 @@ public sealed class GetMyHuddlePlanQueryHandler(
             .Include(item => item.HuddleTopic).ThenInclude(item => item.HuddleFocusArea)
             .Include(item => item.HuddleTopic).ThenInclude(item => item.TopicRoles).ThenInclude(item => item.Role)
             .Include(item => item.HuddleTopic).ThenInclude(item => item.TopicAgents).ThenInclude(item => item.HuddleAgent)
+            .Include(item => item.HuddleTopic).ThenInclude(item => item.McemStages).ThenInclude(item => item.HuddleMcemStage)
             .ToListAsync(cancellationToken))
         .GroupBy(item => item.HuddleTopicId).Select(group => group.First().HuddleTopic).Take(7).ToList();
 

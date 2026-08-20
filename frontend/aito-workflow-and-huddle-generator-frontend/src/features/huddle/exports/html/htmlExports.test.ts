@@ -17,7 +17,7 @@ const huddle: HuddlePresentationModel = {
   contentAvailability: { narrativeComplete: false, facilitatorGuideAvailable: false, phasesAvailable: true, activitiesAvailable: true, agentsAvailable: false, resourcesAvailable: true, reflectionAvailable: false, commitmentAvailable: false, missingFields: ["useCase"] },
 };
 
-const catalog = (week: number) => ({ externalId: `topic-${week}`, name: `Huddle ${week}`, description: null, type: "Prescriptive", focusAreaExternalId: null, focusAreaName: null, durationMinutes: 30, recommendationPriority: week, audienceDescription: null, desiredOutcome: null, roles: [], primaryAgents: [], secondaryAgents: [] });
+const catalog = (week: number) => ({ externalId: `topic-${week}`, name: `Huddle ${week}`, description: null, type: "Prescriptive", focusAreaExternalId: null, focusAreaName: null, durationMinutes: 30, recommendationPriority: week, audienceDescription: null, desiredOutcome: null, roles: [], primaryAgents: [], secondaryAgents: [], mcemStages: [], activityCount: 0 });
 const plan: HuddlePlanResponse = { roleExternalId: "seller", isCustomized: true, rowVersion: "row", items: [8, 4, 2, 7, 3, 6, 5].map((week) => ({ week, recommendedHuddleExternalId: week === 4 ? "recommended-topic" : `topic-${week}`, isCustomized: week === 4, huddle: catalog(week) })) };
 
 describe("secure Huddle HTML exports", () => {
@@ -29,17 +29,25 @@ describe("secure Huddle HTML exports", () => {
   it("exports long Huddle content without scripts, event handlers, or semantic substitution", () => {
     const output = createHuddleHtmlExport(huddle);
     expect(output.html).toContain("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;");
-    expect(output.html).not.toContain("<img");
+    expect(output.html).not.toContain("<img src=x");
+    expect(output.html).not.toContain('onerror="');
     expect(output.html).not.toContain("javascript:");
     expect(output.html).not.toContain("<script>alert");
     expect(output.html).not.toContain("Use Case</h3>");
     expect(output.html).toContain("Long content. Long content.");
-    expect(output.html).toContain("Microsoft AI Tools");
-    expect(output.html).toContain("Prompts &amp; Discussion");
-    expect(output.html).toContain('data-section-target="overview"');
+    // Brand artwork is inlined as data URIs, never fetched from the network.
+    expect(output.html).toContain('src="data:image/png;base64,');
+    expect(output.html).not.toContain('src="http');
+    // The eight-section guide layout from the Frontier Accelerator reference export.
+    ["overview", "best-practices", "preparation", "practice", "commit", "tool", "resources", "notes"]
+      .forEach((section) => expect(output.html).toContain('data-section-panel="' + section + '"'));
+    expect(output.html).toContain("Share Your Experience");
+    expect(output.html).toContain("Featured activities");
+    expect(output.html).toContain('data-activity-tier="optional"');
+    expect(output.html).toContain('data-practice-tier="featured"');
     expect(output.html).toContain("data-section-previous");
-    expect(output.html).toContain("data-phase-filter");
-    expect(output.html).toContain("data-copy-prompt");
+    expect(output.html).toContain("data-flow-target");
+    expect(output.html).toContain("data-copy=");
   });
 
   it("includes explicitly supplied facilitator notes and escapes untrusted markup", () => {

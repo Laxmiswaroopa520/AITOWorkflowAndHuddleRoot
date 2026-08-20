@@ -14,7 +14,7 @@ function detail(overrides: Partial<HuddleDetailResponse> = {}): HuddleDetailResp
   return {
     externalId: "huddle-1", name: "Huddle", description: "Description", type: "Prescriptive", publicationStatus: "Published",
     focusAreaExternalId: "focus-1", focusAreaName: "Focus", durationMinutes: 30, recommendationPriority: 1,
-    roles: [{ externalId: "role-1", name: "Role", abbreviation: "R", segment: "Segment" }], audienceDescription: "Audience",
+    roles: [{ externalId: "role-1", name: "Role", abbreviation: "R", segment: "Segment", description: null }], audienceDescription: "Audience",
     todayObjective: "Objective", useCase: "Use case", whyItMatters: "Why", desiredOutcome: "Outcome", stepsToGetStarted: [],
     mcemStages: [{ externalId: "stage-2", name: "Stage 2", description: null, displayOrder: 2 }, { externalId: "stage-1", name: "Stage 1", description: null, displayOrder: 1 }],
     primaryAgents: [agent("primary-2", 2), agent("primary-1", 1)], secondaryAgents: [agent("secondary-1", 1)],

@@ -1,8 +1,9 @@
-import { useState, type MouseEvent } from "react";
-import { BookOpen, Clock, Download, ExternalLink, Eye, FileDown, Layers3, ListChecks, MoreHorizontal, Presentation, Sparkles, UserRound } from "lucide-react";
+import { useState } from "react";
+import { BookOpen, Download, ExternalLink, Eye, Layers3, ListChecks, MoreHorizontal, Presentation, Sparkles, Target, Users } from "lucide-react";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { LoadingSpinner } from "@/components/feedback/LoadingSpinner";
 import { cn } from "@/lib/utils";
+import { formatMcemStageLabel } from "../../mappers";
 import type { HuddleDetailResponse } from "../../types";
 
 type DetailTab = "overview" | "resources" | "takeaways";
@@ -23,14 +24,11 @@ interface HuddleDetailPanelProps {
 
 export function HuddleDetailPanel({ data, isLoading, error, hasSelection, exportPending = false, onRetry, onOpenWorkspace: openWorkspace, onPreview, onExportHtml, onExportPowerPoint, onMeetCoach }: HuddleDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
-  const [moreOpen, setMoreOpen] = useState(false);
-  const onOpenWorkspace = (event: MouseEvent<HTMLButtonElement>) => {
-    if (event.currentTarget.textContent?.includes("Preview")) onPreview();
-    else openWorkspace();
-  };
+  const [secondaryOpen, setSecondaryOpen] = useState(false);
+  const onOpenWorkspace = openWorkspace;
 
   if (!hasSelection) {
-    return <aside className="w-full self-start rounded-xl border bg-white px-6 py-10 text-center shadow-sm xl:sticky xl:top-24"><span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F2F1]"><Presentation className="h-5 w-5 text-[#605E5C]" /></span><p className="font-semibold">Select a Huddle</p><p className="mx-auto mt-1 max-w-[230px] text-sm leading-5 text-muted-foreground">Review the outcome, resources, and actions before generating your session.</p></aside>;
+    return <aside className="w-full self-start rounded-xl border bg-white px-6 py-10 text-center shadow-sm"><span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F2F1]"><Presentation className="h-5 w-5 text-[#605E5C]" /></span><p className="font-semibold">Select a Huddle</p><p className="mx-auto mt-1 max-w-[230px] text-sm leading-5 text-muted-foreground">Review the outcome, resources, and actions before generating your session.</p></aside>;
   }
 
   if (isLoading) return <aside className="rounded-xl border bg-white"><LoadingSpinner message="Loading Huddle details..." /></aside>;
@@ -43,11 +41,12 @@ export function HuddleDetailPanel({ data, isLoading, error, hasSelection, export
     .filter((resource, index, all) => all.findIndex((candidate) => candidate.externalId === resource.externalId) === index)
     .sort((left, right) => left.displayOrder - right.displayOrder);
   const takeaways = [data.keyTakeaway, data.reflectionPrompt, data.commitmentPrompt].filter((value): value is string => Boolean(value));
+  const mcemStageLabel = formatMcemStageLabel(data.mcemStages ?? []);
 
-  return <aside className="w-full self-start overflow-visible rounded-xl border bg-white shadow-sm xl:sticky xl:top-24 [font-family:'Segoe_UI_Variable','Segoe_UI',Arial,sans-serif]">
+  return <aside className="w-full self-start overflow-visible rounded-xl border bg-white shadow-sm [font-family:'Segoe_UI_Variable','Segoe_UI',Arial,sans-serif]">
     <header className="space-y-4 rounded-t-xl border-b bg-gradient-to-br from-[#F8FBFF] via-white to-[#F3FAF3] p-5">
-      <div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="rounded border border-[#0F6CBD]/25 bg-[#E8F2FF] px-2 py-1 text-[10px] font-semibold text-[#0F6CBD]">{data.type}</span><span className="text-xs text-muted-foreground">Selected Huddle</span></div><h2 className="text-xl font-bold leading-7 text-[#242424]">{data.name}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{data.description ?? "Description unavailable."}</p></div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{data.durationMinutes ?? 30} min</span><span className="flex items-center gap-1.5"><Layers3 className="h-3.5 w-3.5" />{data.phases.length} phases</span><span className="flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5" />{activityCount} activities</span></div>
+      <div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">Selected Huddle</span></div><h2 className="text-xl font-bold leading-7 text-[#242424]">{data.name}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{data.description ?? "Description unavailable."}</p></div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><Layers3 className="h-3.5 w-3.5" />{data.phases.length} phases</span><span className="flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5" />{activityCount} activities</span>{mcemStageLabel && <span className="flex items-center gap-1.5"><Target className="h-3.5 w-3.5" />{mcemStageLabel}</span>}</div>
     </header>
 
     <div className="flex border-b px-3 pt-2" role="tablist" aria-label="Huddle details">{(["overview", "resources", "takeaways"] as const).map((tab) => <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)} className={cn("relative px-3 py-2.5 text-sm font-medium capitalize transition-colors", activeTab === tab ? "text-[#0F6CBD]" : "text-muted-foreground hover:text-foreground")}>{tab}{activeTab === tab && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#0F6CBD]" />}</button>)}</div>
@@ -58,6 +57,6 @@ export function HuddleDetailPanel({ data, isLoading, error, hasSelection, export
       {activeTab === "takeaways" && <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">After this Huddle</p>{takeaways.length ? <ul className="mt-3 space-y-2">{takeaways.map((item) => <li key={item} className="flex items-start gap-2 text-sm leading-6"><Sparkles className="mt-1 h-4 w-4 shrink-0 text-[#0F6CBD]" />{item}</li>)}</ul> : <div className="mt-3 rounded-lg border border-dashed p-5 text-center text-sm text-muted-foreground">Content unavailable</div>}</div>}
     </div>
 
-    <footer className="border-t p-3"><button type="button" onClick={onOpenWorkspace} className="inline-flex h-11 w-full items-center justify-center rounded-md bg-[#0F6CBD] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#115EA3]"><Sparkles className="mr-2 h-4 w-4" />Generate Huddle</button><div className="relative mt-2 grid grid-cols-3 gap-2"><button type="button" onClick={onOpenWorkspace} className="inline-flex h-9 items-center justify-center rounded-md border bg-white text-sm font-semibold hover:bg-[#F5F9FF]"><Eye className="mr-1.5 h-4 w-4" />Preview</button><button type="button" disabled={exportPending} onClick={onExportPowerPoint} className="inline-flex h-9 items-center justify-center rounded-md border bg-white text-sm font-semibold hover:bg-[#F5F9FF] disabled:opacity-50"><Download className="mr-1.5 h-4 w-4" />PPT</button><button type="button" onClick={() => setMoreOpen((value) => !value)} className="inline-flex h-9 items-center justify-center rounded-md border bg-white text-sm font-semibold hover:bg-[#F5F9FF]" aria-expanded={moreOpen}><MoreHorizontal className="mr-1.5 h-4 w-4" />More</button>{moreOpen && <div className="absolute bottom-11 right-0 z-50 w-64 rounded-xl border bg-white p-1.5 shadow-xl"><button type="button" onClick={() => { onExportHtml(); setMoreOpen(false); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm hover:bg-[#F5F9FF]"><FileDown className="h-4 w-4" />Download HTML</button><button type="button" onClick={() => { onMeetCoach(); setMoreOpen(false); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm hover:bg-[#F5F9FF]"><UserRound className="h-4 w-4" />Meet with a Coach</button></div>}</div></footer>
+    <footer className="border-t p-3"><button type="button" onClick={onOpenWorkspace} className="inline-flex h-11 w-full items-center justify-center rounded-md bg-[#0F6CBD] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#115EA3]"><Sparkles className="mr-2 h-4 w-4" />Generate Huddle</button><div className="relative mt-2 flex items-center gap-2"><button type="button" onClick={onExportHtml} className="inline-flex h-9 items-center justify-center rounded-md border bg-white text-sm font-semibold hover:bg-[#F5F9FF] flex-none px-4"><Download className="mr-1.5 h-4 w-4" />HTML</button><button type="button" onClick={onMeetCoach} className="inline-flex h-9 items-center justify-center rounded-md border bg-white text-sm font-semibold hover:bg-[#F5F9FF] min-w-0 flex-1 px-4"><Users className="mr-1.5 h-4 w-4" />Meet with a Coach</button><button type="button" aria-label="More Huddle actions" aria-haspopup="menu" aria-expanded={secondaryOpen} onClick={() => setSecondaryOpen((open) => !open)} className="inline-flex h-9 items-center justify-center rounded-md border bg-white text-sm font-semibold hover:bg-[#F5F9FF] w-9 flex-none"><MoreHorizontal className="h-4 w-4" /></button>{secondaryOpen && <div role="menu" className="absolute bottom-11 right-0 z-20 w-56 rounded-lg border bg-white p-1.5 shadow-xl"><button type="button" role="menuitem" onClick={() => { onPreview(); setSecondaryOpen(false); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-[#F5F9FF]"><Eye className="h-4 w-4" />Preview slides</button><button type="button" role="menuitem" disabled={exportPending} onClick={() => { onExportPowerPoint(); setSecondaryOpen(false); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-[#F5F9FF] disabled:opacity-50"><Presentation className={cn("h-4 w-4", exportPending && "animate-bounce")} />{exportPending ? "Exporting..." : "Download PPT"}</button></div>}</div></footer>
   </aside>;
 }

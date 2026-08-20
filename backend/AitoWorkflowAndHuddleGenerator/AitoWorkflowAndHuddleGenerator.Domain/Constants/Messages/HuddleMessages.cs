@@ -6,7 +6,7 @@ namespace AitoWorkflowAndHuddleGenerator.Domain.Constants.Messages;
 public static class HuddleMessages
 {
     public const string NotFound = "The Huddle was not found.";
-    public const string SavedPlanInvalid = "The saved Huddle plan is incomplete or invalid. Reset it to the recommended path.";
+    public const string SavedPlanInvalid = "The saved Huddle plan is incomplete or invalid. Reset it to the role path.";
     public const string SelectedHuddlesUnavailable = "One or more selected Huddles are unavailable or unpublished.";
     public const string PlanNoLongerExists = "The Huddle plan no longer exists. Refresh and try again.";
     public const string PlanChanged = "The Huddle plan changed. Refresh and try again.";

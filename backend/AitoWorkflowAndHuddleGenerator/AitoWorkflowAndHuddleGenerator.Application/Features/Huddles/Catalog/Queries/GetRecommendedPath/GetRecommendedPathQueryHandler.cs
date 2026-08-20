@@ -33,13 +33,16 @@ public sealed class GetRecommendedPathQueryHandler : IRequestHandler<GetRecommen
             .Include(x => x.HuddleTopic).ThenInclude(x => x.HuddleFocusArea)
             .Include(x => x.HuddleTopic).ThenInclude(x => x.TopicRoles).ThenInclude(x => x.Role)
             .Include(x => x.HuddleTopic).ThenInclude(x => x.TopicAgents).ThenInclude(x => x.HuddleAgent)
+            .Include(x => x.HuddleTopic).ThenInclude(x => x.McemStages).ThenInclude(x => x.HuddleMcemStage)
             .ToListAsync(cancellationToken);
 
         List<HuddleRolePathItem> unique = path.GroupBy(x => x.HuddleTopicId).Select(x => x.First()).OrderBy(x => x.WeekPosition).Take(7).ToList();
         bool complete = unique.Count == 7;
+        IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
+            dbContext, unique.Select(x => x.HuddleTopicId).ToList(), cancellationToken);
         List<RecommendedHuddlePathItemResponse> items = unique.Select((x, index) =>
-            new RecommendedHuddlePathItemResponse(2 + index, index + 1, HuddleMappings.ToCatalogItem(x.HuddleTopic))).ToList();
-        string? message = complete ? null : $"Recommended Path requires seven unique published Huddles, but only {unique.Count} eligible Huddles are configured for role '{roleExternalId}'.";
+            new RecommendedHuddlePathItemResponse(2 + index, index + 1, HuddleMappings.ToCatalogItem(x.HuddleTopic, activityCounts))).ToList();
+        string? message = complete ? null : $"Role Path requires seven unique published Huddles, but only {unique.Count} eligible Huddles are configured for role '{roleExternalId}'.";
         return new RecommendedHuddlePathResponse(roleExternalId, complete, message, items);
     }
 }

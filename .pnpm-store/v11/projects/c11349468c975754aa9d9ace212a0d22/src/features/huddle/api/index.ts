@@ -17,4 +17,5 @@ export { getCoachAvailability } from "./getCoachAvailability";
 export { bookCoach } from "./bookCoach";
 export { getMyHuddleLaunchPlan } from "./getMyHuddleLaunchPlan";
 export { saveHuddleLaunchPlan } from "./saveHuddleLaunchPlan";
+export { createHuddleLaunchEmailDraft } from "./createHuddleLaunchEmailDraft";
 export { resetHuddleLaunchPlan } from "./resetHuddleLaunchPlan";

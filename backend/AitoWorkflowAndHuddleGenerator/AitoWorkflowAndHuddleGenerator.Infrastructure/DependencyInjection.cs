@@ -11,6 +11,8 @@ using AitoWorkflowAndHuddleGenerator
 using AitoWorkflowAndHuddleGenerator
     .Infrastructure
     .Identity;
+using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Mail;
+using AitoWorkflowAndHuddleGenerator.Infrastructure.Mail;
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Coaching;
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Calendar;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Calendar;
@@ -87,6 +89,12 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         services.AddScoped<IWorkflowCalendarService, GraphWorkflowCalendarService>();
+        services.AddHttpClient(GraphHuddleLaunchMailService.HttpClientName, client =>
+        {
+            client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddScoped<IHuddleLaunchMailService, GraphHuddleLaunchMailService>();
 
         return services;
     }

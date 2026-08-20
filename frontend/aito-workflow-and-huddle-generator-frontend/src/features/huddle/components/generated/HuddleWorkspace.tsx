@@ -8,6 +8,7 @@ import {
   Clock,
   Copy,
   ExternalLink,
+  Eye,
   FileDown,
   FileText,
   Home,
@@ -21,6 +22,12 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type {
   HuddlePresentationActivity,
@@ -44,6 +51,7 @@ interface HuddleWorkspaceProps {
   onSetActivityCompletion: (activityExternalId: string, isCompleted: boolean, currentPhaseExternalId: string | null, facilitatorNotes: string | null) => Promise<HuddleSessionResponse>;
   onCompleteSession: () => Promise<HuddleSessionResponse>;
   onMeetCoach: () => void;
+  onPreviewSlides: () => void;
   onClose: () => void;
 }
 
@@ -57,9 +65,14 @@ function ResourceLink({ resource }: { resource: HuddlePresentationResource }) {
   return resource.url ? <a className={className} href={resource.url} target="_blank" rel="noreferrer">{content}</a> : <span className={cn(className, "cursor-default text-[#616161] hover:bg-white")}>{content}</span>;
 }
 
-function ActivityCard({ activity, ordinal, completed, disabled, onToggle }: { activity: HuddlePresentationActivity; ordinal: number; completed: boolean; disabled: boolean; onToggle: () => void }) {
+function ActivityCard({ activity, ordinal, completed, disabled, fallbackResources, onToggle, onViewResources }: { activity: HuddlePresentationActivity; ordinal: number; completed: boolean; disabled: boolean; fallbackResources: readonly HuddlePresentationResource[]; onToggle: () => void; onViewResources: () => void }) {
   const primaryAgent = activity.agents[0];
   const secondaryAgents = activity.agents.slice(1);
+  const accessUrl = primaryAgent?.showAccessLink ? primaryAgent.accessUrl : null;
+  const openLabel = primaryAgent ? `Open in ${primaryAgent.name}` : "Open AI tool";
+  // Activity-level resources are optional in the catalog. When an activity has none of its own,
+  // surface the Huddle's topic resources so the card matches the governed reference experience.
+  const cardResources = activity.resources.length > 0 ? activity.resources : fallbackResources;
   return (
     <article className="rounded-xl border border-[#dfe3e8] bg-white shadow-sm">
       <div className="flex items-start gap-4 p-5">
@@ -71,8 +84,28 @@ function ActivityCard({ activity, ordinal, completed, disabled, onToggle }: { ac
               <OptionalContent value={activity.description} />
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
-              {primaryAgent?.showAccessLink && primaryAgent.accessUrl && <Button asChild variant="outline" size="sm" className="border-[#8DC8E8] bg-white text-[#0f6cbd] hover:bg-[#e8f2ff]"><a href={primaryAgent.accessUrl} target="_blank" rel="noreferrer"><Bot className="mr-2 h-4 w-4" />Open in {primaryAgent.name}<ExternalLink className="ml-2 h-3.5 w-3.5" /></a></Button>}
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`More options for ${activity.name}`}><MoreHorizontal className="h-4 w-4" /></Button>
+              {primaryAgent && (accessUrl
+                ? <Button asChild variant="outline" size="sm" className="border-[#8DC8E8] bg-white text-[#0f6cbd] hover:bg-[#e8f2ff]"><a href={accessUrl} target="_blank" rel="noreferrer"><Bot className="mr-2 h-4 w-4" />{openLabel}<ExternalLink className="ml-2 h-3.5 w-3.5" /></a></Button>
+                : <Button variant="outline" size="sm" disabled title={`${primaryAgent.name} does not have an approved access link yet`} className="border-[#8DC8E8] bg-white text-[#0f6cbd]"><Bot className="mr-2 h-4 w-4" />{openLabel}<ExternalLink className="ml-2 h-3.5 w-3.5" /></Button>)}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`More options for ${activity.name}`}><MoreHorizontal className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="min-w-52">
+                  <DropdownMenuItem disabled={disabled} onClick={onToggle}>
+                    <Check className="mr-2 h-4 w-4" />{completed ? "Mark incomplete" : "Mark complete"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!activity.prompt} onClick={() => { if (activity.prompt) void navigator.clipboard.writeText(activity.prompt); }}>
+                    <Copy className="mr-2 h-4 w-4" />Copy prompt
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={!accessUrl} onClick={() => { if (accessUrl) window.open(accessUrl, "_blank", "noopener,noreferrer"); }}>
+                    <Bot className="mr-2 h-4 w-4" />{openLabel}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={cardResources.length === 0} onClick={onViewResources}>
+                    <BookOpen className="mr-2 h-4 w-4" />View resources
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#707070]">
@@ -87,7 +120,7 @@ function ActivityCard({ activity, ordinal, completed, disabled, onToggle }: { ac
             <ActivityField label="Required context" value={activity.requiredContext} />
             <ActivityField label="Best-fit job" value={activity.bestFitJob} />
           </div>
-          {activity.resources.length > 0 && <div className="mt-4"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#616161]">Resources</p><div className="flex flex-wrap gap-2">{activity.resources.map((resource) => <ResourceLink key={resource.externalId} resource={resource} />)}</div></div>}
+          {cardResources.length > 0 && <div className="mt-4"><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#616161]">Resources</p><div className="flex flex-wrap gap-2">{cardResources.map((resource) => <ResourceLink key={resource.externalId} resource={resource} />)}</div></div>}
         </div>
       </div>
     </article>
@@ -99,7 +132,7 @@ function ActivityField({ label, value, tone = "default" }: { label: string; valu
   return <section className={cn("rounded-lg border px-4 py-3", tone === "blue" && "border-[#8DC8E8] bg-[#E2F1F9]", tone === "tan" && "border-[#D8C3B2] bg-[#F0E9E3]", tone === "default" && "border-[#e1e4e8] bg-[#fbfbfb]")}><p className={cn("text-xs font-semibold uppercase tracking-wide", tone === "blue" ? "text-[#0F6CBD]" : tone === "tan" ? "text-[#704214]" : "text-[#616161]")}>{label}</p><p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-[#242424]">{value}</p></section>;
 }
 
-export function HuddleWorkspace({ model, session, sessionLoading, sessionError, mutationPending, onRefreshSession, onSaveSession, onSetActivityCompletion, onCompleteSession, onMeetCoach, onClose }: HuddleWorkspaceProps) {
+export function HuddleWorkspace({ model, session, sessionLoading, sessionError, mutationPending, onRefreshSession, onSaveSession, onSetActivityCompletion, onCompleteSession, onMeetCoach, onPreviewSlides, onClose }: HuddleWorkspaceProps) {
   const [section, setSection] = useState<WorkspaceSection>(model.phases.length > 0 ? "activities" : "overview");
   const [activePhaseId, setActivePhaseId] = useState<string | null>(() =>
     session?.currentPhaseExternalId && model.phases.some((phase) => phase.externalId === session.currentPhaseExternalId)
@@ -204,21 +237,22 @@ export function HuddleWorkspace({ model, session, sessionLoading, sessionError, 
   return (
     <div role="dialog" aria-modal="true" aria-label={`${model.identity.name} workspace`} className="fixed inset-0 z-50 flex h-dvh w-screen flex-col overflow-hidden bg-[#f7f8fa] text-[#242424]">
       <header className="flex flex-shrink-0 items-center border-b border-[#e1e4e8] bg-white px-4 py-3 lg:px-5">
-        <div className="flex min-w-0 items-center gap-3"><Button variant="ghost" size="icon" className="h-9 w-9" onClick={onClose} aria-label="Exit generated Huddle"><X className="h-4 w-4" /></Button><div className="min-w-0"><div className="flex items-center gap-2"><h2 className="truncate text-lg font-semibold lg:text-xl">{model.identity.name}</h2><span className="rounded border border-[#0f6cbd]/25 bg-[#e8f2ff] px-2 py-1 text-xs font-semibold text-[#0f6cbd]">{model.identity.type}</span></div>{model.identity.description && <p className="hidden truncate text-sm text-[#616161] sm:block">{model.identity.description}</p>}</div></div>
-        <div className="ml-auto flex flex-shrink-0 items-center gap-2 overflow-x-auto pl-3"><Button variant="outline" size="sm" onClick={() => setTalkTrackOpen(true)}><MessageSquare className="mr-2 h-4 w-4" />Talk Track</Button><Button variant="outline" size="sm" disabled={sessionLoading || mutationPending} onClick={() => void saveProgress()}><FileText className="mr-2 h-4 w-4" />{mutationPending ? "Saving..." : "Save Progress"}</Button><Button size="sm" disabled={!progressSummary.canComplete || mutationPending} title={progressSummary.canComplete ? undefined : "Complete every current activity first"} onClick={() => void completeHuddle()} className="flex-shrink-0 bg-[#0f6cbd] text-white hover:bg-[#115ea3]"><CheckCircle2 className="mr-2 h-4 w-4" />Complete Huddle</Button></div>
+        <div className="flex min-w-0 items-center gap-3"><Button variant="ghost" size="icon" className="h-9 w-9" onClick={onClose} aria-label="Exit generated Huddle"><X className="h-4 w-4" /></Button><div className="min-w-0"><div className="flex items-center gap-2"><h2 className="truncate text-lg font-semibold lg:text-xl">{model.identity.name}</h2></div>{model.identity.description && <p className="hidden truncate text-sm text-[#616161] sm:block">{model.identity.description}</p>}</div></div>
+        <div className="ml-auto flex flex-shrink-0 items-center gap-2 overflow-x-auto pl-3"><Button variant="outline" size="sm" disabled={sessionLoading || mutationPending} onClick={() => void saveProgress()}><FileText className="mr-2 h-4 w-4" />{mutationPending ? "Saving..." : "Save Progress"}</Button><Button size="sm" disabled={!progressSummary.canComplete || mutationPending} title={progressSummary.canComplete ? undefined : "Complete every current activity first"} onClick={() => void completeHuddle()} className="flex-shrink-0 bg-[#0f6cbd] text-white hover:bg-[#115ea3]"><CheckCircle2 className="mr-2 h-4 w-4" />Complete Huddle</Button></div>
       </header>
       <div className="flex flex-shrink-0 items-center gap-2 overflow-x-auto border-b border-[#e1e4e8] bg-white px-4 py-3 lg:px-6">
         <div className="flex w-full items-center gap-2 overflow-x-auto">{[{ label: "Duration", value: model.identity.durationMinutes === null ? "Unavailable" : `${model.identity.durationMinutes} min`, icon: Clock }, { label: "Phases", value: String(model.phases.length), icon: Layers }, { label: "Activities", value: String(activityCount), icon: ListChecks }, { label: "AI tools", value: String(agents.length), icon: Bot }].map(({ label, value, icon: Icon }) => <div key={label} className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-[#e1e4e8] bg-white px-3 py-2"><Icon className="h-4 w-4 text-[#0f6cbd]" /><div><p className="text-sm font-semibold">{value}</p><p className="text-[10px] uppercase tracking-wide text-[#707070]">{label}</p></div></div>)}<div className="ml-auto hidden min-w-[280px] lg:block"><div className="mb-1 flex justify-between text-xs text-[#616161]"><span>{progressSummary.completedCount} of {progressSummary.totalCount} activities complete</span><span>{progressSummary.percentage}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-[#e8eaed]"><div className="h-full rounded-full bg-[#0f6cbd] transition-all" style={{ width: `${progressSummary.percentage}%` }} /></div></div></div>
       </div>
       <div className={cn("relative grid min-h-0 flex-1", guideCollapsed ? "lg:grid-cols-[64px_minmax(0,1fr)_300px]" : "lg:grid-cols-[232px_minmax(0,1fr)_300px]")}>
         <aside className="hidden min-h-0 flex-col border-r border-[#e1e4e8] bg-white lg:flex"><div className="flex items-center justify-between px-4 py-4">{!guideCollapsed && <p className="text-sm font-semibold">Huddle Guide</p>}<Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setGuideCollapsed((value) => !value)} aria-label="Toggle Huddle Guide"><PanelLeftClose className={cn("h-4 w-4 transition-transform", guideCollapsed && "rotate-180")} /></Button></div><nav className="space-y-1 px-2"><WorkspaceNavButton active={section === "overview"} collapsed={guideCollapsed} icon={<Home className="h-4 w-4" />} label="Overview" onClick={() => setSection("overview")} />{!guideCollapsed && <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-[#707070]">Huddle Flow</p>}{model.phases.map((phase, index) => { const completedInPhase = phase.activities.filter((activity) => progressSummary.completedActivityIds.has(activity.externalId)).length; return <button key={phase.externalId} type="button" onClick={() => { setActivePhaseId(phase.externalId); setSection("activities"); }} className={cn("flex w-full items-start gap-3 rounded-md border-l-2 px-3 py-3 text-left transition-colors", section === "activities" && activePhase?.externalId === phase.externalId ? "border-[#0f6cbd] bg-[#eef6fc] text-[#0f6cbd]" : "border-transparent text-[#424242] hover:bg-[#f3f3f3]")}><span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold">{index + 1}</span>{!guideCollapsed && <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{phase.name}</p><div className="mt-1 flex justify-between text-xs text-[#707070]"><span>{phase.durationMinutes === null ? "Duration unavailable" : `${phase.durationMinutes} min`}</span><span>{completedInPhase}/{phase.activities.length}</span></div></div>}</button>; })}</nav><div className="mt-auto border-t border-[#e1e4e8] p-2"><WorkspaceNavButton active={section === "resources"} collapsed={guideCollapsed} icon={<BookOpen className="h-4 w-4" />} label="Resources" onClick={() => setSection("resources")} /></div></aside>
-        <main className="min-h-0 overflow-y-auto px-4 py-5 lg:px-7 lg:py-6">
+        <button type="button" onClick={() => setTalkTrackOpen(true)} style={{ writingMode: "vertical-rl" }} aria-expanded={talkTrackOpen} className={cn("absolute top-10 z-20 hidden h-28 w-9 items-center justify-center gap-2 rounded-r-md border border-l-0 border-[#C7E0F4] text-xs font-semibold shadow-sm transition-colors lg:flex", guideCollapsed ? "left-16" : "left-[232px]", talkTrackOpen ? "bg-[#0F6CBD] text-white" : "bg-[#F5F9FF] text-[#0F6CBD] hover:bg-[#E8F2FF]")}><MessageSquare className="h-4 w-4" /><span>Talk Track</span></button>
+        <main className="min-h-0 overflow-y-auto px-4 py-5 lg:py-6 lg:pl-12 lg:pr-7">
           <div className="mb-4 flex gap-2 overflow-x-auto lg:hidden"><MobileNav label="Overview" active={section === "overview"} onClick={() => setSection("overview")} /><MobileNav label="Talk Track" active={talkTrackOpen} onClick={() => setTalkTrackOpen(true)} /><MobileNav label="Activities" active={section === "activities"} onClick={() => setSection("activities")} /><MobileNav label="Resources" active={section === "resources"} onClick={() => setSection("resources")} /></div>
           {section === "overview" && <Overview model={model} />}
           {sessionError && <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><span>{"status" in sessionError && sessionError.status === 409 ? "Progress changed elsewhere. Refresh before retrying." : sessionError.message}</span><Button variant="outline" size="sm" onClick={() => void refreshSession()}>Refresh</Button></div>}
           {feedback && <div role="status" className={cn("mb-4 rounded-lg border p-3 text-sm", feedback.kind === "success" ? "border-green-200 bg-green-50 text-green-900" : "border-red-200 bg-red-50 text-red-900")}>{feedback.message}</div>}
           {(session?.removedActivityExternalIds.length ?? 0) > 0 && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{session!.removedActivityExternalIds.length} saved activity record(s) no longer belong to the current Huddle and were excluded from progress.</p>}
-          {section === "activities" && <Activities model={model} activePhase={activePhase} activePhaseId={activePhaseId} completedActivityIds={progressSummary.completedActivityIds} mutationPending={mutationPending} onPhaseChange={setActivePhaseId} onToggle={(activityExternalId, isCompleted) => void toggleActivity(activityExternalId, isCompleted)} />}
+          {section === "activities" && <Activities model={model} activePhase={activePhase} activePhaseId={activePhaseId} completedActivityIds={progressSummary.completedActivityIds} mutationPending={mutationPending} onPhaseChange={setActivePhaseId} onToggle={(activityExternalId, isCompleted) => void toggleActivity(activityExternalId, isCompleted)} onViewResources={() => setSection("resources")} />}
           {section === "resources" && <Resources resources={allResources} />}
         </main>
         <aside className="hidden min-h-0 overflow-y-auto border-l-4 border-[#8dc8e8] bg-[#fbfbfb] p-3 lg:block">
@@ -231,11 +265,11 @@ export function HuddleWorkspace({ model, session, sessionLoading, sessionError, 
               </Button>
             </section>
             <section className="rounded-xl border border-[#e1e4e8] bg-white p-4 shadow-sm"><div className="mb-2 flex items-center justify-between"><div className="flex items-center gap-2"><StickyNote className="h-4 w-4 text-[#0f6cbd]" /><h3 className="font-semibold">My Notes</h3></div><span className="rounded border px-2 py-0.5 text-[10px]">Private</span></div><textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Add facilitator insights, role-specific guidance, or follow-up actions..." className="min-h-[130px] w-full resize-y rounded-lg border border-[#d8c3b2] bg-[#fffdf2] p-3 text-sm outline-none focus:border-[#0f6cbd] focus:ring-1 focus:ring-[#0f6cbd]" /><p className="mt-2 text-[11px] text-[#707070]">These notes can be included in HTML and PowerPoint exports later.</p></section>
-            {model.keyTakeaway && <section className="rounded-xl border border-[#b9d9c5] bg-[#f3faf4] p-4"><p className="text-sm font-semibold text-[#0f6cbd]">Key takeaway</p><p className="mt-2 text-sm leading-6 text-[#424242]">{model.keyTakeaway}</p></section>}
+            <section className="rounded-xl border border-[#b9d9c5] bg-[#f3faf4] p-4"><p className="text-sm font-semibold text-[#0f6cbd]">Key takeaway</p><OptionalContent value={model.keyTakeaway} /></section>
           </div>
         </aside>
       </div>
-      <footer className="flex flex-shrink-0 items-center gap-3 overflow-x-auto border-t border-[#e1e4e8] bg-white px-4 py-2.5 lg:px-5"><Button variant="ghost" className="flex-shrink-0" onClick={onClose}><ChevronLeft className="mr-2 h-4 w-4" />Exit to Huddle Library</Button><span className="ml-auto hidden flex-shrink-0 text-xs text-[#707070] xl:block">{session ? `Last saved ${new Date(session.lastSavedAtUtc).toLocaleString()}` : "Progress has not been saved yet."}</span><div className="flex flex-shrink-0 items-center gap-2"><Button className="lg:hidden" variant="outline" size="sm" onClick={onMeetCoach}><UserRound className="mr-2 h-4 w-4" />Meet with a Coach</Button><Button variant="outline" size="sm" disabled={exportingHtml} onClick={() => void downloadHtml()}><FileDown className="mr-2 h-4 w-4" />{exportingHtml ? "Exporting..." : "HTML"}</Button><Button variant="outline" size="sm" disabled={exporting} onClick={() => void downloadPowerPoint()}><FileDown className="mr-2 h-4 w-4" />{exporting ? "Exporting..." : "PowerPoint"}</Button><Button className="lg:hidden" variant="outline" size="sm" disabled={sessionLoading || mutationPending} onClick={() => void saveProgress()}><FileText className="mr-2 h-4 w-4" />{mutationPending ? "Saving..." : "Save Progress"}</Button></div></footer>
+      <footer className="flex flex-shrink-0 items-center gap-3 overflow-x-auto border-t border-[#e1e4e8] bg-white px-4 py-2.5 lg:px-5"><Button variant="ghost" className="flex-shrink-0" onClick={onClose}><ChevronLeft className="mr-2 h-4 w-4" />Exit to Huddle Library</Button><span className="ml-auto hidden flex-shrink-0 text-xs text-[#707070] xl:block">{session ? `Last saved ${new Date(session.lastSavedAtUtc).toLocaleString()}` : "Progress has not been saved yet."}</span><div className="flex flex-shrink-0 items-center gap-2"><Button className="lg:hidden" variant="outline" size="sm" onClick={onMeetCoach}><UserRound className="mr-2 h-4 w-4" />Meet with a Coach</Button><Button variant="outline" size="sm" onClick={onPreviewSlides}><Eye className="mr-2 h-4 w-4" />Preview slides</Button><Button variant="outline" size="sm" disabled={exportingHtml} onClick={() => void downloadHtml()}><FileDown className="mr-2 h-4 w-4" />{exportingHtml ? "Exporting..." : "HTML"}</Button><Button variant="outline" size="sm" disabled={exporting} onClick={() => void downloadPowerPoint()}><FileDown className="mr-2 h-4 w-4" />{exporting ? "Exporting..." : "PowerPoint"}</Button><Button className="lg:hidden" variant="outline" size="sm" disabled={sessionLoading || mutationPending} onClick={() => void saveProgress()}><FileText className="mr-2 h-4 w-4" />{mutationPending ? "Saving..." : "Save Progress"}</Button><Button size="sm" disabled={!progressSummary.canComplete || mutationPending} title={progressSummary.canComplete ? undefined : "Complete every current activity first"} onClick={() => void completeHuddle()} className="bg-[#0f6cbd] text-white hover:bg-[#115ea3]"><CheckCircle2 className="mr-2 h-4 w-4" />Complete Huddle</Button></div></footer>
       {talkTrackOpen && <HuddleTalkTrackPanel guide={model.facilitatorGuide} onClose={() => setTalkTrackOpen(false)} />}
     </div>
   );
@@ -257,9 +291,9 @@ function OverviewCard({ title, value }: { title: string; value: string | null })
   return <section className="min-h-[126px] rounded-xl border border-[#dfe3e8] bg-white p-5"><h4 className="font-semibold">{title}</h4><OptionalContent value={value} /></section>;
 }
 
-function Activities({ model, activePhase, activePhaseId, completedActivityIds, mutationPending, onPhaseChange, onToggle }: { model: HuddlePresentationModel; activePhase: HuddlePresentationModel["phases"][number] | null; activePhaseId: string | null; completedActivityIds: ReadonlySet<string>; mutationPending: boolean; onPhaseChange: (id: string) => void; onToggle: (activityExternalId: string, isCompleted: boolean) => void }) {
+function Activities({ model, activePhase, activePhaseId, completedActivityIds, mutationPending, onPhaseChange, onToggle, onViewResources }: { model: HuddlePresentationModel; activePhase: HuddlePresentationModel["phases"][number] | null; activePhaseId: string | null; completedActivityIds: ReadonlySet<string>; mutationPending: boolean; onPhaseChange: (id: string) => void; onToggle: (activityExternalId: string, isCompleted: boolean) => void; onViewResources: () => void }) {
   if (!activePhase) return <Unavailable title="Huddle activities" />;
-  return <div className="mx-auto max-w-4xl space-y-5"><div className="flex gap-2 overflow-x-auto lg:hidden">{model.phases.map((phase, index) => <button key={phase.externalId} type="button" onClick={() => onPhaseChange(phase.externalId)} className={cn("flex-shrink-0 rounded-full border px-3 py-1.5 text-sm", activePhaseId === phase.externalId ? "border-[#0f6cbd] bg-[#e8f2ff] text-[#0f6cbd]" : "bg-white")}>{index + 1}. {phase.name}</button>)}</div><div><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8f2ff] text-sm font-semibold text-[#0f6cbd]">{model.phases.findIndex((phase) => phase.externalId === activePhase.externalId) + 1}</span><h3 className="text-2xl font-semibold">{activePhase.name}</h3></div>{activePhase.description && <p className="ml-10 mt-1 text-sm text-[#616161]">{activePhase.description}</p>}</div>{activePhase.activities.length > 0 ? <div className="space-y-4">{activePhase.activities.map((activity, index) => <ActivityCard key={activity.externalId} activity={activity} ordinal={index + 1} completed={completedActivityIds.has(activity.externalId)} disabled={mutationPending} onToggle={() => onToggle(activity.externalId, !completedActivityIds.has(activity.externalId))} />)}</div> : <Unavailable title="Activities for this phase" />}</div>;
+  return <div className="mx-auto max-w-4xl space-y-5"><div className="flex gap-2 overflow-x-auto lg:hidden">{model.phases.map((phase, index) => <button key={phase.externalId} type="button" onClick={() => onPhaseChange(phase.externalId)} className={cn("flex-shrink-0 rounded-full border px-3 py-1.5 text-sm", activePhaseId === phase.externalId ? "border-[#0f6cbd] bg-[#e8f2ff] text-[#0f6cbd]" : "bg-white")}>{index + 1}. {phase.name}</button>)}</div><div><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8f2ff] text-sm font-semibold text-[#0f6cbd]">{model.phases.findIndex((phase) => phase.externalId === activePhase.externalId) + 1}</span><h3 className="text-2xl font-semibold">{activePhase.name}</h3></div>{activePhase.description && <p className="ml-10 mt-1 text-sm text-[#616161]">{activePhase.description}</p>}</div>{activePhase.activities.length > 0 ? <div className="space-y-4">{activePhase.activities.map((activity, index) => <ActivityCard key={activity.externalId} activity={activity} ordinal={index + 1} completed={completedActivityIds.has(activity.externalId)} disabled={mutationPending} fallbackResources={model.resources} onToggle={() => onToggle(activity.externalId, !completedActivityIds.has(activity.externalId))} onViewResources={onViewResources} />)}</div> : <Unavailable title="Activities for this phase" />}</div>;
 }
 
 function Resources({ resources }: { resources: readonly HuddlePresentationResource[] }) {

@@ -3,6 +3,7 @@ export interface HuddleRoleResponse {
   name: string;
   abbreviation: string;
   segment: string | null;
+  description: string | null;
 }
 
 export interface HuddleResourceResponse {
@@ -46,6 +47,8 @@ export interface HuddleCatalogItemResponse {
   roles: HuddleRoleResponse[];
   primaryAgents: HuddleAgentResponse[];
   secondaryAgents: HuddleAgentResponse[];
+  mcemStages: HuddleMcemStageResponse[];
+  activityCount: number;
 }
 
 export interface HuddleMcemStageResponse {
@@ -211,6 +214,16 @@ export interface IncompleteHuddleSessionResponse {
   huddleDescription: string | null;
   huddleType: string;
   session: HuddleSessionResponse;
+}
+
+export interface CreateHuddleLaunchEmailDraftRequest {
+  subject: string;
+  bodyText: string;
+}
+
+export interface HuddleLaunchEmailDraftResponse {
+  messageId: string;
+  webLink: string;
 }
 
 export interface SaveHuddleSessionRequest {

@@ -15,7 +15,8 @@ internal static class HuddlePlanMappings
     public static HuddlePlanResponse ToResponse(
         string roleExternalId,
         UserHuddlePlan? plan,
-        IReadOnlyList<HuddleTopic> recommendedTopics)
+        IReadOnlyList<HuddleTopic> recommendedTopics,
+        IReadOnlyDictionary<int, int> activityCounts)
     {
         IReadOnlyList<HuddleTopic> selectedTopics = plan is null
             ? recommendedTopics
@@ -28,7 +29,7 @@ internal static class HuddlePlanMappings
                 2 + index,
                 recommendedExternalId,
                 !string.Equals(topic.ExternalId, recommendedExternalId, StringComparison.OrdinalIgnoreCase),
-                HuddleMappings.ToCatalogItem(topic));
+                HuddleMappings.ToCatalogItem(topic, activityCounts));
         }).ToList();
 
         return new HuddlePlanResponse(

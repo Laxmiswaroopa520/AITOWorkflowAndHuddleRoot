@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { LoadingSpinner } from "@/components/feedback/LoadingSpinner";
@@ -7,62 +6,103 @@ import { mapHuddleCatalogItemToCard } from "../../mappers";
 import type { HuddleCatalogItemResponse, HuddleVoteResponse } from "../../types";
 import type { IncompleteHuddleSessionResponse } from "../../types";
 import { HuddleCatalogCard } from "./HuddleCatalogCard";
-import { ContinueLearningCard, isContinueLearningAvailable } from "../progress";
+import { CustomLearningPlanCard } from "./CustomLearningPlanCard";
+import { CustomLearningPlanDialog } from "./CustomLearningPlanDialog";
+import { ContinueLearningList } from "../progress";
+import { exportCustomLearningPlanHtml } from "../../exports/html/exportCustomLearningPlanHtml";
+import type { CustomLearningPlanState } from "../../hooks/useCustomLearningPlan";
 
-interface FilterOption { value: string; label: string }
 interface HuddleCatalogProps {
   data: HuddleCatalogItemResponse[] | undefined;
   isLoading: boolean;
   error: Error | null;
   selectedExternalId: string | null;
-  filters: { role: string; focusArea: string; agent: string; sort: string; search: string };
-  options: { roles: FilterOption[]; focusAreas: FilterOption[]; agents: FilterOption[] };
+  audienceRoleIds: string[];
+  /** Changes whenever any filter changes, so paging can restart at page one. */
+  filterKey: string;
   votes: Map<string, HuddleVoteResponse>;
   votePending: boolean;
-  onFilterChange: (name: "role" | "focusArea" | "agent" | "sort" | "search", value: string) => void;
   onSelect: (externalId: string) => void;
   onVote: (externalId: string, value: -1 | 1 | null) => void;
   onRetry: () => void;
-  continueLearning?: IncompleteHuddleSessionResponse;
+  /** Every in-progress session; the list shows the latest and can expand to the rest. */
+  continueLearning?: IncompleteHuddleSessionResponse[];
   onContinue: (externalId: string) => void;
+  /** Custom learning plan state. Omit to hide the multi-select experience entirely. */
+  plan?: CustomLearningPlanState;
+  /** Human-readable persona shown on the exported plan. */
+  planAudienceLabel?: string | null;
+  onCloseDetails?: () => void;
 }
 
 const PAGE_SIZE = 10;
 
-function FilterSelect({ label, value, options, allLabel, onChange }: { label: string; value: string; options: FilterOption[]; allLabel: string; onChange: (value: string) => void }) {
-  return <label className="block min-w-0"><span className="mb-1.5 block text-xs font-semibold tracking-wide text-muted-foreground">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#0F6CBD]"><option value="">{allLabel}</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
-}
 
-export function HuddleCatalog({ data, isLoading, error, selectedExternalId, filters, options, votes, votePending, continueLearning, onFilterChange, onSelect, onVote, onRetry, onContinue }: HuddleCatalogProps) {
+export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audienceRoleIds, filterKey, votes, votePending, continueLearning, plan, planAudienceLabel, onSelect, onVote, onRetry, onContinue, onCloseDetails }: HuddleCatalogProps) {
   const [page, setPage] = useState(1);
-  const cards = useMemo(() => (data ?? []).map(mapHuddleCatalogItemToCard), [data]);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+  // The catalog endpoint filters by one role only. With several selected we request every
+  // role and narrow client-side, which keeps the server contract unchanged.
+  const visible = useMemo(() => {
+    if (audienceRoleIds.length <= 1) return data ?? [];
+    return (data ?? []).filter((item) => item.roles.some((role) => audienceRoleIds.includes(role.externalId)));
+  }, [data, audienceRoleIds]);
+  const cards = useMemo(() => visible.map(mapHuddleCatalogItemToCard), [visible]);
+
+  // Resolve the plan sequence against the full API payload so a topic stays in the plan
+  // even when the current filters or page would hide its card.
+  const planHuddles = useMemo(() => {
+    if (!plan) return [];
+    const byExternalId = new Map((data ?? []).map((item) => [item.externalId, item]));
+    return plan.sequence.map((externalId) => byExternalId.get(externalId)).filter((item): item is HuddleCatalogItemResponse => Boolean(item));
+  }, [data, plan]);
+
+  const exportPlan = () => {
+    setPlanError(null);
+    setExporting(true);
+    try {
+      exportCustomLearningPlanHtml(planHuddles, { personaLabel: planAudienceLabel ?? null });
+    } catch (exportFailure) {
+      setPlanError(exportFailure instanceof Error ? exportFailure.message : "Unable to export the learning plan.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const clearPlan = () => {
+    plan?.clear();
+    setPlanOpen(false);
+    setPlanError(null);
+  };
   const totalPages = Math.max(1, Math.ceil(cards.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * PAGE_SIZE;
   const pagedCards = cards.slice(pageStart, pageStart + PAGE_SIZE);
 
-  const changeFilter = (name: "role" | "focusArea" | "agent" | "sort" | "search", value: string) => {
-    setPage(1);
-    onFilterChange(name, value);
-  };
+  // Filters live above this component now, so restart paging when they change.
+  useEffect(() => { setPage(1); }, [filterKey]);
 
   if (isLoading) return <LoadingSpinner message="Loading Huddles..." />;
   if (error) return <ErrorState title="Unable to load Huddles" message={error.message} onRetry={onRetry} />;
 
   return (
     <section className="space-y-4">
-      <div><h2 className="text-2xl font-bold">Additional Topics</h2><p className="mt-1 text-sm text-muted-foreground">Explore all published Huddles without restrictions.</p></div>
-      {isContinueLearningAvailable(continueLearning) && <ContinueLearningCard item={continueLearning} onContinue={onContinue} />}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-        <FilterSelect label="Audience" value={filters.role} options={options.roles} allLabel="All Audiences" onChange={(value) => changeFilter("role", value)} />
-        <FilterSelect label="Focus Area" value={filters.focusArea} options={options.focusAreas} allLabel="All Focus Areas" onChange={(value) => changeFilter("focusArea", value)} />
-        <FilterSelect label="AI Tool" value={filters.agent} options={options.agents} allLabel="All AI Tools" onChange={(value) => changeFilter("agent", value)} />
-        <FilterSelect label="Sort" value={filters.sort} options={[{ value: "role-relevance", label: "Role relevance" }, { value: "most-upvoted", label: "Most upvoted" }, { value: "default", label: "Default order" }]} allLabel="Default order" onChange={(value) => changeFilter("sort", value)} />
-        <label className="block min-w-0"><span className="mb-1.5 block text-xs font-semibold tracking-wide text-muted-foreground">Search</span><span className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={filters.search} onChange={(event) => changeFilter("search", event.target.value)} placeholder="Search Huddles" className="h-10 w-full rounded-md border border-input bg-white pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-[#0F6CBD]" /></span></label>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div><h2 className="text-2xl font-bold">Additional Topics</h2><p className="mt-1 text-sm text-muted-foreground">Build your own learning plan from additional workflows, tools, and role-relevant Huddles.</p></div>
+        <div className="flex items-center gap-2">
+          {plan && plan.selectedIds.length > 0 && <span className="rounded-full bg-[#E8F2FF] px-2.5 py-1 text-xs font-semibold text-[#0F6CBD]">{plan.selectedIds.length} {plan.selectedIds.length === 1 ? "topic" : "topics"} selected</span>}
+          {selectedExternalId && onCloseDetails && <Button variant="ghost" size="sm" onClick={onCloseDetails}>Close details</Button>}
+        </div>
       </div>
-      <div className="space-y-3">{pagedCards.map((huddle) => <HuddleCatalogCard showManagementMenu key={huddle.id} huddle={huddle} selected={selectedExternalId === huddle.id} vote={votes.get(huddle.id)} votePending={votePending} primaryAccessUrl={huddle.primaryAccessUrl} onSelect={onSelect} onVote={onVote} />)}</div>
+      <ContinueLearningList items={continueLearning} onContinue={onContinue} />
+      {plan && plan.selectedIds.length > 0 && <CustomLearningPlanCard selectedCount={plan.selectedIds.length} exporting={exporting} onBuild={() => setPlanOpen(true)} onExport={exportPlan} onClear={clearPlan} />}
+      {planError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">{planError}</p>}
+      <div className="space-y-3">{pagedCards.map((huddle) => <HuddleCatalogCard showManagementMenu key={huddle.id} huddle={huddle} selected={selectedExternalId === huddle.id} vote={votes.get(huddle.id)} votePending={votePending} primaryAccessUrl={huddle.primaryAccessUrl} planChecked={plan?.isSelected(huddle.id) ?? false} onTogglePlan={plan ? plan.toggle : undefined} onSelect={onSelect} onVote={onVote} />)}</div>
       {cards.length === 0 && <div className="rounded-xl border border-dashed bg-white py-10 text-center text-sm text-muted-foreground">No Huddles match this filter.</div>}
       {cards.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 pt-1"><p className="text-xs text-muted-foreground">Showing {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, cards.length)} of {cards.length} Huddles</p>{totalPages > 1 && <div className="flex items-center gap-2"><Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</Button><span className="min-w-16 text-center text-xs font-medium text-muted-foreground">Page {currentPage} of {totalPages}</span><Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next</Button></div>}</div>}
+      {plan && planOpen && <CustomLearningPlanDialog huddles={planHuddles} exporting={exporting} onMove={plan.move} onRemove={plan.remove} onClear={clearPlan} onExport={exportPlan} onClose={() => setPlanOpen(false)} />}
     </section>
   );
 }

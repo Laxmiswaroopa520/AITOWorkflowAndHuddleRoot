@@ -1,4 +1,4 @@
-using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Persistence;
+﻿using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Persistence;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Common;
 using AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 using AitoWorkflowAndHuddleGenerator.Domain.Entities;
@@ -47,13 +47,16 @@ public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCata
 
         List<HuddleTopic> topics = await AddCatalogIncludes(query)
             .ToListAsync(cancellationToken);
-        return topics.Select(HuddleMappings.ToCatalogItem).ToList();
+        IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
+            dbContext, topics.Select(x => x.Id).ToList(), cancellationToken);
+        return topics.Select(x => HuddleMappings.ToCatalogItem(x, activityCounts)).ToList();
     }
 
     internal static IQueryable<HuddleTopic> AddCatalogIncludes(IQueryable<HuddleTopic> query) => query
         .Include(x => x.HuddleFocusArea)
         .Include(x => x.TopicRoles).ThenInclude(x => x.Role)
-        .Include(x => x.TopicAgents).ThenInclude(x => x.HuddleAgent);
+        .Include(x => x.TopicAgents).ThenInclude(x => x.HuddleAgent)
+        .Include(x => x.McemStages).ThenInclude(x => x.HuddleMcemStage);
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

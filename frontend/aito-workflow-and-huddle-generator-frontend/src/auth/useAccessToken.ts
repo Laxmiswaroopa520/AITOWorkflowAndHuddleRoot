@@ -1,4 +1,5 @@
 /*Silently acquires an API access token for the signed-in account and falls back to an interactive flow when required.*/
+//provides function for getting microsoft entra token
 import {
   InteractionRequiredAuthError,
   type AccountInfo,

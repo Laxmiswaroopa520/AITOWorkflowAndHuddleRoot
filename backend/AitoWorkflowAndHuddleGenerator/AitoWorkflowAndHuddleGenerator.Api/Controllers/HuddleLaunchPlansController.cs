@@ -1,4 +1,5 @@
 using AitoWorkflowAndHuddleGenerator.Api.Authorization;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.LaunchPlans.Commands.CreateHuddleLaunchEmailDraft;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.LaunchPlans.Commands.ResetHuddleLaunchPlan;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.LaunchPlans.Commands.SaveHuddleLaunchPlan;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.LaunchPlans.Queries.GetMyHuddleLaunchPlan;
@@ -29,6 +30,19 @@ public sealed class HuddleLaunchPlansController(ISender sender) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<HuddleLaunchPlanResponse>> SaveMine([FromBody] SaveHuddleLaunchPlanRequest request, CancellationToken cancellationToken) =>
         Ok(await sender.Send(new SaveHuddleLaunchPlanCommand(request.TeamName, request.CohortName, request.StartDate, request.EndDate, request.SponsorName, request.Managers, request.Facilitators, request.ProgramLead, request.TaskStateJson, request.RowVersion), cancellationToken));
+
+    /// <summary>Creates a branded launch email draft in the current user's mailbox.</summary>
+    /// <remarks>Creates a draft only. Nothing is sent; the user addresses and sends it.</remarks>
+    [HttpPost("me/email-drafts")]
+    [ProducesResponseType(typeof(HuddleLaunchEmailDraftResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<HuddleLaunchEmailDraftResponse>> CreateEmailDraft(
+        [FromBody] CreateHuddleLaunchEmailDraftRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(
+            new CreateHuddleLaunchEmailDraftCommand(request.Subject, request.BodyText),
+            cancellationToken));
 
     /// <summary>Deletes the current user's launch plan.</summary>
     [HttpDelete("me")]

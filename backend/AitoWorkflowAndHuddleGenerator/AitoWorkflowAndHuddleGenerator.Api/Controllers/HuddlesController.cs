@@ -61,7 +61,7 @@ public sealed class HuddlesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     /// <summary>
-    /// Gets Recommended Path.
+    /// Gets Role Path.
     /// </summary>
     public async Task<ActionResult<RecommendedHuddlePathResponse>> GetRecommendedPath(
         [FromQuery] string roleExternalId, CancellationToken cancellationToken)

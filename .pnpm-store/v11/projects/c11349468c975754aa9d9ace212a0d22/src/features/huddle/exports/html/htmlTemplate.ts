@@ -1,8 +1,12 @@
 import { escapeHtml } from "./htmlSanitizer";
 import { huddleHtmlStyles } from "./htmlStyles";
 
-export function createHtmlDocument(title: string, body: string): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(title)}</title><style>${huddleHtmlStyles}</style></head><body>${body}</body></html>`;
+/**
+ * Wraps body markup in a standalone document. The Huddle guide passes its own
+ * stylesheet; the Role Path and custom learning plan exports keep the default.
+ */
+export function createHtmlDocument(title: string, body: string, styles: string = huddleHtmlStyles): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(title)}</title><style>${styles}</style></head><body>${body}</body></html>`;
 }
 
 export function downloadHtmlFile(html: string, fileName: string): void {

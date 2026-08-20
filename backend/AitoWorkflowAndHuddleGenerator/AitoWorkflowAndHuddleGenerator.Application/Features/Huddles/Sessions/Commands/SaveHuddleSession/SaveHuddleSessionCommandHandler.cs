@@ -52,7 +52,10 @@ public sealed class SaveHuddleSessionCommandHandler(IApplicationDbContext dbCont
         }
         else
         {
-            if (session.SessionStatus == HuddleSessionStatus.Completed) throw new ConflictException(HuddleMessages.SessionAlreadyComplete);
+            // A completed session stays completed: SessionStatus and CompletedAtUtc are
+            // deliberately untouched below. Facilitator notes feed the HTML and PowerPoint
+            // exports, so they must remain saveable after the session is finished. This also
+            // matches SetHuddleActivityCompletion, which already edits completed sessions.
             ApplyConcurrency(session, request.RowVersion);
             session.CurrentHuddlePhase = phase;
             session.Notes = request.FacilitatorNotes;
