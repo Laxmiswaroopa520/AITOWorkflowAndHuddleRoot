@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground:
+    hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground:
+    hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground:
+    hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground:
+    hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground:
+    hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
+:root {
+  /* The one font stack. Keep identical to HUDDLE_FONT_STACK in
+     src/features/huddle/exports/html/fontStack.ts, so a downloaded document matches the
+     screen it came from. House typography order: Segoe UI, then Calibri, then Arial. */
+  --aito-font-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Calibri, Arial, Helvetica, sans-serif;
+
+  font-family: var(--aito-font-sans);
+
+  color: #242424;
+  background: #fafafa;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --background: 220 14% 98%;
+  --foreground: 220 5% 14%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --primary: 206 100% 42%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 220 4% 35%;
+
+  /*
+     --accent is the surface behind hover states (outline/ghost buttons, menu rows),
+     not a brand fill. It was a saturated violet (262 83% 58%), which is why hovering
+     the role selector or "Explore Additional Topics" flooded them in purple. A light
+     blue tint matching the app's #E8F2FF family keeps hovers subtle and on-palette.
+     Dark mode already used a neutral surface here and is unchanged.
+  */
+  --accent: 214 100% 96%;
+  --accent-foreground: 222 47% 11%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 220 6% 91%;
+  --input: 220 6% 91%;
+  --ring: 206 100% 42%;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 220 29% 9%;
+  --foreground: 210 20% 96%;
+  --card: 220 25% 13%;
+  --card-foreground: 210 20% 96%;
+  --primary: 207 90% 61%;
+  --primary-foreground: 220 29% 9%;
+  --secondary: 220 20% 18%;
+  --secondary-foreground: 210 20% 96%;
+  --muted: 220 20% 18%;
+  --muted-foreground: 215 14% 70%;
+  --accent: 220 20% 22%;
+  --accent-foreground: 210 20% 96%;
+  --destructive: 0 72% 56%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 16% 24%;
+  --input: 220 16% 24%;
+  --ring: 207 90% 61%;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+* {
+  box-sizing: border-box;
+  border-color: hsl(var(--border));
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/*
+  Kept inside @layer base so Tailwind utilities can still win.
+  Unlayered rules override every @layer utilities declaration regardless of
+  specificity, which previously forced anchors to inherit their colour and
+  swallowed text-[#0f6cbd] / hover:underline on links and asChild buttons.
+*/
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: hsl(var(--muted)); }
+::-webkit-scrollbar-thumb { border-radius: 999px; background: hsl(var(--primary) / 0.35); }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.55); }

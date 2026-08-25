@@ -1,0 +1,18 @@
+import { formatLaunchDate, launchMilestoneDate, personalizeLaunchTemplate } from "../../data/launchPlannerData";
+import { HUDDLE_FONT_STACK } from "../html/fontStack";
+import type { LaunchConfiguration, LaunchMilestoneDefinition, LaunchTaskState } from "../../types/launchPlanner.types";
+
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ?? character);
+
+/** Downloads a sanitized, standalone V5 launch package. */
+export function exportLaunchPackage(configuration: LaunchConfiguration, milestones: LaunchMilestoneDefinition[], taskState: Record<string, LaunchTaskState>) {
+  const sections = milestones.map(milestone => {
+    const state = taskState[milestone.id];
+    const templates = milestone.templates.map(template => `<article><span>${escapeHtml(template.type)}</span><h3>${escapeHtml(template.title)}</h3>${template.subject ? `<p><strong>Subject:</strong> ${escapeHtml(personalizeLaunchTemplate(template.subject, configuration))}</p>` : ""}<pre>${escapeHtml(personalizeLaunchTemplate(template.body, configuration))}</pre></article>`).join("");
+    const checklist = milestone.checklist.map((item, index) => `<li>${state?.checklist[index] ? "✓" : "○"} ${escapeHtml(item)}</li>`).join("");
+    return `<section><div class="milestone"><div><small>${escapeHtml(milestone.relativeLabel)} · ${escapeHtml(formatLaunchDate(launchMilestoneDate(configuration, milestone)))}</small><h2>${escapeHtml(milestone.title)}</h2><p>${escapeHtml(milestone.description)}</p></div><b>${escapeHtml(state?.status ?? "not-started")}</b></div><p><strong>Owner:</strong> ${escapeHtml(milestone.ownerRole)} · <strong>Audience:</strong> ${escapeHtml(milestone.audience)}</p><ul>${checklist}</ul><div class="templates">${templates}</div></section>`;
+  }).join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Frontier Accelerator Launch Package</title><style>body{font-family:${HUDDLE_FONT_STACK};font-synthesis:none;text-rendering:optimizeLegibility;margin:0;background:#f5f8fb;color:#16233a}header,main{max-width:1100px;margin:auto}header{padding:48px 32px;background:#173b63;color:white}main{padding:28px}section,article{background:white;border:1px solid #dce6ed;border-radius:16px;padding:22px;margin:16px 0}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.summary div{background:#e8f2ff;padding:14px;border-radius:12px}.milestone{display:flex;justify-content:space-between;gap:20px}.milestone small,article span{color:#0a6bba;font-weight:700}pre{white-space:pre-wrap;font-family:inherit;line-height:1.6}.templates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}@media(max-width:700px){.summary,.templates{grid-template-columns:1fr}.milestone{display:block}}</style></head><body><header><small>FRONTIER ACCELERATOR</small><h1>Launch Package</h1><p>${escapeHtml(configuration.cohortName || configuration.teamName)}</p></header><main><div class="summary"><div><b>Team</b><p>${escapeHtml(configuration.teamName)}</p></div><div><b>Start date</b><p>${escapeHtml(formatLaunchDate(launchMilestoneDate(configuration, milestones[4])))}</p></div><div><b>Program lead</b><p>${escapeHtml(configuration.programLead)}</p></div></div>${sections}</main></body></html>`;
+  const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+  const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${(configuration.cohortName || configuration.teamName || "Frontier-Accelerator").replace(/[^a-z0-9]+/gi, "-")}-Launch-Package.html`; anchor.click(); URL.revokeObjectURL(url);
+}

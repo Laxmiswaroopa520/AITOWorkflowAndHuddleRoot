@@ -1,0 +1,364 @@
+using AitoWorkflowAndHuddleGenerator.Application.Common.Exceptions;
+using FluentValidation;
+using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace AitoWorkflowAndHuddleGenerator
+    .Api
+    .Middleware;
+
+/// <summary>
+/// Represents the Exception Handling Middleware model.
+/// </summary>
+public sealed class ExceptionHandlingMiddleware
+{
+    private readonly RequestDelegate next;
+
+    private readonly
+        ILogger<ExceptionHandlingMiddleware>
+        logger;
+
+    public ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger)
+    {
+        this.next = next;
+        this.logger = logger;
+    }
+
+    /// <summary>
+    /// Processes the current HTTP request.
+    /// </summary>
+
+    public async Task InvokeAsync(
+        HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        try
+        {
+            await next(context);
+        }
+        catch (ValidationException exception)
+        {
+            await WriteValidationProblemAsync(
+                context,
+                exception);
+        }
+        catch (OperationCanceledException exception)
+            when (context.RequestAborted.IsCancellationRequested)
+        {
+            LogClientCancellation(context, exception);
+        }
+        catch (SqlException exception)
+            when (context.RequestAborted.IsCancellationRequested)
+        {
+            LogClientCancellation(context, exception);
+        }
+        catch (Exception exception)
+        {
+            (int statusCode, string title) =
+                MapException(exception);
+
+            if (
+                statusCode ==
+                StatusCodes.Status500InternalServerError)
+            {
+                logger.LogError(
+                    exception,
+                    ApiProblemMessages.UnhandledExceptionLog,
+                    context.TraceIdentifier);
+
+                await WriteUnexpectedProblemAsync(context);
+
+                return;
+            }
+
+            logger.LogWarning(
+                exception,
+                ApiProblemMessages.RequestFailureLog,
+                statusCode,
+                context.TraceIdentifier);
+
+            await WriteMappedProblemAsync(
+                context,
+                exception,
+                statusCode,
+                title);
+        }
+    }
+
+    private void LogClientCancellation(
+        HttpContext context,
+        Exception exception)
+    {
+        logger.LogDebug(
+            exception,
+            ApiProblemMessages.ClientCancellationLog,
+            context.TraceIdentifier);
+    }
+
+    private static async Task
+        WriteValidationProblemAsync(
+            HttpContext context,
+            ValidationException exception)
+    {
+        context.Response.StatusCode =
+            StatusCodes.Status400BadRequest;
+
+        context.Response.ContentType =
+            "application/problem+json";
+
+        Dictionary<string, string[]> errors =
+            exception.Errors
+                .GroupBy(error =>
+                    error.PropertyName)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group
+                        .Select(error =>
+                            error.ErrorMessage)
+                        .Distinct()
+                        .ToArray());
+
+        var problemDetails =
+            new HttpValidationProblemDetails(errors)
+            {
+                Status =
+                    StatusCodes.Status400BadRequest,
+
+                Title =
+                    ApiProblemMessages.ValidationErrorsOccurred,
+
+                Instance =
+                    context.Request.Path
+            };
+
+        problemDetails.Extensions[
+            "correlationId"
+        ] = context.TraceIdentifier;
+
+        await context.Response.WriteAsJsonAsync(
+            problemDetails);
+    }
+
+    private static async Task
+        WriteMappedProblemAsync(
+            HttpContext context,
+            Exception exception,
+            int statusCode,
+            string title)
+    {
+        context.Response.StatusCode =
+            statusCode;
+
+        context.Response.ContentType =
+            "application/problem+json";
+
+        var problemDetails =
+            new ProblemDetails
+            {
+                Status = statusCode,
+                Title = title,
+                Detail = exception.Message,
+                Instance = context.Request.Path
+            };
+
+        problemDetails.Extensions[
+            "correlationId"
+        ] = context.TraceIdentifier;
+
+        await context.Response.WriteAsJsonAsync(
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json");
+    }
+
+    private static async Task
+        WriteUnexpectedProblemAsync(
+            HttpContext context)
+    {
+        context.Response.StatusCode =
+            StatusCodes
+                .Status500InternalServerError;
+
+        context.Response.ContentType =
+            "application/problem+json";
+
+        var problemDetails =
+            new ProblemDetails
+            {
+                Status =
+                    StatusCodes
+                        .Status500InternalServerError,
+
+                Title =
+                    ApiProblemMessages.UnexpectedErrorOccurred,
+
+                Detail =
+                    ApiProblemMessages.UnexpectedErrorDetail,
+
+                Instance =
+                    context.Request.Path
+            };
+
+        problemDetails.Extensions[
+            "correlationId"
+        ] = context.TraceIdentifier;
+
+        await context.Response.WriteAsJsonAsync(
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json");
+    }
+
+    private static (
+    int StatusCode,
+    string Title)
+    MapException(
+        Exception exception)
+    {
+        return exception switch
+        {
+            FluentValidation
+                .ValidationException =>
+                (
+                    StatusCodes
+                        .Status400BadRequest,
+                    ApiProblemMessages.ValidationFailed
+                ),
+
+            NotFoundException =>
+                (
+                    StatusCodes
+                        .Status404NotFound,
+                    ApiProblemMessages.ResourceNotFound
+                ),
+
+            ConflictException =>
+                (
+                    StatusCodes
+                        .Status409Conflict,
+                    ApiProblemMessages.Conflict
+                ),
+
+            ForbiddenAccessException =>
+                (
+                    StatusCodes
+                        .Status403Forbidden,
+                    ApiProblemMessages.Forbidden
+                ),
+
+            UnauthorizedAccessException =>
+                (
+                    StatusCodes
+                        .Status401Unauthorized,
+                    ApiProblemMessages.Unauthorized
+                ),
+
+            DbUpdateConcurrencyException =>
+                (
+                    StatusCodes
+                        .Status409Conflict,
+                    ApiProblemMessages.ConcurrencyConflict
+                ),
+
+            ExternalServiceUnavailableException =>
+                (
+                    StatusCodes.Status503ServiceUnavailable,
+                    ApiProblemMessages.ExternalServiceUnavailable
+                ),
+
+            _ =>
+                (
+                    StatusCodes
+                        .Status500InternalServerError,
+                    ApiProblemMessages.UnexpectedError
+                ),
+        };
+    }
+}
+
+
+
+
+/*using Microsoft.AspNetCore.Mvc;
+
+namespace AitoWorkflowAndHuddleGenerator.Api.Middleware;
+
+public sealed class ExceptionHandlingMiddleware
+{
+    private readonly RequestDelegate next;
+
+    private readonly
+        ILogger<ExceptionHandlingMiddleware>
+        logger;
+
+    public ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger)
+    {
+        this.next = next;
+        this.logger = logger;
+    }
+
+    public async Task InvokeAsync(
+        HttpContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        try
+        {
+            await next(context);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "An unhandled exception occurred. " +
+                "Correlation ID: {CorrelationId}",
+                context.TraceIdentifier);
+
+            await WriteProblemDetailsAsync(context);
+        }
+    }
+
+    private static async Task
+        WriteProblemDetailsAsync(
+            HttpContext context)
+    {
+        context.Response.StatusCode =
+            StatusCodes.Status500InternalServerError;
+
+        context.Response.ContentType =
+            "application/problem+json";
+
+        var problemDetails = new ProblemDetails
+        {
+            Status =
+                StatusCodes
+                    .Status500InternalServerError,
+
+            Title =
+                "An unexpected error occurred.",
+
+            Detail =
+                "The request could not be completed. " +
+                "Use the correlation ID when " +
+                "contacting support.",
+
+            Instance =
+                context.Request.Path
+        };
+
+        problemDetails.Extensions["correlationId"] =
+            context.TraceIdentifier;
+
+        await context.Response.WriteAsJsonAsync(
+            problemDetails,
+            options: null,
+            contentType: "application/problem+json");
+    }
+}
+*/

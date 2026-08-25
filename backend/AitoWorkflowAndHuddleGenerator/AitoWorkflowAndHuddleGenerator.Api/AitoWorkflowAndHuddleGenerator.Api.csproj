@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aito-workflow-and-huddle-generator-api-4a7511c4-956d-48f4-ae40-59621f60f94d</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.18">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Identity.Web" Version="4.14.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Application\AitoWorkflowAndHuddleGenerator.Application.csproj" />
+    <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Contracts\AitoWorkflowAndHuddleGenerator.Contracts.csproj" />
+    <ProjectReference Include="..\AitoWorkflowAndHuddleGenerator.Infrastructure\AitoWorkflowAndHuddleGenerator.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
