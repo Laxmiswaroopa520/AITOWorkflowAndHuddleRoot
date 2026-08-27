@@ -12,7 +12,7 @@ export function createLearningPlanHtmlExport(plan: HuddlePlanResponse, options: 
     const secondary = item.huddle.secondaryAgents.map((agent) => agent.name);
     const changedFromRecommendation = item.huddle.externalId !== item.recommendedHuddleExternalId;
     return `<article class="week"><span class="week-badge">W${escapeHtml(item.week)}</span><div class="week-card"><h3>${escapeHtml(item.huddle.name)}</h3>${item.huddle.description ? `<p>${escapeHtml(item.huddle.description)}</p>` : ""}<div class="week-meta"><span class="tag">${item.huddle.durationMinutes === null ? "Duration unavailable" : `${escapeHtml(item.huddle.durationMinutes)} minutes`}</span><span class="status${item.isCustomized ? " custom" : ""}">${item.isCustomized ? "Customized" : "Recommended"}</span></div>${primary.length ? `<div class="section"><span class="label">Primary AI tools</span><div class="tag-list">${primary.map((name) => `<span class="tag">${escapeHtml(name)}</span>`).join("")}</div></div>` : ""}${secondary.length ? `<div class="section"><span class="label">Secondary AI tools</span><div class="tag-list">${secondary.map((name) => `<span class="tag">${escapeHtml(name)}</span>`).join("")}</div></div>` : ""}${changedFromRecommendation ? `<p class="recommended-note"><strong>Recommended replacement reference:</strong> ${escapeHtml(item.recommendedHuddleExternalId)}</p>` : ""}</div></article>`;
-  }).join("")}</section></div><footer class="footer">AITO Workflow &amp; Huddle Generator</footer></main>`;
+  }).join("")}</section></div><footer class="footer">Frontier Accelerator App</footer></main>`;
   return { html: createHtmlDocument(`${audience} Learning Plan`, body), fileName: options.fileName ?? safeHtmlFileName(`${audience} - Learning Plan`, "Learning Plan") };
 }
 

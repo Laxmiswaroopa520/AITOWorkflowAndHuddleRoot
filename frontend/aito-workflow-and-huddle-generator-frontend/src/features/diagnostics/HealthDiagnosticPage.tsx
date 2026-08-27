@@ -71,7 +71,7 @@ export function HealthDiagnosticPage() {
 
       <p>
         This page verifies communication between
-        AITO Workflow and Huddle Generator and the
+        Frontier Accelerator App and the
         ASP.NET Core API.
       </p>
 

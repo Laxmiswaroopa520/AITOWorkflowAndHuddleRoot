@@ -252,27 +252,16 @@ export function AuthGate({
             <div className="mb-1 leading-none">
               <span
                 className="
-                  text-xl
+                  text-lg
                   font-extrabold
                   tracking-tight
                   text-foreground
+                  whitespace-nowrap
                 "
               >
-                AITO
+                Frontier Accelerator App
               </span>
             </div>
-
-            <p
-              className="
-                text-[11px]
-                font-medium
-                uppercase
-                tracking-wide
-                text-muted-foreground
-              "
-            >
-              Workflow &amp; Huddle Generator
-            </p>
           </div>
 
           <div

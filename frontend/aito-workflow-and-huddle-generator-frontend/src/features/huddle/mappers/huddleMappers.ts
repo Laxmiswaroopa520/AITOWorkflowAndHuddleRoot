@@ -16,7 +16,17 @@ function mcemStageNumber(stage: HuddleMcemStageResponse): number | null {
   return match ? Number(match[1]) : null;
 }
 
-/** Formats stages as `MCEM Stage: Manage and Optimize (5)`, joining multiples with ` & `. */
+/**
+ * Joins list items the way a reader expects: two items get " & " between them ("A & B"); three
+ * or more get commas between every item except the last, which gets " & " instead of a comma
+ * ("A, B & C") -- never "A & B & C" and never an Oxford comma before the final "&".
+ */
+function joinAsList(parts: string[]): string {
+  if (parts.length <= 2) return parts.join(" & ");
+  return `${parts.slice(0, -1).join(", ")} & ${parts[parts.length - 1]}`;
+}
+
+/** Formats stages as `MCEM Stage: Manage and Optimize (5)`, joining multiples per joinAsList above. */
 export function formatMcemStageLabel(stages: readonly HuddleMcemStageResponse[]): string | null {
   if (stages.length === 0) return null;
   const parts = [...stages]
@@ -25,7 +35,7 @@ export function formatMcemStageLabel(stages: readonly HuddleMcemStageResponse[])
       const number = mcemStageNumber(stage);
       return number === null ? stage.name : `${stage.name} (${number})`;
     });
-  return `MCEM Stage: ${parts.join(" & ")}`;
+  return `MCEM Stage: ${joinAsList(parts)}`;
 }
 
 export function mapHuddleCatalogItemToCard(

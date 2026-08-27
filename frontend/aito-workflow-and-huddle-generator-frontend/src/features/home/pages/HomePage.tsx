@@ -1,13 +1,13 @@
 import {
   ArrowRight,
-  Calendar,
-  Lightbulb,
-  MessageSquare,
-  Presentation,
+  Compass,
+  ListChecks,
+  Map,
+  Save,
+  Sparkles,
   Target,
   Users,
   Workflow,
-  Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
@@ -63,39 +63,41 @@ export function HomePage() {
             </div>
           </div>
           <h1 className="mb-4 text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-            AITO Workflow &amp; Huddle Generator
+            Frontier Accelerator App
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            Choose how you want to work with AI today
+            Turn AI guidance into practical workflows and team learning experiences.
           </p>
         </motion.header>
 
         <div className="grid gap-6 md:grid-cols-2">
           <ModeCard
             title="Build My Workflow"
-            description="Plan your day, week, or quarter with AI-guided activities tailored to your role."
-            audience="For Individual Contributors"
+            tagline="Individual work transformation"
+            description="Create practical AI-assisted workflows based on your role, priorities, and the work you want to improve."
             icon={Workflow}
             accent="blue"
             features={[
-              { icon: Target, label: "Role-specific activity recommendations" },
-              { icon: Calendar, label: "Day/Week/Month/Quarter timeline views" },
-              { icon: Zap, label: "AI tools mapped to each activity" },
+              { icon: Target, label: "Choose a role and focus area" },
+              { icon: Sparkles, label: "Build AI-assisted activities" },
+              { icon: Save, label: "Save and revisit your workflow" },
             ]}
+            cta="Build My Workflow"
             onClick={() => navigate("/workflow")}
           />
 
           <ModeCard
             title="Run a Huddle"
-            description="Generate team session content with talking points, demos, and coaching materials."
-            audience="For Managers & Facilitators"
+            tagline="Team learning and AI adoption"
+            description="Build AI fluency through guided team discussions, hands-on practice, and role-relevant activities."
             icon={Users}
             accent="green"
             features={[
-              { icon: Presentation, label: "Auto-generated PowerPoint decks" },
-              { icon: MessageSquare, label: "Key talking points & demo prompts" },
-              { icon: Lightbulb, label: "Coaching questions for your team" },
+              { icon: Compass, label: "Start with Orientation" },
+              { icon: Map, label: "Follow your Role Path" },
+              { icon: ListChecks, label: "Explore Additional Topics" },
             ]}
+            cta="Explore Huddles"
             onClick={() => navigate("/huddle")}
           />
         </div>
@@ -110,21 +112,23 @@ export function HomePage() {
 
 interface ModeCardProps {
   title: string;
+  tagline: string;
   description: string;
-  audience: string;
   icon: typeof Workflow;
   accent: "blue" | "green";
   features: Array<{ icon: typeof Workflow; label: string }>;
+  cta: string;
   onClick: () => void;
 }
 
 function ModeCard({
   title,
+  tagline,
   description,
-  audience,
   icon: Icon,
   accent,
   features,
+  cta,
   onClick,
 }: ModeCardProps) {
   const green = accent === "green";
@@ -149,7 +153,10 @@ function ModeCard({
           <ArrowRight className={cn("h-6 w-6 text-muted-foreground transition-all group-hover:translate-x-1", green ? "group-hover:text-green-600" : "group-hover:text-primary")} />
         </div>
 
-        <h2 className="mb-3 text-2xl font-bold text-card-foreground">{title}</h2>
+        <span className={cn("text-xs font-semibold uppercase tracking-wider", green ? "text-green-600" : "text-primary")}>
+          {tagline}
+        </span>
+        <h2 className="mb-3 mt-1 text-2xl font-bold text-card-foreground">{title}</h2>
         <p className="mb-6 text-muted-foreground">{description}</p>
 
         <div className="space-y-3">
@@ -164,10 +171,9 @@ function ModeCard({
           })}
         </div>
 
-        <div className="mt-6 border-t border-border pt-6">
-          <span className={cn("text-xs font-medium uppercase tracking-wider", green ? "text-green-600" : "text-primary")}>
-            {audience}
-          </span>
+        <div className="mt-6 flex items-center gap-2 border-t border-border pt-6 text-sm font-semibold">
+          <span className={green ? "text-green-600" : "text-primary"}>{cta}</span>
+          <ArrowRight className={cn("h-4 w-4 transition-transform group-hover:translate-x-1", green ? "text-green-600" : "text-primary")} />
         </div>
       </button>
     </motion.div>

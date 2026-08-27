@@ -16,8 +16,266 @@ const activityLetter = (index: number) => (index < LETTERS.length ? LETTERS[inde
 
 const CHEVRON_SVG = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20"><path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
 const COPY_SVG = '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"></rect><rect x="4" y="4" width="11" height="11" rx="2"></rect></svg>';
+const ROLE_SVG = '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M5.5 19c.8-4 3-6 6.5-6s5.7 2 6.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>';
+const AI_TOOLS_SVG = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3.5l1.25 4.1L17.5 9l-4.25 1.4L12 14.5l-1.25-4.1L6.5 9l4.25-1.4L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path><path d="M18.5 14.5l.7 2.25 2.3.75-2.3.75-.7 2.25-.7-2.25-2.3-.75 2.3-.75.7-2.25Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>';
+const MCEM_SVG = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 5h12M6 12h12M6 19h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="7" cy="5" r="1.7" fill="currentColor"></circle><circle cx="12" cy="12" r="1.7" fill="currentColor"></circle><circle cx="17" cy="19" r="1.7" fill="currentColor"></circle></svg>';
+
+function compactFileToken(value: string): string {
+  return value
+    .trim()
+    .replace(/&/g, " And ")
+    .replace(/[^A-Za-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+}
+
+function getWorkflowExportName(model: HuddlePresentationModel): string {
+  const candidate = model as unknown as {
+    workflowName?: string | null;
+    workflow?: { name?: string | null; displayName?: string | null } | null;
+    identity: HuddlePresentationModel["identity"] & { workflowName?: string | null; workflow?: string | null };
+  };
+
+  return candidate.workflow?.displayName?.trim()
+    || candidate.workflow?.name?.trim()
+    || candidate.workflowName?.trim()
+    || candidate.identity.workflowName?.trim()
+    || candidate.identity.workflow?.trim()
+    || model.identity.name;
+}
+
+function getRoleExportName(model: HuddlePresentationModel): string {
+  const audience = model.audience as typeof model.audience & {
+    roleCode?: string | null;
+    roleShortName?: string | null;
+    roleExternalId?: string | null;
+  };
+
+  const explicit = audience.roleCode?.trim() || audience.roleShortName?.trim();
+  if (explicit) return compactFileToken(explicit).toUpperCase();
+
+  const roleName = audience.roleName?.trim() || audience.roleExternalId?.trim() || "Role";
+  const knownRoleCodes: Record<string, string> = {
+    "account executive": "AE",
+    "account technology strategist": "ATS",
+    "solution sales professional": "SSP",
+    "solution engineer": "SE",
+    "commercial executive": "CE",
+    "cloud solution architect": "CSA",
+    "customer success account manager": "CSAM",
+  };
+
+  return knownRoleCodes[roleName.toLowerCase()] || compactFileToken(roleName);
+}
+
+function exportDateToken(date: Date): string {
+  const yyyy = String(date.getFullYear());
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}_${mm}_${dd}`;
+}
 /** Pure-CSS Copilot glyph, used when an agent has no inlined logo. */
 const COPILOT_MARK = '<span class="copilot-mark" aria-hidden="true"><span class="copilot-loop copilot-loop-a"></span><span class="copilot-loop copilot-loop-b"></span></span>';
+
+
+/**
+ * Export-only typography corrections.
+ * Keep these scoped to the specific content areas called out in the HTML export
+ * so the rest of the existing Huddle UI/UX remains unchanged.
+ */
+const HUDDLE_EXPORT_STYLE_FIXES = `
+  /* Consistent typography across the exported Huddle. */
+  .huddle-page,
+  .huddle-page button,
+  .huddle-page input,
+  .huddle-page textarea {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+  }
+
+  /* Main Huddle title */
+  .hero-copy h1 {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1.08;
+  }
+
+  /* Stage titles */
+  .stage-header h2 {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Major section titles */
+  .section-heading h2,
+  .bottom-title h2,
+  .tool-card-title h2,
+  .business-workflow-heading h2,
+  .tfd-section-heading h2 {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Card headings */
+  .stage-content-card h3,
+  .activity-detail-card h3,
+  .commit-discussion-card h3,
+  .reflection-card h3,
+  .commit-card h3,
+  .guide-card .activity-eyebrow,
+  .discussion-question-card strong,
+  .activity-preview-row strong,
+  .practice-activity-heading strong,
+  .featured-activities-header h3,
+  .additional-activities-copy strong,
+  .resource-copy strong,
+  .tool-info h3,
+  .flow-stage-card h3 {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  /* Standard body copy used inside cards and content sections. */
+  .hero-description,
+  .objective-card p,
+  .overview-summary-card > p,
+  .overview-outcome .overview-outcome-value,
+  .best-practices-intro,
+  .discussion-question-card p,
+  .stage-header p,
+  .stage-content-card .question-list li,
+  .activity-detail-card .question-list li,
+  .activity-output-card p,
+  .reflection-card > p,
+  .commit-card > p,
+  .commit-discussion-card .question-list li,
+  .commit-discussion-card > p,
+  .resources-intro,
+  .resource-copy small,
+  .tool-info p,
+  .tool-brand span,
+  .facilitator-notes-intro,
+  .facilitator-notes-content,
+  .flow-stage-card p,
+  .tfd-card p,
+  .overview-next-note span {
+    color: #263660;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.55;
+  }
+
+  /* Activity supporting descriptions are intentionally one step smaller. */
+  .activity-preview-row p,
+  .practice-activity-heading small,
+  .additional-activities-copy small,
+  .featured-activities-header p {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* Small labels */
+  .activity-eyebrow,
+  .prompt-label,
+  .stage-kicker,
+  .transition-kicker,
+  .stage-topic-context > span,
+  .overview-outcome > span {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  /* Role / AI Tools / MCEM metadata */
+  .meta-item small {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  .meta-item strong {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Navigation and section controls */
+  .huddle-section-tab,
+  .section-action-button {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  /* Desired outcome remains regular rather than bold. */
+  .overview-outcome .overview-outcome-value {
+    display: block;
+    margin: 0;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  /* Keep all three metadata items together in the original compact overview row. */
+  .hero-copy .meta-strip {
+    display: grid;
+    grid-template-columns: minmax(0, .8fr) 1px minmax(0, 1.35fr) 1px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 16px;
+    width: 100%;
+  }
+
+  .hero-copy .meta-strip .meta-item {
+    min-width: 0;
+    align-items: center;
+  }
+
+  .round-icon.meta-icon svg {
+    width: 21px;
+    height: 21px;
+    display: block;
+  }
+
+  /*
+   * Do not override hero-grid or objective-card dimensions here.
+   * Their original export styles keep Today's Objective at the intended compact size.
+   */
+
+  /* Preparation uses the same bullet treatment in all three cards. */
+  .stage-content-grid .stage-content-card .question-list {
+    margin-top: 14px;
+  }
+
+  /* Closed details point down; expanded details point up. */
+  .additional-activities > summary .scenario-chevron,
+  .practice-activity-card > summary .scenario-chevron {
+    transform: none !important;
+    transition: transform .18s ease;
+  }
+
+  .additional-activities[open] > summary .scenario-chevron,
+  .practice-activity-card[open] > summary .scenario-chevron {
+    transform: rotate(180deg) !important;
+  }
+`;
 
 /**
  * Copy that belongs to the guide template rather than to any Huddle record. The
@@ -68,10 +326,6 @@ function questionList(values: readonly string[], fallback: string): string {
   return `<ul class="question-list">${values.map((value) => `<li>${text(value)}</li>`).join("")}</ul>`;
 }
 
-function checkList(values: readonly string[]): string {
-  return `<ul class="check-list">${values.map((value) => `<li>${text(value)}</li>`).join("")}</ul>`;
-}
-
 function resourceRows(resources: readonly HuddlePresentationResource[]): string {
   return `<ul>${resources.map((resource) => {
     const copy = `<span class="resource-copy"><strong>${text(resource.title)}</strong>${resource.description ? `<small>${text(resource.description)}</small>` : ""}</span><span class="resource-arrow">→</span>`;
@@ -99,7 +353,7 @@ function activityCard(activity: HuddlePresentationActivity, index: number, tier:
     + `<span class="scenario-chevron">${CHEVRON_SVG}</span></summary>`
     + `<div class="practice-activity-body">${toolRow}${promptBlock}`
     + `<div class="activity-practice-grid">`
-    + `<section class="activity-detail-card"><h3>How to practice</h3>${activity.requiredContext ? `<ol class="numbered-steps compact-steps"><li><span>1</span><p>${text(activity.requiredContext)}</p></li></ol>` : placeholder("Step-by-step practice guidance is not configured for this activity yet.")}</section>`
+    + `<section class="activity-detail-card"><h3>How to practice</h3>${activity.requiredContext ? questionList([activity.requiredContext], "") : placeholder("Step-by-step practice guidance is not configured for this activity yet.")}</section>`
     + `<section class="activity-detail-card"><h3>Discuss while practicing</h3>${questionList(discussionWhilePracticing, "No discussion prompts are configured for this activity yet.")}</section>`
     + `</div>`
     + `<div class="activity-output-grid">`
@@ -196,6 +450,9 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   const generated = new Date();
   const generatedDate = generated.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const generatedTime = generated.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const workflowExportName = compactFileToken(getWorkflowExportName(model)) || "Huddle";
+  const roleExportName = getRoleExportName(model);
+  const exportBaseName = `FA-Huddle_${workflowExportName}_${roleExportName}_${exportDateToken(generated)}`;
 
   const overviewPanel = `<section class="huddle-section-panel is-active" data-section-panel="overview">`
     + `<div class="overview-timing-band" aria-label="Today’s Huddle"><div class="overview-timing-title">Today’s Huddle</div><div class="overview-timing-steps">`
@@ -203,17 +460,17 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `</div></div>`
     + `<section class="hero-grid"><div class="hero-copy"><h1>${text(topicName)}</h1>${model.identity.description ? `<p class="hero-description">${text(model.identity.description)}</p>` : ""}`
     + `<div class="meta-strip">`
-    + `<div class="meta-item"><span class="round-icon">◎</span><span><small>Role</small><strong>${text(model.audience.roleName?.trim() || "Not specified")}</strong></span></div>`
+    + `<div class="meta-item"><span class="round-icon meta-icon">${ROLE_SVG}</span><span><small>Role</small><strong>${text(model.audience.roleName?.trim() || "Not specified")}</strong></span></div>`
     + `<span class="meta-divider"></span>`
-    + `<div class="meta-item"><span class="round-icon">✦</span><span><small>AI Tools</small><strong>${text(toolNames.length ? toolNames.join(", ") : "Not configured")}</strong></span></div>`
+    + `<div class="meta-item"><span class="round-icon meta-icon">${AI_TOOLS_SVG}</span><span><small>AI Tools</small><strong>${text(toolNames.length ? toolNames.join(", ") : "Not configured")}</strong></span></div>`
     + `<span class="meta-divider"></span>`
-    + `<div class="meta-item"><span class="round-icon">▤</span><span><small>MCEM Stages</small><strong>${text(model.mcemStages.length ? model.mcemStages.map((stage) => stage.name).join(", ") : "Not configured")}</strong></span></div>`
+    + `<div class="meta-item"><span class="round-icon meta-icon">${MCEM_SVG}</span><span><small>MCEM Stages</small><strong>${text(model.mcemStages.length ? model.mcemStages.map((stage) => stage.name).join(", ") : "Not configured")}</strong></span></div>`
     + `</div></div>`
     + `<aside class="objective-card"><span class="objective-icon">◎</span><div><h2>Today’s Objective</h2>${model.narrative.todayObjective ? `<p>${text(model.narrative.todayObjective)}</p>` : placeholder("No objective is configured for this Huddle yet.")}</div></aside></section>`
     + `<section class="overview-two-column">`
     + `<div class="card overview-summary-card"><div class="section-heading"><span class="sparkle-icon">✦</span><h2>Why this Huddle matters</h2></div>`
     + `${model.narrative.whyItMatters ? `<p>${text(model.narrative.whyItMatters)}</p>` : placeholder("Not configured yet.")}`
-    + `<div class="overview-outcome"><span>Desired outcome</span><strong>${text(model.narrative.desiredOutcome?.trim() || "Not configured yet.")}</strong></div></div>`
+    + `<div class="overview-outcome"><span>Desired outcome</span><p class="overview-outcome-value">${text(model.narrative.desiredOutcome?.trim() || "Not configured yet.")}</p></div></div>`
     + `<div class="card activity-preview-card"><div class="section-heading"><span class="line-icon">◉</span><h2>What you’ll practice</h2></div>`
     + `${featuredActivities.length ? `<div class="activity-preview-list">${featuredActivities.map((activity, index) => `<div class="activity-preview-row"><span class="activity-letter">${text(activityLetter(index))}</span><div><strong>${text(activity.name)}</strong>${activity.description ? `<p>${text(activity.description)}</p>` : ""}</div></div>`).join("")}</div>` : placeholder("No activities are configured for this Huddle yet.")}</div>`
     + `</section>`
@@ -235,22 +492,15 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   const preparationPanel = `<section class="huddle-section-panel" data-section-panel="preparation">`
     + stageShell(topicName, 1, stageName(0, "Preparation"), stageDescription(0) ?? "Set the context before opening an AI tool. Align on the workflow, people, evidence, and friction that matter.",
       `<div class="stage-content-grid">`
-      + `${guide?.sessionIntroduction ? `<section class="stage-content-card"><h3>Session introduction</h3><p>${text(guide.sessionIntroduction)}</p></section>` : ""}`
+      + `${guide?.sessionIntroduction ? `<section class="stage-content-card"><h3>Session introduction</h3>${questionList([guide.sessionIntroduction], "")}</section>` : ""}`
       + `<section class="stage-content-card"><h3>Discuss before practicing</h3>${questionList(guide?.discussionQuestions ?? [], "No discussion questions are configured for this Huddle yet.")}</section>`
-      + `<section class="stage-content-card preparation-checklist"><h3>Bring into the conversation</h3>${guide?.preparationChecklist?.length ? checkList(guide.preparationChecklist) : checkList(TEMPLATE.bringIntoTheConversation)}</section>`
+      + `<section class="stage-content-card preparation-checklist"><h3>Bring into the conversation</h3>${questionList(guide?.preparationChecklist?.length ? guide.preparationChecklist : TEMPLATE.bringIntoTheConversation, "")}</section>`
       + `</div>`)
     + `</section>`;
 
   const practicePanel = `<section class="huddle-section-panel" data-section-panel="practice">`
     + stageShell(topicName, 2, stageName(1, "Explore & Practice"), stageDescription(1) ?? "Work through the Huddle activities using a real scenario. Adapt the prompt, inspect the output, and keep human judgment explicit.",
-      `${guide?.facilitatorQuestions?.length || guide?.listenFor?.length || guide?.fallbackGuidance
-        ? `<div class="stage-content-grid">`
-          + `${guide?.facilitatorQuestions?.length ? `<section class="stage-content-card"><h3>Ask while practicing</h3>${questionList(guide.facilitatorQuestions, "")}</section>` : ""}`
-          + `${guide?.listenFor?.length ? `<section class="stage-content-card"><h3>Listen for</h3>${questionList(guide.listenFor, "")}</section>` : ""}`
-          + `${guide?.fallbackGuidance ? `<section class="stage-content-card"><h3>If it goes wrong</h3><p>${text(guide.fallbackGuidance)}</p></section>` : ""}`
-          + `</div>`
-        : ""}`
-      + `<div class="featured-activities-header"><div><h3>Featured activities</h3><p>Start with these priority activities for today’s Huddle.</p></div><span class="activity-tier-badge">Featured</span></div>`
+      `<div class="featured-activities-header"><div><h3>Featured activities</h3><p>Start with these priority activities for today’s Huddle.</p></div><span class="activity-tier-badge">Featured</span></div>`
       + `<div class="practice-activity-stack" data-activity-tier="featured">${featuredActivities.length
         ? featuredActivities.map((activity, index) => activityCard(activity, index, "featured", guide?.keyTalkingPoints ?? [])).join("")
         : placeholder("No featured activities are configured for this Huddle yet.")}</div>`
@@ -267,10 +517,8 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
       + `<section class="reflection-card card nested-card"><div class="bottom-title green-title"><span>♧</span><h2>Reflect</h2></div><h3>What did you learn today?</h3>${reflectPrompt ? `<p>${text(reflectPrompt)}</p>` : placeholder("No reflection prompt is configured yet.")}</section>`
       + `<section class="commit-card card nested-card"><div class="bottom-title orange-title"><span>◎</span><h2>Commit</h2></div><h3>What will you do this week?</h3>${commitPrompt ? `<p>${text(commitPrompt)}</p>` : placeholder("No commitment prompt is configured yet.")}</section>`
       + `</div>`
-      + `${guide?.bringBackEvidence?.length ? `<section class="commit-discussion-card"><h3>Bring back as evidence</h3>${questionList(guide.bringBackEvidence, "")}</section>` : ""}`
-      + `${guide?.wrapUpGuidance ? `<section class="commit-discussion-card"><h3>Wrap up</h3><p>${text(guide.wrapUpGuidance)}</p></section>` : ""}`
       + `<section class="commit-discussion-card"><h3>Close the Huddle</h3>${questionList(TEMPLATE.closeTheHuddle, "")}</section>`
-      + `${model.keyTakeaway ? `<section class="commit-discussion-card"><h3>Key takeaway</h3><p>${text(model.keyTakeaway)}</p></section>` : ""}`)
+      )
     + `</section>`;
 
   const toolPanel = `<section class="huddle-section-panel" data-section-panel="tool">`
@@ -289,14 +537,7 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `<p class="facilitator-notes-intro">These notes were added by the facilitator before downloading the Huddle.</p>`
     + `<div class="facilitator-notes-content">${facilitatorNotes ? text(facilitatorNotes) : "No facilitator notes were added for this Huddle."}</div>`
     + `</section>`
-    + `${guide ? `<section class="facilitator-guidance-summary card"><div class="section-heading"><span class="sparkle-icon">✦</span><h2>Facilitation guidance</h2></div>`
-      + `<div class="facilitator-stage-summary-grid">`
-      + `<div class="guide-card"><span class="activity-eyebrow">Session introduction</span>${guide.sessionIntroduction ? `<p>${text(guide.sessionIntroduction)}</p>` : placeholder("Not configured yet.")}</div>`
-      + `<div class="guide-card"><span class="activity-eyebrow">Key talking points</span>${questionList(guide.keyTalkingPoints, "Not configured yet.")}</div>`
-      + `<div class="guide-card"><span class="activity-eyebrow">Suggested transitions</span>${questionList(guide.suggestedTransitions, "Not configured yet.")}</div>`
-      + `<div class="guide-card"><span class="activity-eyebrow">Wrap-up guidance</span>${guide.wrapUpGuidance ? `<p>${text(guide.wrapUpGuidance)}</p>` : placeholder("Not configured yet.")}</div>`
-      + `</div></section>` : ""}`
-    + `<footer class="page-footer"><div class="generated-badge">${COPILOT_MARK}<span>Generated from the AITO Workflow &amp; Huddle Generator</span><i></i><span>${text(generatedDate)}</span><b>•</b><span>${text(generatedTime)}</span></div><span class="page-number">1</span></footer>`
+    + `<footer class="page-footer"><div class="generated-badge">${COPILOT_MARK}<span>Generated from the Frontier Accelerator App</span><i></i><span>${text(generatedDate)}</span><b>•</b><span>${text(generatedTime)}</span></div><span class="page-number">1</span></footer>`
     + `</section>`;
 
   const body = `<article class="huddle-page segmented-huddle-page workflow-huddle-page" id="huddle-1">`
@@ -313,8 +554,8 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `</article><div class="toast" id="copyToast">Prompt copied</div>`;
 
   return {
-    html: createHtmlDocument(`${topicName} Huddle`, `${body}${huddleGuideInteractions}`, huddleGuideStyles),
-    fileName: options.fileName ?? safeHtmlFileName(`${topicName} - Huddle`, "Huddle"),
+    html: createHtmlDocument(exportBaseName, `${body}${huddleGuideInteractions}`, `${huddleGuideStyles}\n${HUDDLE_EXPORT_STYLE_FIXES}`),
+    fileName: options.fileName ?? safeHtmlFileName(exportBaseName, "FA-Huddle"),
   };
 }
 

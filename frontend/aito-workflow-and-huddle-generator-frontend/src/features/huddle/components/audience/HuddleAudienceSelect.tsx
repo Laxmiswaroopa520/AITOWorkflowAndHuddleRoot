@@ -38,13 +38,19 @@ interface HuddleAudienceSelectProps {
   loading?: boolean;
   /** Shown in place of the list when the read failed, so a failure is not read as an empty result. */
   errorMessage?: string | null;
+  /**
+   * Small explanatory line shown under the trigger, e.g. when the current selection was
+   * inherited from elsewhere rather than chosen here directly -- so the reader understands
+   * why a role is already showing instead of "Select Audience".
+   */
+  note?: string | null;
 }
 
 function roleIcon(externalId: string): ElementType {
   return ROLE_ICONS[externalId] ?? Briefcase;
 }
 
-export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onChange, loading = false, errorMessage = null }: HuddleAudienceSelectProps) {
+export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onChange, loading = false, errorMessage = null, note = null }: HuddleAudienceSelectProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const multi = mode === "multi";
@@ -52,9 +58,14 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
   useDismissOnOutside(open, containerRef, useCallback(() => setOpen(false), []));
 
   // Segments keep first-appearance order so Enterprise leads, matching the reference design.
+  // "All Roles" is pulled out of the segment groups and rendered as its own separate entry at
+  // the end of the list instead. Sorted in with the named roles it landed alphabetically between
+  // two of them, which read as a data error rather than the "every role" option it actually is.
+  const allRolesRole = useMemo(() => roles.find((role) => role.name === "All Roles") ?? null, [roles]);
   const segments = useMemo(() => {
     const grouped = new Map<string, HuddleRoleResponse[]>();
     roles.forEach((role) => {
+      if (role.name === "All Roles") return;
       const segment = role.segment ?? "Other";
       const bucket = grouped.get(segment);
       if (bucket) bucket.push(role);
@@ -74,6 +85,49 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
       return;
     }
     onChange(selectedIds.includes(externalId) ? selectedIds.filter((id) => id !== externalId) : [...selectedIds, externalId]);
+  };
+
+  /** One selectable role row. Shared by the segment groups and the standalone "All Roles" entry. */
+  const renderRole = (role: HuddleRoleResponse) => {
+    const Icon = roleIcon(role.externalId);
+    const isChecked = selectedIds.includes(role.externalId);
+
+    return (
+      <button
+        key={role.externalId}
+        type="button"
+        role="option"
+        aria-selected={isChecked}
+        onClick={() => toggle(role.externalId)}
+        className={cn(
+          "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+          isChecked ? "border-[#0F6CBD]/25 bg-[#0F6CBD]/[0.08]" : "border-transparent hover:bg-[#F5F9FF]",
+        )}
+      >
+        {multi && (
+          <input
+            type="checkbox"
+            checked={isChecked}
+            tabIndex={-1}
+            onChange={() => toggle(role.externalId)}
+            onClick={(event) => event.stopPropagation()}
+            aria-label={`Select ${role.name}`}
+            className="mt-1 h-4 w-4 flex-none cursor-pointer rounded accent-[#0F6CBD]"
+          />
+        )}
+        <span className={cn("flex-none rounded-lg p-2", isChecked ? "bg-[#0F6CBD]/15" : "bg-muted")}>
+          <Icon className={cn("h-4 w-4", isChecked ? "text-[#0F6CBD]" : "text-muted-foreground")} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className={cn("text-sm font-medium", isChecked ? "text-[#115EA3]" : "text-foreground")}>{role.name}</span>
+            {!multi && isChecked && <Check className="h-4 w-4 flex-none text-[#0F6CBD]" />}
+          </span>
+          {/* Always rendered: a collapsed row hides whether the copy is missing or the field is. */}
+          <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">{role.description ?? "Description unavailable."}</span>
+        </span>
+      </button>
+    );
   };
 
   return (
@@ -96,7 +150,10 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
         ) : selected.length === 0 ? (
           <span className="flex items-center gap-2 font-normal text-muted-foreground"><Briefcase className="h-4 w-4" />Select Audience</span>
         ) : selected.length === 1 ? (
-          <span className="flex min-w-0 items-center gap-2"><TriggerIcon className="h-4 w-4 flex-none text-[#0F6CBD]" /><span className="truncate">{multi ? selected[0].abbreviation : selected[0].name}</span></span>
+          // A single selected role always reads by its full name here, in both single- and
+          // multi-select mode -- the abbreviation ("AE") only appears once two or more roles are
+          // selected and space is genuinely tight (see the chip row just below).
+          <span className="flex min-w-0 items-center gap-2"><TriggerIcon className="h-4 w-4 flex-none text-[#0F6CBD]" /><span className="truncate">{selected[0].name}</span></span>
         ) : (
           <span className="flex min-w-0 flex-wrap items-center gap-1.5">
             {selected.slice(0, 2).map((role) => <span key={role.externalId} className="rounded-full border border-[#0F6CBD]/20 bg-[#0F6CBD]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#115EA3]">{role.abbreviation}</span>)}
@@ -105,6 +162,7 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
         )}
         <ChevronDown className={cn("ml-2 h-4 w-4 flex-none text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
+      {note && <p className="mt-1 text-[11px] italic text-muted-foreground">{note}</p>}
 
       {open && (
         <div role="listbox" aria-multiselectable={multi} className="absolute left-0 z-30 mt-1 w-80 overflow-hidden rounded-xl border bg-white shadow-xl">
@@ -144,56 +202,24 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
               </p>
             )}
             {!loading && errorMessage && <p className="px-2 py-6 text-center text-sm text-[#A80000]" role="alert">{errorMessage}</p>}
-            {!loading && !errorMessage && segments.length === 0 && <p className="px-2 py-6 text-center text-sm text-muted-foreground">No audience roles available.</p>}
+            {!loading && !errorMessage && segments.length === 0 && !allRolesRole && <p className="px-2 py-6 text-center text-sm text-muted-foreground">No audience roles available.</p>}
             {segments.map(([segment, segmentRoles]) => (
               <div key={segment} className="mb-3 last:mb-0">
                 <div className="mb-1 px-2 py-1.5">
                   <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", SEGMENT_STYLES[segment] ?? "border-input bg-muted text-muted-foreground")}>{segment}</span>
                 </div>
 
-                {segmentRoles.map((role) => {
-                  const Icon = roleIcon(role.externalId);
-                  const isChecked = selectedIds.includes(role.externalId);
-
-                  return (
-                    <button
-                      key={role.externalId}
-                      type="button"
-                      role="option"
-                      aria-selected={isChecked}
-                      onClick={() => toggle(role.externalId)}
-                      className={cn(
-                        "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors",
-                        isChecked ? "border-[#0F6CBD]/25 bg-[#0F6CBD]/[0.08]" : "border-transparent hover:bg-[#F5F9FF]",
-                      )}
-                    >
-                      {multi && (
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          tabIndex={-1}
-                          onChange={() => toggle(role.externalId)}
-                          onClick={(event) => event.stopPropagation()}
-                          aria-label={`Select ${role.name}`}
-                          className="mt-1 h-4 w-4 flex-none cursor-pointer rounded accent-[#0F6CBD]"
-                        />
-                      )}
-                      <span className={cn("flex-none rounded-lg p-2", isChecked ? "bg-[#0F6CBD]/15" : "bg-muted")}>
-                        <Icon className={cn("h-4 w-4", isChecked ? "text-[#0F6CBD]" : "text-muted-foreground")} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2">
-                          <span className={cn("text-sm font-medium", isChecked ? "text-[#115EA3]" : "text-foreground")}>{role.name}</span>
-                          {!multi && isChecked && <Check className="h-4 w-4 flex-none text-[#0F6CBD]" />}
-                        </span>
-                        {/* Always rendered: a collapsed row hides whether the copy is missing or the field is. */}
-                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">{role.description ?? "Description unavailable."}</span>
-                      </span>
-                    </button>
-                  );
-                })}
+                {segmentRoles.map((role) => renderRole(role))}
               </div>
             ))}
+            {allRolesRole && (
+              <div className="mt-1 border-t pt-3">
+                <div className="mb-1 px-2 py-1.5">
+                  <span className="rounded-full border border-input bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Every role</span>
+                </div>
+                {renderRole(allRolesRole)}
+              </div>
+            )}
           </div>
 
           {multi && (

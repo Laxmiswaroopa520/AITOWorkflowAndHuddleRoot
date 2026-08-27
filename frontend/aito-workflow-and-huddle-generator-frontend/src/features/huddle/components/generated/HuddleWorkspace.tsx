@@ -17,6 +17,7 @@ import {
   ListChecks,
   MessageSquare,
   MoreHorizontal,
+  Sparkles,
   PanelLeftClose,
   StickyNote,
   UserRound,
@@ -39,7 +40,7 @@ import type {
 import { HuddleTalkTrackPanel } from "../talk-track";
 import { createHuddleSessionProgressSummary } from "../progress/huddleSessionProgress";
 
-type WorkspaceSection = "overview" | "activities" | "resources";
+type WorkspaceSection = "overview" | "share-experience" | "activities" | "resources";
 
 interface HuddleWorkspaceProps {
   model: HuddlePresentationModel;
@@ -274,11 +275,11 @@ export function HuddleWorkspace({ model, session, sessionLoading, sessionError, 
         <div className="flex w-full items-center gap-2 overflow-x-auto">{[{ label: "Duration", value: model.identity.durationMinutes === null ? "Unavailable" : `${model.identity.durationMinutes} min`, icon: Clock }, { label: "Phases", value: String(model.phases.length), icon: Layers }, { label: "Activities", value: String(activityCount), icon: ListChecks }, { label: "AI tools", value: String(agents.length), icon: Bot }].map(({ label, value, icon: Icon }) => <div key={label} className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-[#e1e4e8] bg-white px-3 py-2"><Icon className="h-4 w-4 text-[#0f6cbd]" /><div><p className="text-sm font-semibold">{value}</p><p className="text-[10px] uppercase tracking-wide text-[#707070]">{label}</p></div></div>)}<div className="ml-auto hidden min-w-[280px] lg:block"><div className="mb-1 flex justify-between text-xs text-[#616161]"><span>{progressSummary.completedCount} of {progressSummary.totalCount} activities complete</span><span>{progressSummary.percentage}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-[#e8eaed]"><div className="h-full rounded-full bg-[#0f6cbd] transition-all" style={{ width: `${progressSummary.percentage}%` }} /></div></div></div>
       </div>
       <div className={cn("relative grid min-h-0 flex-1", guideCollapsed ? "lg:grid-cols-[64px_minmax(0,1fr)_300px]" : "lg:grid-cols-[232px_minmax(0,1fr)_300px]")}>
-        <aside className="hidden min-h-0 flex-col border-r border-[#e1e4e8] bg-white lg:flex"><div className="flex items-center justify-between px-4 py-4">{!guideCollapsed && <p className="text-sm font-semibold">Huddle Guide</p>}<Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setGuideCollapsed((value) => !value)} aria-label="Toggle Huddle Guide"><PanelLeftClose className={cn("h-4 w-4 transition-transform", guideCollapsed && "rotate-180")} /></Button></div><nav className="space-y-1 px-2"><WorkspaceNavButton active={section === "overview"} collapsed={guideCollapsed} icon={<Home className="h-4 w-4" />} label="Overview" onClick={() => setSection("overview")} />{!guideCollapsed && <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-[#707070]">Huddle Flow</p>}{model.phases.map((phase, index) => { const featuredInPhase = phase.activities.filter((activity) => activity.practiceTier !== "Extended"); const completedInPhase = featuredInPhase.filter((activity) => progressSummary.completedActivityIds.has(activity.externalId)).length; return <button key={phase.externalId} type="button" onClick={() => { setActivePhaseId(phase.externalId); setSection("activities"); }} className={cn("flex w-full items-start gap-3 rounded-md border-l-2 px-3 py-3 text-left transition-colors", section === "activities" && activePhase?.externalId === phase.externalId ? "border-[#0f6cbd] bg-[#eef6fc] text-[#0f6cbd]" : "border-transparent text-[#424242] hover:bg-[#f3f3f3]")}><span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold">{index + 1}</span>{!guideCollapsed && <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{phase.name}</p><div className="mt-1 flex justify-between text-xs text-[#707070]"><span>{phase.durationMinutes === null ? "Duration unavailable" : `${phase.durationMinutes} min`}</span><span>{completedInPhase}/{featuredInPhase.length}</span></div></div>}</button>; })}</nav><div className="mt-auto border-t border-[#e1e4e8] p-2"><WorkspaceNavButton active={section === "resources"} collapsed={guideCollapsed} icon={<BookOpen className="h-4 w-4" />} label="Resources" onClick={() => setSection("resources")} /></div></aside>
+        <aside className="hidden min-h-0 flex-col border-r border-[#e1e4e8] bg-white lg:flex"><div className="flex items-center justify-between px-4 py-4">{!guideCollapsed && <p className="text-sm font-semibold">Huddle Guide</p>}<Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setGuideCollapsed((value) => !value)} aria-label="Toggle Huddle Guide"><PanelLeftClose className={cn("h-4 w-4 transition-transform", guideCollapsed && "rotate-180")} /></Button></div><nav className="space-y-1 px-2"><WorkspaceNavButton active={section === "overview"} collapsed={guideCollapsed} icon={<Home className="h-4 w-4" />} label="Overview" onClick={() => setSection("overview")} /><WorkspaceNavButton active={section === "share-experience"} collapsed={guideCollapsed} icon={<Sparkles className="h-4 w-4" />} label="Share Your Experience" onClick={() => setSection("share-experience")} />{!guideCollapsed && <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-[#707070]">Huddle Flow</p>}{model.phases.map((phase, index) => { const featuredInPhase = phase.activities.filter((activity) => activity.practiceTier !== "Extended"); const completedInPhase = featuredInPhase.filter((activity) => progressSummary.completedActivityIds.has(activity.externalId)).length; return <button key={phase.externalId} type="button" onClick={() => { setActivePhaseId(phase.externalId); setSection("activities"); }} className={cn("flex w-full items-start gap-3 rounded-md border-l-2 px-3 py-3 text-left transition-colors", section === "activities" && activePhase?.externalId === phase.externalId ? "border-[#0f6cbd] bg-[#eef6fc] text-[#0f6cbd]" : "border-transparent text-[#424242] hover:bg-[#f3f3f3]")}><span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-xs font-semibold">{index + 1}</span>{!guideCollapsed && <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{phase.name}</p>{phase.name === "Explore and Practice" && <p className="mt-1 text-xs text-[#707070]">{completedInPhase}/{featuredInPhase.length}</p>}</div>}</button>; })}</nav><div className="mt-auto border-t border-[#e1e4e8] p-2"><WorkspaceNavButton active={section === "resources"} collapsed={guideCollapsed} icon={<BookOpen className="h-4 w-4" />} label="Resources" onClick={() => setSection("resources")} /></div></aside>
         <button type="button" onClick={() => setTalkTrackOpen(true)} style={{ writingMode: "vertical-rl" }} aria-expanded={talkTrackOpen} className={cn("absolute top-10 z-20 hidden h-28 w-9 items-center justify-center gap-2 rounded-r-md border border-l-0 border-[#C7E0F4] text-xs font-semibold shadow-sm transition-colors lg:flex", guideCollapsed ? "left-16" : "left-[232px]", talkTrackOpen ? "bg-[#0F6CBD] text-white" : "bg-[#F5F9FF] text-[#0F6CBD] hover:bg-[#E8F2FF]")}><MessageSquare className="h-4 w-4" /><span>Talk Track</span></button>
         <main className="min-h-0 overflow-y-auto px-4 py-5 lg:py-6 lg:pl-12 lg:pr-7">
-          <div className="mb-4 flex gap-2 overflow-x-auto lg:hidden"><MobileNav label="Overview" active={section === "overview"} onClick={() => setSection("overview")} /><MobileNav label="Talk Track" active={talkTrackOpen} onClick={() => setTalkTrackOpen(true)} /><MobileNav label="Activities" active={section === "activities"} onClick={() => setSection("activities")} /><MobileNav label="Resources" active={section === "resources"} onClick={() => setSection("resources")} /></div>
-          {section === "overview" && <Overview model={model} />}
+          <div className="mb-4 flex gap-2 overflow-x-auto lg:hidden"><MobileNav label="Overview" active={section === "overview"} onClick={() => setSection("overview")} /><MobileNav label="Share Your Experience" active={section === "share-experience"} onClick={() => setSection("share-experience")} /><MobileNav label="Talk Track" active={talkTrackOpen} onClick={() => setTalkTrackOpen(true)} /><MobileNav label="Activities" active={section === "activities"} onClick={() => setSection("activities")} /><MobileNav label="Resources" active={section === "resources"} onClick={() => setSection("resources")} /></div>
+          {section === "overview" && <Overview model={model} />}{section === "share-experience" && <ShareYourExperience />}
           {sessionError && <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><span>{"status" in sessionError && sessionError.status === 409 ? "Progress changed elsewhere. Refresh before retrying." : sessionError.message}</span><Button variant="outline" size="sm" onClick={() => void refreshSession()}>Refresh</Button></div>}
           {feedback && <div role="status" className={cn("mb-4 rounded-lg border p-3 text-sm", feedback.kind === "success" ? "border-green-200 bg-green-50 text-green-900" : "border-red-200 bg-red-50 text-red-900")}>{feedback.message}</div>}
           {(session?.removedActivityExternalIds.length ?? 0) > 0 && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{session!.removedActivityExternalIds.length} saved activity record(s) no longer belong to the current Huddle and were excluded from progress.</p>}
@@ -321,6 +322,16 @@ function OverviewCard({ title, value }: { title: string; value: string | null })
   return <section className="min-h-[126px] rounded-xl border border-[#dfe3e8] bg-white p-5"><h4 className="font-semibold">{title}</h4><OptionalContent value={value} /></section>;
 }
 
+const SHARE_YOUR_EXPERIENCE_QUESTIONS = [
+  { title: "What did you try with AI since the last Huddle?", copy: "Share a real task, prompt, workflow, or moment where you used AI." },
+  { title: "What worked well, and what did not?", copy: "Compare useful approaches with outputs, dead ends, or situations where AI was less helpful." },
+  { title: "What did you learn, and where did you run into friction?", copy: "Share a discovery others can reuse and any process, data, tool, access, or confidence blockers you encountered." },
+] as const;
+
+function ShareYourExperience() {
+  return <div className="mx-auto max-w-4xl"><h3 className="text-2xl font-semibold">Share Your Experience</h3><p className="mt-1 text-sm text-[#616161]">Use this time to share what you tried with AI since the last Huddle. Compare what worked, what did not, what you learned, and where you ran into friction.</p><div className="mt-5 grid gap-4 md:grid-cols-2">{SHARE_YOUR_EXPERIENCE_QUESTIONS.map((question, index) => <section key={question.title} className="rounded-xl border border-[#dfe3e8] bg-white p-5"><span className="text-xs font-semibold text-[#0f6cbd]">{String(index + 1).padStart(2, "0")}</span><h4 className="mt-2 font-semibold">{question.title}</h4><p className="mt-2 text-sm leading-6 text-[#616161]">{question.copy}</p></section>)}</div></div>;
+}
+
 /**
  * Explore and Practice, split by practice tier. Featured activities are listed directly; Extended
  * activities sit behind a collapsed disclosure so a fifteen-minute segment is not buried under
@@ -354,12 +365,11 @@ function Activities({ model, activePhase, activePhaseId, completedActivityIds, m
         {activePhase.description && <p className="ml-10 mt-1 text-sm text-[#616161]">{activePhase.description}</p>}
       </div>
 
-      {activePhase.activities.length === 0 && <Unavailable title="Activities for this phase" />}
+      {activePhase.activities.length === 0 && <PhaseGuidance phase={activePhase} guide={model.facilitatorGuide} />}
 
       {featured.length > 0 && (
         <section>
           <div className="mb-1 flex items-center gap-2">
-            <ListChecks className="h-4 w-4 text-[#0f6cbd]" />
             <h4 className="text-sm font-semibold text-[#242424]">Featured activities</h4>
             <span className="rounded-full bg-[#E8F2FF] px-2 py-0.5 text-[11px] font-semibold text-[#0f6cbd]">{featured.length}</span>
           </div>
@@ -373,7 +383,6 @@ function Activities({ model, activePhase, activePhaseId, completedActivityIds, m
           <button type="button" onClick={() => setExtendedOpen((value) => !value)} aria-expanded={extendedOpen} className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left">
             <span className="min-w-0">
               <span className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-[#0f6cbd]" />
                 <strong className="text-sm font-semibold text-[#242424]">Additional activities to explore</strong>
                 <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#616161]">{extended.length} extended</span>
               </span>
@@ -385,6 +394,108 @@ function Activities({ model, activePhase, activePhaseId, completedActivityIds, m
         </section>
       )}
     </div>
+  );
+}
+
+/**
+ * Preparation and Commit to Action never carry activities in this content model - activities are
+ * scoped to Explore and Practice only (see the source workbook's Preparation / Explore_Practice /
+ * Commit tabs). The facilitator guide is authored per phase instead, so this renders that content
+ * in place of an empty activities list rather than leaving the phase looking unfinished.
+ */
+function PhaseGuidance({ phase, guide }: { phase: HuddlePresentationModel["phases"][number]; guide: HuddlePresentationModel["facilitatorGuide"] }) {
+  if (!guide) return <Unavailable title="Activities for this phase" />;
+
+  if (phase.name === "Preparation") {
+    return (
+      <div className="space-y-4">
+        <GuidanceSection title="Session introduction" value={guide.sessionIntroduction} />
+        <GuidanceList title="Key talking points" values={guide.keyTalkingPoints} />
+        <GuidanceList title="Discussion questions" values={guide.discussionQuestions} />
+        <GuidanceList title="Preparation checklist" values={guide.preparationChecklist} />
+      </div>
+    );
+  }
+
+  if (phase.name === "Commit to Action") {
+    return (
+      <div className="space-y-4">
+        <CommitCard icon={CheckCircle2} title="Wrap Up" value={guide.wrapUpGuidance} tone="neutral" />
+        <CommitCard icon={MessageSquare} title="Reflect" value={guide.reflectPrompt} tone="green" />
+        <CommitCard icon={CheckCircle2} title="Commit to Action" value={guide.commitPrompt} tone="blue" />
+        <CommitListCard icon={BookOpen} title="Bring Back Next Time" values={guide.bringBackEvidence} tone="green" />
+      </div>
+    );
+  }
+
+  return <Unavailable title="Activities for this phase" />;
+}
+
+function GuidanceSection({ title, value }: { title: string; value: string | null }) {
+  return (
+    <section className="rounded-xl border border-[#dfe3e8] bg-white p-5">
+      <h4 className="font-semibold">{title}</h4>
+      <OptionalContent value={value} />
+    </section>
+  );
+}
+
+function GuidanceList({ title, values }: { title: string; values: readonly string[] }) {
+  return (
+    <section className="rounded-xl border border-[#dfe3e8] bg-white p-5">
+      <h4 className="font-semibold">{title}</h4>
+      {values.length > 0 ? (
+        <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-6 text-[#424242]">
+          {values.map((value, index) => <li key={`${index}-${value}`}>{value}</li>)}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-[#707070]">Content unavailable</p>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Wrap Up / Reflect / Commit to Action / Bring Back Next Time - the manager's styling for the
+ * Commit to Action phase: a colored, icon-led card per section instead of a plain bordered box.
+ * Green marks the two team-facing reflection sections, blue marks the two facilitator-action
+ * sections, matching the tone already used elsewhere in this file (success banners, AI tools panel).
+ */
+type CommitCardTone = "neutral" | "green" | "blue";
+
+function commitCardClassName(tone: CommitCardTone): string {
+  if (tone === "green") return "border-green-200 bg-green-50";
+  if (tone === "blue") return "border-[#c7e0f4] bg-[#f5f9ff]";
+  return "border-[#dfe3e8] bg-white";
+}
+
+function commitIconClassName(tone: CommitCardTone): string {
+  return tone === "green" ? "text-green-700" : "text-[#0f6cbd]";
+}
+
+function CommitCard({ icon: Icon, title, value, tone }: { icon: React.ComponentType<{ className?: string }>; title: string; value: string | null; tone: CommitCardTone }) {
+  return (
+    <section className={cn("rounded-xl border p-5", commitCardClassName(tone))}>
+      <div className="flex items-center gap-2"><Icon className={cn("h-4 w-4", commitIconClassName(tone))} /><h4 className="font-semibold">{title}</h4></div>
+      <OptionalContent value={value} />
+    </section>
+  );
+}
+
+function CommitListCard({ icon: Icon, title, values, tone }: { icon: React.ComponentType<{ className?: string }>; title: string; values: readonly string[]; tone: CommitCardTone }) {
+  return (
+    <section className={cn("rounded-xl border p-5", commitCardClassName(tone))}>
+      <div className="flex items-center gap-2"><Icon className={cn("h-4 w-4", commitIconClassName(tone))} /><h4 className="font-semibold">{title}</h4></div>
+      {values.length === 0 ? (
+        <p className="mt-2 text-sm text-[#707070]">Content unavailable</p>
+      ) : values.length === 1 ? (
+        <p className="mt-2 text-sm leading-6 text-[#424242]">{values[0]}</p>
+      ) : (
+        <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm leading-6 text-[#424242]">
+          {values.map((value, index) => <li key={`${index}-${value}`}>{value}</li>)}
+        </ul>
+      )}
+    </section>
   );
 }
 

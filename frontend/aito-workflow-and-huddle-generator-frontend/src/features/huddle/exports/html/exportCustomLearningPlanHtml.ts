@@ -23,7 +23,7 @@ export function createCustomLearningPlanHtmlExport(
     const audience = huddle.roles.map((role) => role.abbreviation || role.name);
     const mcemLabel = formatMcemStageLabel(huddle.mcemStages ?? []);
     return `<article class="week"><span class="week-badge">${index + 1}</span><div class="week-card"><h3>${escapeHtml(huddle.name)}</h3><p>${huddle.description ? escapeHtml(huddle.description) : "Description unavailable."}</p><div class="week-meta"><span class="tag">${huddle.durationMinutes === null ? "Duration unavailable" : `${escapeHtml(huddle.durationMinutes)} minutes`}</span>${mcemLabel ? `<span class="status">${escapeHtml(mcemLabel)}</span>` : ""}${huddle.focusAreaName ? `<span class="tag">${escapeHtml(huddle.focusAreaName)}</span>` : ""}</div>${audience.length ? `<div class="section"><span class="label">Audience</span><div class="tag-list">${audience.map((name) => `<span class="tag">${escapeHtml(name)}</span>`).join("")}</div></div>` : ""}${primary.length ? `<div class="section"><span class="label">Primary AI tools</span><div class="tag-list">${primary.map((name) => `<span class="tag">${escapeHtml(name)}</span>`).join("")}</div></div>` : ""}${secondary.length ? `<div class="section"><span class="label">Secondary AI tools</span><div class="tag-list">${secondary.map((name) => `<span class="tag">${escapeHtml(name)}</span>`).join("")}</div></div>` : ""}</div></article>`;
-  }).join("")}</section></div><footer class="footer">AITO Workflow &amp; Huddle Generator</footer></main>`;
+  }).join("")}</section></div><footer class="footer">Frontier Accelerator App</footer></main>`;
 
   return {
     html: createHtmlDocument("Custom Learning Plan", body),

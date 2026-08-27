@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAtom } from "jotai";
-import { CalendarDays, Library, Sparkles, Users } from "lucide-react";
+import { CalendarDays, ChevronRight, Home, Library, Sparkles, Users } from "lucide-react";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { HuddleAudienceSelect } from "../components/audience";
@@ -16,10 +16,10 @@ import type { HuddlePlanResponse, HuddleVoteResponse } from "../types";
 import type { HuddlePersona } from "../types/huddlePersona.types";
 import { createHuddlePresentationModel } from "../mappers";
 
-/** The first tab is named for the persona: Team Members get Orientation, the rest Onboarding. */
+/** The first tab is named for the persona: Team Members get Onboarding, Manager and Facilitator get Orientation. */
 function buildNavigationItems(persona: HuddlePersona | null): { id: HuddleViewMode; label: string }[] {
   return [
-    { id: "orientation", label: persona === "team-member" ? "Orientation" : "Onboarding" },
+    { id: "orientation", label: persona === "team-member" ? "Onboarding" : "Orientation" },
     { id: "guided", label: "Role Path" },
     { id: "evergreen", label: "Additional Topics" },
   ];
@@ -50,6 +50,11 @@ export function HuddlePage() {
   // to the reader's own Role Path role. It is not "every topic whose AlignedRoles mentions me",
   // which is what previously surfaced a role's own Role Path topics under Additional Topics.
   const additionalRoleExternalId = (audienceRoleIds.length === 1 ? audienceRoleIds[0] : selectedRoleExternalId) ?? undefined;
+  // Additional Topics silently inherits the Role Path role above when no explicit audience has
+  // been chosen here (see additionalRoleExternalId). Reflect that inherited role in the picker
+  // itself too, so it doesn't read "Select Audience" while a role is actually filtering the list.
+  const evergreenAudienceDisplayIds = audienceRoleIds.length === 0 && selectedRoleExternalId ? [selectedRoleExternalId] : audienceRoleIds;
+  const evergreenAudienceNote = audienceRoleIds.length === 0 && selectedRoleExternalId ? "Matches your Role Path audience" : null;
   // Only the Additional Topics tab reads this. It used to run unconditionally alongside
   // referenceCatalogQuery on every visit to the Huddle page -- two full catalogue reads in
   // parallel, competing for the same backend and database, before the reader had even chosen a
@@ -175,11 +180,16 @@ export function HuddlePage() {
     }
   };
   const exportSelectedHuddlePowerPoint = async () => {
+    // PowerPoint export is temporarily disabled -- the design and content for this feature have
+    // not been finalized by the team yet. The button and menu entry stay in place (see
+    // HuddleDetailPanel's "Download PPT" menu item, which now shows "Currently unavailable"
+    // instead of calling into this) so the feature is easy to re-enable later: just uncomment
+    // the two lines below once the team signs off.
     if (!presentationModel || exportPending) return;
     setExportPending(true);
     try {
-      const { exportHuddlePowerPoint } = await import("../exports/powerpoint");
-      await exportHuddlePowerPoint(presentationModel);
+      // const { exportHuddlePowerPoint } = await import("../exports/powerpoint");
+      // await exportHuddlePowerPoint(presentationModel);
     } finally {
       setExportPending(false);
     }
@@ -189,8 +199,8 @@ export function HuddlePage() {
 
   return (
     <div className="mx-auto max-w-[1540px] space-y-6 p-4 [font-family:var(--aito-font-sans)] lg:p-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><div className="mb-2 flex items-center gap-3"><span className="rounded-xl bg-[#E8F2FF] p-2"><Users className="h-6 w-6 text-[#0F6CBD]" /></span><h1 className="text-2xl font-bold lg:text-3xl">Run a Huddle</h1></div><p className="text-muted-foreground">Discover and run guided Huddles that help your team apply AI to real workflows.</p></div><div className="flex flex-wrap items-center gap-2">{persona === "manager" && <button type="button" data-tour="huddle-launch-planner" onClick={() => navigate("/huddle/launch-planner")} className="inline-flex h-10 items-center rounded-lg border border-[#0A6BBA] bg-white px-4 text-sm font-semibold text-[#0A6BBA] hover:bg-[#E2F1F9]"><CalendarDays className="mr-2 h-4 w-4" />Launch Planner</button>}<button type="button" data-tour="huddle-resources" onClick={() => setResourcesOpen(true)} className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-semibold hover:bg-muted"><Library className="mr-2 h-4 w-4" />Resources</button>{viewMode !== "orientation" && <span className="inline-flex h-10 items-center rounded-lg border border-[#0F6CBD]/25 bg-[#E8F2FF] px-3 text-sm font-semibold text-[#0F6CBD]">{selectedExternalId ? "1 selected" : "0 selected"}</span>}{selectedExternalId && <button type="button" data-tour="huddle-generate" onClick={() => setWorkspaceOpen(true)} className="inline-flex h-10 items-center rounded-lg bg-[#0F6CBD] px-4 text-sm font-semibold text-white shadow-lg shadow-[#0F6CBD]/20 hover:bg-[#115EA3]"><Sparkles className="mr-2 h-4 w-4" />Generate Huddle</button>}</div></header>
-      {persona && <div className="space-y-4"><nav data-tour="huddle-sections" aria-label="Huddle sections" className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-border/80 bg-muted/40 p-1.5 shadow-sm">{navigationItems.map((item) => <button key={item.id} type="button" onClick={() => changeViewMode(item.id)} className={cn("rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200", viewMode === item.id ? "border border-[#0F6CBD] bg-[#0F6CBD] text-white shadow-md shadow-[#0F6CBD]/20" : "text-muted-foreground hover:bg-white/80 hover:text-foreground")}>{item.label}</button>)}</nav>{viewMode === "guided" && <div data-tour="huddle-audience"><HuddleAudienceSelect mode="single" roles={roles} loading={rolesLoading} errorMessage={rolesErrorMessage} selectedIds={selectedRoleExternalId ? [selectedRoleExternalId] : []} onChange={(selectedIds) => { setSelectedRoleExternalId(selectedIds[0] ?? null); setSelectedExternalId(null); }} /></div>}{viewMode === "evergreen" && <div data-tour="huddle-filters"><HuddleFilterBar filters={filters} options={options} roles={roles} rolesLoading={rolesLoading} rolesErrorMessage={rolesErrorMessage} audienceRoleIds={audienceRoleIds} onAudienceChange={setAudienceRoleIds} onFilterChange={changeFilter} /></div>}</div>}
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div>{persona && <nav aria-label="Huddle breadcrumb" className="mb-1.5 flex min-w-0 items-center gap-1 text-sm font-medium"><button type="button" onClick={changePersona} title="Back to the Huddle landing page" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[#0F6CBD] transition-colors hover:bg-[#E8F2FF] hover:underline"><Home className="h-3.5 w-3.5" aria-hidden="true" />Huddles</button><ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" aria-hidden="true" />{viewMode === "orientation" ? <span className="px-1.5 py-0.5 text-muted-foreground" aria-current="page">{personaLabel}</span> : <button type="button" onClick={() => changeViewMode("orientation")} title={`Back to ${personaLabel} home`} className="truncate rounded-md px-1.5 py-0.5 text-[#0F6CBD] transition-colors hover:bg-[#E8F2FF] hover:underline">{personaLabel}</button>}</nav>}<div className="mb-2 flex items-center gap-3"><span className="rounded-xl bg-[#E8F2FF] p-2"><Users className="h-6 w-6 text-[#0F6CBD]" /></span><h1 className="text-2xl font-bold lg:text-3xl">{persona ? personaLabel : "Huddles"}</h1></div><p className="text-muted-foreground">{persona ? "Discover and run guided Huddles that help your team apply AI to real workflows." : "Build AI fluency through guided conversations, practical activities, and shared learning."}</p></div><div className="flex flex-wrap items-center gap-2">{persona === "manager" && <button type="button" data-tour="huddle-launch-planner" onClick={() => navigate("/huddle/launch-planner")} className="inline-flex h-10 items-center rounded-lg border border-[#0A6BBA] bg-white px-4 text-sm font-semibold text-[#0A6BBA] hover:bg-[#E2F1F9]"><CalendarDays className="mr-2 h-4 w-4" />Launch Planner</button>}<button type="button" data-tour="huddle-resources" onClick={() => setResourcesOpen(true)} className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-semibold hover:bg-muted"><Library className="mr-2 h-4 w-4" />Resources</button>{viewMode !== "orientation" && <span className="inline-flex h-10 items-center rounded-lg border border-[#0F6CBD]/25 bg-[#E8F2FF] px-3 text-sm font-semibold text-[#0F6CBD]">{selectedExternalId ? "1 selected" : "0 selected"}</span>}{selectedExternalId && <button type="button" data-tour="huddle-generate" onClick={() => setWorkspaceOpen(true)} className="inline-flex h-10 items-center rounded-lg bg-[#0F6CBD] px-4 text-sm font-semibold text-white shadow-lg shadow-[#0F6CBD]/20 hover:bg-[#115EA3]"><Sparkles className="mr-2 h-4 w-4" />Generate Huddle</button>}</div></header>
+      {persona && <div className="space-y-4"><nav data-tour="huddle-sections" aria-label="Huddle sections" className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-border/80 bg-muted/40 p-1.5 shadow-sm">{navigationItems.map((item) => <button key={item.id} type="button" onClick={() => changeViewMode(item.id)} className={cn("rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200", viewMode === item.id ? "border border-[#0F6CBD] bg-[#0F6CBD] text-white shadow-md shadow-[#0F6CBD]/20" : "text-muted-foreground hover:bg-white/80 hover:text-foreground")}>{item.label}</button>)}</nav>{viewMode === "guided" && <div data-tour="huddle-audience"><HuddleAudienceSelect mode="single" roles={roles} loading={rolesLoading} errorMessage={rolesErrorMessage} selectedIds={selectedRoleExternalId ? [selectedRoleExternalId] : []} onChange={(selectedIds) => { setSelectedRoleExternalId(selectedIds[0] ?? null); setSelectedExternalId(null); }} /></div>}{viewMode === "evergreen" && <div data-tour="huddle-filters"><HuddleFilterBar filters={filters} options={options} roles={roles} rolesLoading={rolesLoading} rolesErrorMessage={rolesErrorMessage} audienceRoleIds={evergreenAudienceDisplayIds} onAudienceChange={setAudienceRoleIds} audienceNote={evergreenAudienceNote} onFilterChange={changeFilter} /></div>}</div>}
 
       {viewMode === "orientation" && <HuddleOnboardingExperience key={persona ?? "choose-experience"} persona={persona} onSelectPersona={selectPersona} onChangePersona={changePersona} onStartRolePath={() => changeViewMode("guided")} onAdditionalTopics={() => changeViewMode("evergreen")} />}
       {persona && viewMode !== "orientation" && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"><div data-tour="huddle-list" className="min-w-0">{viewMode === "guided" ? <RecommendedPath data={recommendedPathQuery.data} roleName={presentationAudience.roleName} catalog={referenceCatalogQuery.data ?? []} isLoading={recommendedPathQuery.isLoading} error={recommendedPathQuery.error} mutationError={savePlanMutation.error ?? resetPlanMutation.error} selectedExternalId={selectedExternalId} hasRole={Boolean(selectedRoleExternalId)} votes={votes} votePending={voteMutation.isPending} savePending={savePlanMutation.isPending || resetPlanMutation.isPending} onSelect={setSelectedExternalId} onVote={setVote} onSave={savePlan} onReset={resetPlan} onRetry={() => void recommendedPathQuery.refetch()} /> : <HuddleCatalog data={evergreenQuery.data} isLoading={evergreenQuery.isLoading} error={evergreenQuery.error} selectedExternalId={selectedExternalId} audienceRoleIds={audienceRoleIds} filterKey={filterKey} filtersActive={Boolean(filters.focusArea || filters.agent || filters.search)} votes={votes} votePending={voteMutation.isPending} continueLearning={incompleteSessionsQuery.data} plan={customLearningPlan} planAudienceLabel={personaLabel} onSelect={setSelectedExternalId} onVote={setVote} onRetry={() => void evergreenQuery.refetch()} onContinue={continueLearning} onCloseDetails={() => setSelectedExternalId(null)} />}</div><div data-tour="huddle-detail">{detailPanel}</div></div>}

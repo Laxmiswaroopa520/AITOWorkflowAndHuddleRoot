@@ -40,7 +40,7 @@ export function RecommendedPathCard({
   return (
     <article
       className={cn(
-        "group relative grid grid-cols-[58px_minmax(0,1fr)] gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all duration-200 before:absolute before:-bottom-4 before:left-[39px] before:top-8 before:w-px before:bg-[#C7E0F4] last:before:hidden",
+        "group relative grid grid-cols-[58px_minmax(0,1fr)] items-start gap-3 rounded-xl border bg-white p-4 shadow-sm transition-all duration-200 before:absolute before:-bottom-4 before:left-[39px] before:top-8 before:w-px before:bg-[#C7E0F4] last:before:hidden sm:grid-cols-[58px_minmax(0,1fr)_auto]",
         managementMenuOpen && "z-50",
         selected
           ? "border-[#0F6CBD] bg-[#0F6CBD]/[0.035] ring-2 ring-[#0F6CBD]/15"
@@ -56,7 +56,7 @@ export function RecommendedPathCard({
         className="min-w-0 text-left focus-visible:outline-none"
         onClick={() => onSelect(huddle.externalId)}
       >
-        <span className="flex flex-wrap items-center gap-2 pr-0 sm:pr-28">
+        <span className="flex flex-wrap items-center gap-2">
           <span className="text-base font-semibold leading-5 text-[#242424] transition-colors group-hover:text-[#115EA3]">
             {card.title}
           </span>
@@ -67,7 +67,7 @@ export function RecommendedPathCard({
           )}
         </span>
 
-        <span className="mt-1 block line-clamp-2 pr-0 text-sm leading-5 text-muted-foreground sm:pr-28">
+        <span className="mt-1 block line-clamp-2 text-sm leading-5 text-muted-foreground">
           {card.description ?? "Description unavailable."}
         </span>
 
@@ -109,7 +109,7 @@ export function RecommendedPathCard({
         </span>
       </button>
 
-      <div className="col-span-2 flex items-center justify-end gap-1 sm:absolute sm:right-4 sm:top-4 sm:z-30">
+      <div className="col-span-2 flex items-center justify-end gap-1 pt-1 sm:col-span-1 sm:pt-0">
         <HuddleVoteControls
           huddleName={card.title}
           vote={vote}
