@@ -1,8 +1,6 @@
 import {
   Check,
   Clock,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 
 import {
@@ -24,9 +22,6 @@ import {
 import {
   AiToolBadge,
 } from "./AiToolBadge";
-import {
-  ActivityDetails,
-} from "./ActivityDetails";
 
 interface ActivityCardProps {
   activity: Activity;
@@ -38,9 +33,7 @@ interface ActivityCardProps {
 export function ActivityCard({
   activity,
   isSelected,
-  isExpanded,
   onToggle,
-  onToggleDetails,
 }: ActivityCardProps) {
   const categoryStyle =
     CATEGORY_STYLES[
@@ -193,8 +186,7 @@ export function ActivityCard({
                 leading-5
                 text-muted-foreground
               `,
-              !isExpanded &&
-                "line-clamp-2",
+              "line-clamp-2",
             )}
           >
             {activity.description}
@@ -243,111 +235,7 @@ export function ActivityCard({
             </span>
           )}
         </div>
-
-        <button
-          type="button"
-          className="
-            mt-2
-            inline-flex
-            items-center
-            gap-1
-            text-xs
-            font-medium
-            text-primary
-            hover:underline
-          "
-          onClick={event => { event.stopPropagation(); onToggleDetails(); }}
-        >
-          {isExpanded
-            ? "Hide details"
-            : "View details"}
-
-          {isExpanded ? (
-            <ChevronUp
-              className="h-3 w-3"
-            />
-          ) : (
-            <ChevronDown
-              className="h-3 w-3"
-            />
-          )}
-        </button>
       </div>
-{/*
-      {isExpanded && (
-        <div
-          className="
-            border-t
-            border-border
-            bg-muted/20
-            px-4
-            py-4
-          "
-        >
-          {activity.businessOutcome && (
-            <DetailSection
-              title="Business outcome"
-              content={
-                activity.businessOutcome
-              }
-            />
-          )}
-
-          {activity.beginnerPrompt && (
-            <DetailSection
-              title="Beginner prompt"
-              content={
-                activity.beginnerPrompt
-              }
-            />
-          )}
-
-          {activity.advancedPrompt && (
-            <DetailSection
-              title="Advanced prompt"
-              content={
-                activity.advancedPrompt
-              }
-            />
-          )}
-
-          {activity.suggestedOutputs && (
-            <DetailSection
-              title="Suggested outputs"
-              content={
-                activity.suggestedOutputs
-              }
-            />
-          )}
-        </div>
-      )}*/}
-      {isExpanded && (
-  <motion.div
-    initial={{
-      opacity: 0,
-      height: 0,
-    }}
-    animate={{
-      opacity: 1,
-      height: "auto",
-    }}
-    exit={{
-      opacity: 0,
-      height: 0,
-    }}
-    className="
-      border-t
-      border-border
-      bg-muted/20
-      px-4
-      py-4
-    "
-  >
-    <ActivityDetails
-      activity={activity}
-    />
-  </motion.div>
-)}
     </motion.article>
   );
 }

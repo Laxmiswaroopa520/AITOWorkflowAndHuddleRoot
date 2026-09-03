@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness,
   GraduationCap,
   Handshake,
+  Lightbulb,
   Settings,
   Shield,
   Target,
@@ -199,6 +200,47 @@ export const BUCKET_ICONS:
       GraduationCap,
   };
 
+// Real launch links for the AI tools that also exist in the Huddle module's agent
+// reference data (database/fresh-install-v10.2.1/25_Huddle_Agents.sql), keyed by the
+// AiTool.name used on the Workflow side. Workflow's own AiTool record has no launch URL
+// column yet -- until the backend exposes one directly on ActivityAiToolResponse, this is
+// a stopgap so the "Launch" button only ever appears for a tool with a real destination,
+// never a dead link. Tools without a confident name match here simply get no launch button.
+export const AI_TOOL_LAUNCH_LINKS: Record<string, string> = {
+  "Sales Agent": "https://aka.ms/SalesM365",
+  "ECIF Agent": "https://aka.ms/SalesM365",
+  "M365 Copilot": "https://m365.cloud.microsoft/chat",
+  "Cowork": "https://m365.cloud.microsoft/",
+  "Scout": "https://aka.ms/m",
+  "Researcher": "https://m365.cloud.microsoft/chat",
+  "Analyst": "https://m365.cloud.microsoft/chat",
+  "MSXI Copilot": "https://msxi.microsoft.com/",
+};
+
+/**
+ * Activity.suggestedOutputs is stored as a JSON-encoded array of short strings
+ * (see e.g. the "MSX report filtering guidance" row in database/004-upsert-activities.sql),
+ * not free-form prose. Parses it back into that list; falls back to treating the raw
+ * string as a single line if it isn't valid JSON, and to an empty list if there's nothing.
+ */
+export function parseSuggestedOutputs(suggestedOutputs: string | null): string[] {
+  if (!suggestedOutputs) {
+    return [];
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(suggestedOutputs);
+
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+    }
+  } catch {
+    // not JSON -- fall through to treating it as plain text below
+  }
+
+  return [suggestedOutputs];
+}
+
 export const CATEGORY_STYLES:
   Record<
     string,
@@ -253,3 +295,13 @@ export const CATEGORY_STYLES:
       border: "border-border",
     },
   };
+
+// One icon per activity category, paired with CATEGORY_STYLES above -- used on the
+// category pill in the Day view so the badge reads at a glance instead of by color alone.
+export const CATEGORY_ICONS: Record<string, ElementType> = {
+  Planning: Target,
+  Insight: TrendingUp,
+  Execution: Lightbulb,
+  Engagement: Users,
+  Admin: Settings,
+};

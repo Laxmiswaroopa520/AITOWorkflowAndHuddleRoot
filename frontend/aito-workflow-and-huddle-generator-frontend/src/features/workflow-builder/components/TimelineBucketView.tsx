@@ -1,23 +1,27 @@
-import { Calendar, CalendarDays, ChevronDown, Copy, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, Lightbulb, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import type { Activity } from "../types/activity.types";
 import type { TimelineView } from "../types/timeline.types";
 import { TIMELINE_LABELS } from "../types/timeline.types";
 import { groupActivitiesByBucket } from "../utils/groupActivitiesByBucket";
 import { CalendarReviewDialog } from "./CalendarReviewDialog";
+import { ScheduledActivityCard } from "./ScheduledActivityCard";
 import type { WorkflowCalendarItem } from "../types/workflowCalendar.types";
 
 interface TimelineBucketViewProps {
   activities: Activity[];
   timeline: Exclude<TimelineView, "day">;
+  headerActions?: ReactNode;
 }
 
-export function TimelineBucketView({ activities, timeline }: TimelineBucketViewProps) {
+export function TimelineBucketView({ activities, timeline, headerActions }: TimelineBucketViewProps) {
   const groups = groupActivitiesByBucket(activities, [], true);
   const [expandedActivityId, setExpandedActivityId] = useState<number | null>(null);
   const [copiedActivityId, setCopiedActivityId] = useState<number | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [quickAddItem, setQuickAddItem] = useState<WorkflowCalendarItem | null>(null);
   const calendarItems = useMemo<WorkflowCalendarItem[]>(() => {
     const today = new Date();
     const baseTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0).getTime();
@@ -39,15 +43,35 @@ export function TimelineBucketView({ activities, timeline }: TimelineBucketViewP
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-5">
-        <div className="flex items-center gap-3">
-          <span className="rounded-xl bg-primary/10 p-3 text-primary"><Calendar className="h-6 w-6" /></span>
-          <div>
-            <h2 className="font-bold">{TIMELINE_LABELS[timeline]} at a Glance</h2>
-            <p className="text-sm text-muted-foreground">{activities.length} {activities.length === 1 ? "activity" : "activities"} · {groups.length} {groups.length === 1 ? "bucket" : "buckets"}</p>
+      <div className="rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-primary" aria-hidden="true" />
+            <h3 className="font-semibold text-foreground">Quick Prompts</h3>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {headerActions}
+            <Button type="button" size="sm" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)}><CalendarDays className="mr-2 h-4 w-4" />Add to my calendar</Button>
           </div>
         </div>
-        <Button type="button" size="sm" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)}><CalendarDays className="mr-2 h-4 w-4" />Add to my calendar</Button>
+        <div className="flex flex-wrap gap-2">
+          {activities.slice(0, 3).map(activity => (
+            <button
+              key={activity.id}
+              type="button"
+              onClick={() => {
+                void copyPrompt(activity);
+              }}
+              className="group flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm transition-all hover:border-primary/50 hover:bg-primary/5"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+              <span className="text-foreground">
+                {copiedActivityId === activity.id ? "Copied!" : activity.title}
+              </span>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
+            </button>
+          ))}
+        </div>
       </div>
 
       {groups.length === 0 ? (
@@ -58,27 +82,38 @@ export function TimelineBucketView({ activities, timeline }: TimelineBucketViewP
             <span className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-4 w-4" /></span>
             <div><h3 className="font-semibold">{group.name}</h3><p className="text-xs text-muted-foreground">{group.activities.length} {group.activities.length === 1 ? "activity" : "activities"}</p></div>
           </header>
-          <div className="divide-y">
-            {group.activities.map(activity => {
-              const expanded = expandedActivityId === activity.id;
-              const prompt = activity.beginnerPrompt ?? activity.advancedPrompt;
-              return <article key={activity.id}>
-                <button type="button" onClick={() => setExpandedActivityId(expanded ? null : activity.id)} className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left" aria-expanded={expanded}>
-                  <span className="min-w-0"><strong className="block">{activity.title}</strong><span className="mt-1 block text-sm text-muted-foreground">{activity.frequency} · {activity.durationMinutes} min · {activity.priority} priority</span></span>
-                  <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
-                </button>
-                {expanded && <div className="space-y-4 bg-muted/20 px-5 pb-5 pt-1">
-                  {activity.description && <p className="text-sm text-muted-foreground">{activity.description}</p>}
-                  {activity.businessOutcome && <div className="rounded-xl border bg-background p-4"><p className="text-xs font-semibold uppercase text-primary">Business outcome</p><p className="mt-1 text-sm">{activity.businessOutcome}</p></div>}
-                  {prompt && <div className="rounded-xl border border-primary/20 bg-primary/5 p-4"><div className="flex justify-between gap-3"><p className="text-xs font-semibold uppercase text-primary">Recommended prompt</p><button type="button" onClick={() => void copyPrompt(activity)} className="inline-flex items-center gap-1 text-xs font-medium text-primary"><Copy className="h-3.5 w-3.5" />{copiedActivityId === activity.id ? "Copied" : "Copy"}</button></div><p className="mt-2 whitespace-pre-wrap text-sm">{prompt}</p></div>}
-                  {activity.aiTools.length > 0 && <div className="flex flex-wrap gap-2">{activity.aiTools.map(tool => <span key={tool.id} className="rounded-full border bg-background px-3 py-1 text-xs">{tool.name}{tool.isPrimary ? " · Primary" : ""}</span>)}</div>}
-                </div>}
-              </article>;
-            })}
+          <div className="space-y-3 p-4">
+            {group.activities.map(activity => (
+              <ScheduledActivityCard
+                key={activity.id}
+                activity={activity}
+                isExpanded={expandedActivityId === activity.id}
+                onClick={() => setExpandedActivityId(expandedActivityId === activity.id ? null : activity.id)}
+                copiedActivityId={copiedActivityId}
+                onCopyPrompt={a => {
+                  void copyPrompt(a);
+                }}
+                onQuickAdd={a => {
+                  const item = calendarItems.find(calendarItem => calendarItem.activityExternalId === a.externalId);
+                  if (item) {
+                    setQuickAddItem(item);
+                  }
+                }}
+              />
+            ))}
           </div>
         </section>
       ))}
       <CalendarReviewDialog open={calendarOpen} onOpenChange={setCalendarOpen} items={calendarItems} />
+      <CalendarReviewDialog
+        open={quickAddItem !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setQuickAddItem(null);
+          }
+        }}
+        items={quickAddItem ? [quickAddItem] : []}
+      />
     </div>
   );
 }

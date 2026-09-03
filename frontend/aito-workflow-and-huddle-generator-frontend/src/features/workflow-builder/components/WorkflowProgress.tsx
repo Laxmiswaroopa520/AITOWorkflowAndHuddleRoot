@@ -27,17 +27,17 @@ const workflowSteps: Array<{
   {
     id: "discover",
     number: 1,
-    label: "Choose Your Role", subtitle: "Tell us what you do",
+    label: "Discover", subtitle: "Select your role",
   },
   {
     id: "customize",
     number: 2,
-    label: "Select Activities", subtitle: "Pick your priorities",
+    label: "Customize", subtitle: "Choose activities",
   },
   {
     id: "generate",
     number: 3,
-    label: "Your Workflow", subtitle: "Build your day",
+    label: "Generate Workflow", subtitle: "Your personalized plan",
   },
 ];
 

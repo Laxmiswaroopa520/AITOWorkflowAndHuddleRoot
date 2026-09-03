@@ -2,6 +2,7 @@
 using AitoWorkflowAndHuddleGenerator.Api.Authorization;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Roles.Queries.GetRoles;
 using AitoWorkflowAndHuddleGenerator.Contracts.Roles;
+using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,9 +29,14 @@ public sealed class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Gets application roles, optionally including inactive entries.
+    /// Gets application roles, optionally including inactive entries and scoped to one module.
     /// </summary>
     /// <param name="includeInactive">Whether inactive roles should be included.</param>
+    /// <param name="module">
+    /// Optional. Pass "Huddle" or "Workflow" to restrict the result to that module's roles.
+    /// Omit to get every role regardless of which module owns it (the existing, unscoped
+    /// behavior the Workflow Builder screens rely on).
+    /// </param>
     /// <param name="cancellationToken">A token used to cancel the request.</param>
     /// <returns>The application role catalog.</returns>
     [HttpGet]
@@ -44,11 +50,12 @@ public sealed class RolesController : ControllerBase
     public async Task<
         ActionResult<IReadOnlyList<RoleResponse>>> GetRoles(
             [FromQuery] bool includeInactive,
+            [FromQuery] RoleModule? module,
             CancellationToken cancellationToken)
     {
         IReadOnlyList<RoleResponse> response =
             await sender.Send(
-                new GetRolesQuery(includeInactive),
+                new GetRolesQuery(includeInactive, module),
                 cancellationToken);
 
         return Ok(response);

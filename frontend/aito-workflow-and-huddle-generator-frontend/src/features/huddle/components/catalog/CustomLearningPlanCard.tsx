@@ -1,4 +1,3 @@
-import { ListOrdered } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CustomLearningPlanCardProps {
@@ -19,7 +18,6 @@ export function CustomLearningPlanCard({ selectedCount, exporting, onBuild, onEx
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-[190px]">
           <div className="flex items-center gap-2">
-            <ListOrdered className="h-4 w-4 text-[#0F6CBD]" />
             <p className="font-semibold text-[#16233A]">Custom Learning Plan</p>
             <span className="rounded-full bg-[#E8F2FF] px-2 py-0.5 text-xs font-semibold text-[#0F6CBD]">{selectedCount} selected</span>
           </div>

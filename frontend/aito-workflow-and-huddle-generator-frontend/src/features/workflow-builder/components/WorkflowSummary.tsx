@@ -1,8 +1,10 @@
 import {
   ArrowLeftRight,
-  Clock,
+  CalendarRange,
   Copy,
+  ListChecks,
   Save,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
@@ -15,6 +17,10 @@ import {
 import {
   Button,
 } from "@/components/ui/button";
+
+import {
+  cn,
+} from "@/lib/utils";
 
 import {
   SaveWorkflowDialog,
@@ -42,6 +48,7 @@ import type {
 
 import {
   BUCKET_ICONS,
+  CATEGORY_STYLES,
 } from "../constants/workflowStyles";
 
 import {
@@ -114,7 +121,19 @@ export function WorkflowSummary({
 
   const [timelineView, setTimelineView] = useState<TimelineView>("day");
 
-  const timelineActivities = filterActivitiesByTimeline(activities, timelineView);
+  type SummaryTab = "filters" | "day" | "list";
+  const [activeTab, setActiveTab] = useState<SummaryTab>("day");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+
+  const availableCategories = Array.from(
+    new Set(activities.map(activity => activity.category)),
+  );
+
+  const categoryFilteredActivities = categoryFilter
+    ? activities.filter(activity => activity.category === categoryFilter)
+    : activities;
+
+  const timelineActivities = filterActivitiesByTimeline(categoryFilteredActivities, timelineView);
   const timelineDuration = timelineActivities.reduce(
     (sum, activity) => sum + activity.durationMinutes,
     0,
@@ -131,7 +150,7 @@ export function WorkflowSummary({
 
   const groups =
     groupActivitiesByBucket(
-      activities,
+      categoryFilteredActivities,
       [],
       true,
     );
@@ -304,6 +323,46 @@ export function WorkflowSummary({
           ?.description ?? null
       : null;
 
+  const saveActions = editingWorkflow ? (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="gap-1.5 border-2 text-sm font-semibold"
+        disabled={activities.length === 0 || isMutationPending}
+        onClick={openSaveAsDialog}
+      >
+        <Copy className="h-4 w-4" aria-hidden="true" />
+        Save As
+      </Button>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="gap-1.5 border-2 border-primary/40 text-sm font-semibold text-primary hover:bg-primary/8"
+        disabled={activities.length === 0 || isMutationPending}
+        onClick={handleUpdate}
+      >
+        <Save className="h-4 w-4" aria-hidden="true" />
+        {updateMutation.isPending ? "Updating..." : "Update Workflow"}
+      </Button>
+    </>
+  ) : (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="gap-1.5 border-2 border-border text-sm font-semibold text-muted-foreground hover:border-primary/40 hover:text-primary"
+      disabled={activities.length === 0 || isMutationPending}
+      onClick={openSaveDialog}
+    >
+      <Save className="h-4 w-4" aria-hidden="true" />
+      Save Workflow
+    </Button>
+  );
+
   return (
     <section
       className="
@@ -315,99 +374,13 @@ export function WorkflowSummary({
         pt-6
       "
     >
-      <div
-        className="
-          flex
-          flex-wrap
-          items-center
-          justify-between
-          gap-3
-        "
-      >
-        <WorkflowNavigation
-          backLabel="Back to activities"
-          showNext={false}
-          showRestart
-          onBack={onBack}
-          onRestart={onRestart}
-        />
-
-        <div
-          className="
-            flex
-            flex-wrap
-            items-center
-            gap-2
-          "
-        >
-          {editingWorkflow ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2"
-                disabled={
-                  activities.length ===
-                    0 ||
-                  isMutationPending
-                }
-                onClick={
-                  openSaveAsDialog
-                }
-              >
-                <Copy
-                  className="h-4 w-4"
-                  aria-hidden="true"
-                />
-
-                Save As
-              </Button>
-
-              <Button
-                type="button"
-                className="gap-2"
-                disabled={
-                  activities.length ===
-                    0 ||
-                  isMutationPending
-                }
-                onClick={
-                  handleUpdate
-                }
-              >
-                <Save
-                  className="h-4 w-4"
-                  aria-hidden="true"
-                />
-
-                {updateMutation.isPending
-                  ? "Updating..."
-                  : "Update workflow"}
-              </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              className="gap-2"
-              disabled={
-                activities.length ===
-                  0 ||
-                isMutationPending
-              }
-              onClick={
-                openSaveDialog
-              }
-            >
-              <Save
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
-
-              Save workflow
-            </Button>
-          )}
-        </div>
-      </div>
+      <WorkflowNavigation
+        backLabel="Edit Activities"
+        showNext={false}
+        showRestart
+        onBack={onBack}
+        onRestart={onRestart}
+      />
 
       {editingWorkflow && (
         <div
@@ -480,134 +453,100 @@ export function WorkflowSummary({
         <TimelineToggle value={timelineView} onChange={setTimelineView} />
       </div>
 
-      <div
-        className="
-          mt-5
-          overflow-hidden
-          rounded-2xl
-          border
-          border-primary/20
-          bg-gradient-to-br
-          from-primary/10
-          via-card
-          to-accent/10
-          p-5
-          shadow-md
-        "
-      >
-        <div
-          className="
-            flex
-            flex-wrap
-            items-start
-            justify-between
-            gap-5
-          "
-        >
-          <div>
-            <div
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-full
-                bg-primary/10
-                px-3
-                py-1
-                text-xs
-                font-semibold
-                text-primary
-              "
-            >
-              <Sparkles
-                className="h-3.5 w-3.5"
-                aria-hidden="true"
-              />
+      <div className="mt-5 flex flex-wrap items-center gap-2" role="tablist" aria-label="Workflow view">
+        {(
+          [
+            { id: "filters" as const, label: "Filters", icon: SlidersHorizontal },
+            { id: "day" as const, label: "Your Day", icon: CalendarRange },
+            { id: "list" as const, label: `${categoryFilteredActivities.length} activities`, icon: ListChecks },
+          ]
+        ).map(tab => {
+          const TabIcon = tab.icon;
+          const isActive = activeTab === tab.id;
 
-              Your AI-powered workflow
-            </div>
-
-            <h1
-              className="
-                mt-3
-                text-2xl
-                font-bold
-                tracking-tight
-              "
-            >
-              {TIMELINE_LABELS[timelineView]} is ready
-            </h1>
-
-            <p
-              className="
-                mt-2
-                text-muted-foreground
-              "
-            >
-              {role.name}
-              {" • "}
-              {timelineActivities.length}
-              {" "}
-              activities
-            </p>
-          </div>
-
-          <div
-            className="
-              rounded-2xl
-              border
-              border-border
-              bg-card/80
-              px-4
-              py-3
-              text-center
-              backdrop-blur
-            "
-          >
-            <Clock
-              className="
-                mx-auto
-                h-5
-                w-5
-                text-primary
-              "
-              aria-hidden="true"
-            />
-
-            <p
-              className="
-                mt-2
-                text-xl
-                font-bold
-              "
-            >
-              {formatDuration(
-                timelineDuration,
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-background text-muted-foreground hover:text-foreground",
               )}
-            </p>
-
-            <p
-              className="
-                text-xs
-                text-muted-foreground
-              "
             >
-              Total duration
-            </p>
+              <TabIcon className="h-4 w-4" aria-hidden="true" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === "filters" && (
+        <div className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Filter by category
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setCategoryFilter(null)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                categoryFilter === null
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              All categories
+            </button>
+
+            {availableCategories.map(category => {
+              const style = CATEGORY_STYLES[category] ?? CATEGORY_STYLES.Admin;
+              const isActive = categoryFilter === category;
+
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setCategoryFilter(isActive ? null : category)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                    isActive
+                      ? cn(style.background, style.text, style.border)
+                      : "border-border text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {category}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
+      )}
 
       <div className="mt-5">
-        {timelineView === "day" ? (
-          <DaySchedule activities={timelineActivities} />
-        ) : (
-          <TimelineBucketView activities={timelineActivities} timeline={timelineView} />
-        )}
-      </div>
+        {activeTab === "list" ? (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-5">
+              <div className="flex items-center gap-3">
+                <span className="rounded-xl bg-primary/10 p-3 text-primary">
+                  <ListChecks className="h-6 w-6" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="font-bold">All selected activities</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {categoryFilteredActivities.length} activities · {formatDuration(timelineDuration)} · {role.name}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">{saveActions}</div>
+            </div>
 
-      <div className="hidden" aria-hidden="true">
-        {groups.map(group => {
+            {groups.map(group => {
           const Icon =
             BUCKET_ICONS[group.name] ??
             Sparkles;
@@ -802,6 +741,20 @@ export function WorkflowSummary({
             </section>
           );
         })}
+          </div>
+        ) : (
+          <>
+            {timelineView === "day" ? (
+              <DaySchedule activities={timelineActivities} headerActions={saveActions} />
+            ) : (
+              <TimelineBucketView
+                activities={timelineActivities}
+                timeline={timelineView}
+                headerActions={saveActions}
+              />
+            )}
+          </>
+        )}
       </div>
 
       <div

@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Coffee,
-  Copy,
   CalendarDays,
   MoveRight,
   Sun,
@@ -17,6 +16,11 @@ import {
   useMemo,
   useState,
 } from "react";
+import type { ReactNode } from "react";
+
+import {
+  Badge,
+} from "@/components/ui/badge";
 
 import {
   Button,
@@ -37,10 +41,12 @@ import type {
   SchedulePosition,
 } from "../types/daySchedule.types";
 import { CalendarReviewDialog } from "./CalendarReviewDialog";
+import { ScheduledActivityCard } from "./ScheduledActivityCard";
 import type { WorkflowCalendarItem } from "../types/workflowCalendar.types";
 
 interface DayScheduleProps {
   activities: Activity[];
+  headerActions?: ReactNode;
 }
 
 const ZONE_STYLES: Record<
@@ -87,6 +93,7 @@ function formatDuration(minutes: number): string {
 
 export function DaySchedule({
   activities,
+  headerActions,
 }: DayScheduleProps) {
   const {
     schedule,
@@ -110,6 +117,7 @@ export function DaySchedule({
   const [copiedActivityId, setCopiedActivityId] =
     useState<number | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [quickAddItem, setQuickAddItem] = useState<WorkflowCalendarItem | null>(null);
 
   const calendarItems = useMemo<WorkflowCalendarItem[]>(() => {
     const starts: Record<DayZoneId, [number, number]> = { morning: [8, 30], midday: [11, 30], "late-day": [15, 30] };
@@ -268,27 +276,35 @@ export function DaySchedule({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-5">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="rounded-xl bg-primary/10 p-3 text-primary">
             <Coffee className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="font-bold">Your Day at a Glance</h2>
+            <h2 className="text-lg font-bold">Your Day at a Glance</h2>
             <p className="text-sm text-muted-foreground">
               {activities.length} activities · {formatDuration(totalDuration)} total
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {DAY_ZONES.map(zone => (
-            <span
-              key={zone.id}
-              className="rounded-lg border bg-background px-3 py-1.5 text-xs font-medium"
-            >
-              {zone.title}: {schedule[zone.id].length}
-            </span>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          {DAY_ZONES.map(zone => {
+            const ZoneSummaryIcon = ZONE_STYLES[zone.id].icon;
+
+            return (
+              <span
+                key={zone.id}
+                title={zone.title}
+                aria-label={`${zone.title}: ${schedule[zone.id].length}`}
+                className="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium"
+              >
+                <ZoneSummaryIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                {schedule[zone.id].length}
+              </span>
+            );
+          })}
+          {headerActions}
           <Button type="button" size="sm" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)} className="ml-1 gap-2"><CalendarDays className="h-4 w-4" />Add to my calendar</Button>
         </div>
       </div>
@@ -316,22 +332,22 @@ export function DaySchedule({
             >
               <span className="flex min-w-0 items-start gap-4">
                 <span className={`rounded-xl p-3 ${style.iconClassName}`}>
-                  <ZoneIcon className="h-5 w-5" />
+                  <ZoneIcon className="h-6 w-6" />
                 </span>
                 <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <strong className="text-lg">{zone.title}</strong>
-                    <span className="rounded-full border bg-white/70 px-2.5 py-1 text-xs font-semibold">
+                  <span className="flex flex-wrap items-center gap-3">
+                    <strong className="text-xl">{zone.title}</strong>
+                    <Badge variant="outline" className="text-xs font-semibold">
                       {zone.timeRange}
-                    </span>
+                    </Badge>
                   </span>
-                  <span className="mt-1 block text-sm text-muted-foreground">
+                  <span className="mt-1 block max-w-xl text-sm text-muted-foreground">
                     {zone.description}
                   </span>
-                  <span className="mt-3 flex items-center gap-2">
-                    <span className="h-1.5 w-28 overflow-hidden rounded-full bg-white/70">
+                  <span className="mt-2 flex items-center gap-2">
+                    <span className="h-1.5 w-28 overflow-hidden rounded-full bg-muted/50">
                       <span
-                        className="block h-full rounded-full bg-primary/60"
+                        className={`block h-full rounded-full transition-all duration-500 ${capacityPercent >= 100 ? "bg-[oklch(0.70_0.18_60)]" : "bg-primary/50"}`}
                         style={{ width: `${capacityPercent}%` }}
                       />
                     </span>
@@ -342,9 +358,10 @@ export function DaySchedule({
                 </span>
               </span>
               <span className="flex shrink-0 items-center gap-3">
-                <span className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold">
+                <Badge className="gap-1.5 border-transparent bg-secondary px-3 py-1.5 text-sm text-secondary-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                   {items.length} {items.length === 1 ? "task" : "tasks"}
-                </span>
+                </Badge>
                 <ChevronDown className={`h-5 w-5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
               </span>
             </button>
@@ -431,169 +448,69 @@ export function DaySchedule({
                           )}
                         </div>
 
-                        <article
-                          className={`overflow-hidden rounded-xl border bg-gradient-to-br from-card to-muted/20 shadow-[8px_8px_20px_rgb(15_23_42/0.06),-8px_-8px_20px_rgb(255_255_255/0.8)] transition-all ${
+                        <ScheduledActivityCard
+                          activity={scheduled.activity}
+                          isExpanded={expandedActivityId === scheduled.activity.id}
+                          onClick={() => {
+                            if (swapSource && !isSwapSource) {
+                              handleSwap(position);
+                              return;
+                            }
+
+                            setExpandedActivityId(
+                              expandedActivityId === scheduled.activity.id
+                                ? null
+                                : scheduled.activity.id,
+                            );
+                          }}
+                          copiedActivityId={copiedActivityId}
+                          onCopyPrompt={activity => {
+                            void copyPrompt(activity);
+                          }}
+                          onQuickAdd={activity => {
+                            const item = calendarItems.find(
+                              calendarItem => calendarItem.activityExternalId === activity.externalId,
+                            );
+                            if (item) {
+                              setQuickAddItem(item);
+                            }
+                          }}
+                          headerExtra={
+                            swapSource && !isSwapSource ? (
+                              <span className="rounded-full border border-[oklch(0.55_0.22_145/0.25)] bg-[oklch(0.55_0.22_145/0.10)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.45_0.20_145)]">
+                                Tap to swap here
+                              </span>
+                            ) : undefined
+                          }
+                          topContent={
+                            isMoveSource ? (
+                              <div className="flex flex-wrap items-center gap-2 border-b border-[oklch(0.80_0.08_75/0.4)] bg-[oklch(0.97_0.02_80)] px-3 py-2.5">
+                                <span className="mr-1 text-xs font-medium text-muted-foreground">
+                                  Move to:
+                                </span>
+                                {DAY_ZONES.filter(target => target.id !== zone.id).map(target => (
+                                  <button
+                                    key={target.id}
+                                    type="button"
+                                    onClick={() => handleMoveTo(target.id)}
+                                    className="rounded-lg border px-3 py-1 text-xs font-semibold transition-colors hover:bg-background"
+                                  >
+                                    {target.title}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : undefined
+                          }
+                          className={
                             isSwapSource
                               ? "ring-2 ring-primary/40 ring-offset-1"
                               : isMoveSource
                                 ? "ring-2 ring-[oklch(0.65_0.20_50/0.5)] ring-offset-1"
                                 : swapSource
                                   ? "ring-1 ring-[oklch(0.55_0.22_145/0.30)]"
-                                  : ""
-                          }`}
-                        >
-                          {isMoveSource && (
-                            <div className="flex flex-wrap items-center gap-2 border-b border-[oklch(0.80_0.08_75/0.4)] bg-[oklch(0.97_0.02_80)] px-3 py-2.5">
-                              <span className="mr-1 text-xs font-medium text-muted-foreground">
-                                Move to:
-                              </span>
-                              {DAY_ZONES.filter(target => target.id !== zone.id).map(target => (
-                                <button
-                                  key={target.id}
-                                  type="button"
-                                  onClick={() => handleMoveTo(target.id)}
-                                  className="rounded-lg border px-3 py-1 text-xs font-semibold transition-colors hover:bg-background"
-                                >
-                                  {target.title}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          <div
-                            className="cursor-pointer select-none p-5 pb-4"
-                            onClick={() => {
-                              if (swapSource && !isSwapSource) {
-                                handleSwap(position);
-                                return;
-                              }
-
-                              setExpandedActivityId(
-                                expandedActivityId === scheduled.activity.id
-                                  ? null
-                                  : scheduled.activity.id,
-                              );
-                            }}
-                          >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="mb-2 flex flex-wrap items-center gap-2">
-                                {scheduled.activity.priority === "High" && (
-                                  <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-                                )}
-                              <h3 className="text-lg font-bold leading-tight text-card-foreground">
-                                {scheduled.activity.title}
-                              </h3>
-                                {swapSource && !isSwapSource && (
-                                  <span className="rounded-full border border-[oklch(0.55_0.22_145/0.25)] bg-[oklch(0.55_0.22_145/0.10)] px-2 py-0.5 text-xs font-semibold text-[oklch(0.45_0.20_145)]">
-                                    Tap to swap here
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                <span className="rounded-full bg-primary/10 px-2 py-1 font-medium text-primary">
-                                  {scheduled.activity.category}
-                                </span>
-                                <span>{scheduled.activity.frequency}</span>
-                                <span>·</span>
-                                <span>{scheduled.activity.durationMinutes} min</span>
-                              </div>
-                              {scheduled.activity.description && (
-                                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                  {scheduled.activity.description}
-                                </p>
-                              )}
-                            </div>
-
-                            <ChevronDown
-                              className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                expandedActivityId === scheduled.activity.id
-                                  ? "rotate-180"
-                                  : ""
-                              }`}
-                            />
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-1.5">
-                            {scheduled.activity.aiTools.slice(0, 3).map(tool => (
-                              <span
-                                key={tool.id}
-                                className="rounded-full border bg-background px-2.5 py-1 text-[10px] font-medium"
-                              >
-                                {tool.name}
-                              </span>
-                            ))}
-                          </div>
-                          </div>
-
-                          {expandedActivityId === scheduled.activity.id && (
-                            <div className="grid gap-4 border-t bg-muted/20 p-5 lg:grid-cols-2">
-                              <div className="space-y-4">
-                                {scheduled.activity.businessOutcome && (
-                                  <div>
-                                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                      Business outcome
-                                    </h4>
-                                    <p className="mt-1 text-sm leading-6">
-                                      {scheduled.activity.businessOutcome}
-                                    </p>
-                                  </div>
-                                )}
-
-                                <div>
-                                  <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                    Recommended AI tools
-                                  </h4>
-                                  <div className="mt-2 flex flex-wrap gap-2">
-                                    {scheduled.activity.aiTools.length > 0 ? (
-                                      scheduled.activity.aiTools.map(tool => (
-                                        <span
-                                          key={tool.id}
-                                          className="rounded-full border bg-secondary px-2.5 py-1 text-xs font-medium"
-                                        >
-                                          {tool.name}
-                                          {tool.isPrimary ? " · Primary" : ""}
-                                        </span>
-                                      ))
-                                    ) : (
-                                      <span className="text-sm text-muted-foreground">
-                                        No AI tool mapped
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {(scheduled.activity.beginnerPrompt ||
-                                scheduled.activity.advancedPrompt) && (
-                                <div className="rounded-xl bg-muted/50 p-4">
-                                  <div className="flex items-center justify-between gap-3">
-                                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                      Try this prompt
-                                    </h4>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        void copyPrompt(scheduled.activity);
-                                      }}
-                                      className="gap-1.5"
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                      {copiedActivityId === scheduled.activity.id
-                                        ? "Copied"
-                                        : "Copy"}
-                                    </Button>
-                                  </div>
-                                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6">
-                                    {scheduled.activity.beginnerPrompt ??
-                                      scheduled.activity.advancedPrompt}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </article>
+                                  : undefined
+                          }
+                        />
                       </div>
                     );
                   })
@@ -604,6 +521,15 @@ export function DaySchedule({
         );
       })}
       <CalendarReviewDialog open={calendarOpen} onOpenChange={setCalendarOpen} items={calendarItems} />
+      <CalendarReviewDialog
+        open={quickAddItem !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setQuickAddItem(null);
+          }
+        }}
+        items={quickAddItem ? [quickAddItem] : []}
+      />
     </div>
   );
 }

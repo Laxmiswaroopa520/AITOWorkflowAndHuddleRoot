@@ -1,0 +1,271 @@
+/*
+005 - Upsert Activity-to-AI-Tool mappings
+Generated from the uploaded SharePoint CSV exports.
+Safe to rerun. Uses ExternalId/name lookups instead of hardcoded identity IDs.
+*/
+-- No USE statement here on purpose: this folder does not assume a database name.
+-- Make sure your own target database is selected in SSMS before running this script.
+GO
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+GO
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    DECLARE @Source TABLE
+    (
+        ActivityExternalId nvarchar(100) NOT NULL,
+        ToolExternalId nvarchar(100) NOT NULL,
+        SortOrder int NOT NULL,
+        IsPrimary bit NOT NULL
+    );
+
+    INSERT INTO @Source VALUES
+(N'ae-pipeline-health-review-msx-cleanup',N'sales-agent-auto-fix-pipeline-agent',1,CAST(1 AS bit)),
+(N'ae-pipeline-gap-analysis',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ae-msx-report-filtering-guidance',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ae-msx-report-filtering-guidance',N'sales-agent',2,CAST(0 AS bit)),
+(N'ae-account-strategy-territory-prioritizatio',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ae-account-strategy-territory-prioritizatio',N'sales-agent',2,CAST(0 AS bit)),
+(N'ae-account-360-prep',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-weekly-forecast-narrative',N'intelligent-snapshots-msxi',1,CAST(1 AS bit)),
+(N'ae-weekly-forecast-narrative',N'proactive-insights-in-msxi',2,CAST(0 AS bit)),
+(N'ae-forecast-accuracy-trend-analysis',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-forecast-accuracy-trend-analysis',N'analyst',2,CAST(0 AS bit)),
+(N'ae-on-demand-report-generation',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-customer-engagement-value-narrative',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-executive-value-communication',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ae-deal-book-proposal-creation',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ae-deal-health-risk-mitigation',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ae-empowerment-pricing-rule-check',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ae-sku-migration-pricing',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ae-pre-meeting-brief-role-alignment',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-partner-strategy-co-sell-execution',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-team-briefing-generator',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ae-qbr-strategic-cadence-management',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-weekly-status-internal-reporting',N'cowork',1,CAST(1 AS bit)),
+(N'ae-co-branded-qbr-deck',N'cowork',1,CAST(1 AS bit)),
+(N'ae-ecif-eligibility-submission-management',N'ecif-agent',1,CAST(1 AS bit)),
+(N'ae-investment-planning-funded-motion-execut',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-investment-planning-funded-motion-execut',N'ecif-agent',2,CAST(0 AS bit)),
+(N'ae-ecif-internal-process-finder',N'ecif-agent',1,CAST(1 AS bit)),
+(N'ae-renewal-pipeline-risk-assessment',N'sales-agent',1,CAST(1 AS bit)),
+(N'ae-renewal-outreach-expansion-strategy',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ae-renewal-outreach-expansion-strategy',N'sales-agent',2,CAST(0 AS bit)),
+(N'ae-buying-signal-analysis-lead-qualificatio',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ae-buying-signal-analysis-lead-qualificatio',N'sales-agent',2,CAST(0 AS bit)),
+(N'ae-opportunity-capture-outreach-planning',N'sales-agent',1,CAST(1 AS bit)),
+(N'ce-deal-options-analysis',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ce-deal-structuring-orchestration',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ce-complex-deal-advisory',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ce-sku-selection-one-time-offer-build',N'cowork',1,CAST(1 AS bit)),
+(N'ce-contract-negotiation',N'sales-agent',1,CAST(1 AS bit)),
+(N'ce-deal-desk-concession-drafting',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ce-renewal-deal-book',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ce-renewal-radar',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ce-renewal-radar',N'sales-agent',2,CAST(0 AS bit)),
+(N'ce-renewal-execution',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ce-renewal-execution',N'sales-agent',2,CAST(0 AS bit)),
+(N'ce-amendment-review-at-renewal',N'sales-agent',1,CAST(1 AS bit)),
+(N'ce-amendment-review-at-renewal',N'cowork',2,CAST(0 AS bit)),
+(N'ce-cps-delta-analysis',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ce-cps-delta-analysis',N'cowork',2,CAST(0 AS bit)),
+(N'ce-renewal-opportunity-ownership',N'sales-agent',1,CAST(1 AS bit)),
+(N'ce-discount-exception-scan',N'sales-agent',1,CAST(1 AS bit)),
+(N'ce-licensing-optimization-compliance',N'sales-agent',1,CAST(1 AS bit)),
+(N'ce-empowerment-guide-compliance-check',N'cowork',1,CAST(1 AS bit)),
+(N'ce-coverage-threshold-eligibility-calc',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ce-coverage-threshold-eligibility-calc',N'cowork',2,CAST(0 AS bit)),
+(N'ce-side-agreement-discount-risk-validation',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ce-side-agreement-discount-risk-validation',N'cowork',2,CAST(0 AS bit)),
+(N'ce-certified-gap-drivers',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ce-pipeline-auto-fix-review',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ce-commercial-risk-management',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ce-forecast-accuracy',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ce-legacy-to-new-commerce-migration-advisor',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ce-legacy-to-new-commerce-migration-advisor',N'researcher',2,CAST(0 AS bit)),
+(N'ce-mcae-agreement-validation',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'ce-fast-licensing-answers',N'sales-agent',1,CAST(1 AS bit)),
+(N'ce-qbr-prep',N'cowork',1,CAST(1 AS bit)),
+(N'ce-meeting-prep-commercial-talking-points',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-account-prep-brief',N'cowork',1,CAST(1 AS bit)),
+(N'ats-kpi-report-discovery',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ats-ai-workload-prioritization',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ats-technical-risk-identification',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ats-pre-meeting-client-mood-public-signals',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-pre-meeting-client-mood-public-signals',N'researcher',2,CAST(0 AS bit)),
+(N'ats-azure-migration-priority',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-create-update-opportunity',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-consumption-optimization',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-technical-vision-strategy',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-technical-planning',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-solution-validation',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-swot-technical-trajectory',N'researcher',1,CAST(1 AS bit)),
+(N'ats-swot-technical-trajectory',N'cowork',2,CAST(0 AS bit)),
+(N'ats-match-client-challenges-to-microsoft-use',N'cowork',1,CAST(1 AS bit)),
+(N'ats-technical-orchestration',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-technical-enablement',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ats-executive-technical-briefings',N'sales-agent',1,CAST(1 AS bit)),
+(N'ats-reference-arch-value-summary',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ats-customer-presentation-assembly',N'cowork',1,CAST(1 AS bit)),
+(N'ats-ebc-organization',N'cowork',1,CAST(1 AS bit)),
+(N'ssp-solution-selling-plan',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ssp-solution-selling-execution',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-solution-positioning-strategy',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ssp-solution-positioning-strategy',N'sales-agent',2,CAST(0 AS bit)),
+(N'ssp-customer-deck-proposal-build',N'cowork',1,CAST(1 AS bit)),
+(N'ssp-weekly-pipeline-discipline',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-deal-readiness-checklist',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-azure-migration-priority',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-pipeline-execution',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-deal-support',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-prospecting-lead-follow-up',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-prospecting-lead-follow-up',N'cowork',2,CAST(0 AS bit)),
+(N'ssp-consumption-macc-plan-generation',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-spreadsheet-calculations',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ssp-account-prep-brief',N'cowork',1,CAST(1 AS bit)),
+(N'ssp-customer-discovery',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-competitive-talk-track',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ssp-competitive-positioning',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'ssp-competitive-landscape-monitoring',N'researcher',1,CAST(1 AS bit)),
+(N'ssp-create-ecif-workscope',N'ecif-agent',1,CAST(1 AS bit)),
+(N'ssp-specialist-led-partner-engagement',N'sales-agent',1,CAST(1 AS bit)),
+(N'ssp-ecif-deal-desk-request-prep',N'ecif-agent',1,CAST(1 AS bit)),
+(N'ssp-skill-development',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ssp-role-specific-upskilling',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ssp-shared-prompt-discovery',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-certified-data-q-a',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'se-kpi-report-discovery',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'se-kpi-report-discovery',N'm365-copilot',2,CAST(0 AS bit)),
+(N'se-pipeline-hygiene-review',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'se-azure-migration-insights',N'sales-agent',1,CAST(1 AS bit)),
+(N'se-business-data-exploration',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-meeting-prep-grounded-briefing',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-meeting-prep-grounded-briefing',N'sales-agent',2,CAST(0 AS bit)),
+(N'se-customer-technical-decisioning',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-reactive-real-time-troubleshooting',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-post-call-synthesis-artifacts',N'cowork',1,CAST(1 AS bit)),
+(N'se-email-triage-follow-up',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-technical-selling-discovery',N'sales-agent',1,CAST(1 AS bit)),
+(N'se-architecture-design-reuse',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-customer-workshops-technical-positioning',N'sales-agent',1,CAST(1 AS bit)),
+(N'se-deal-review-prep',N'cowork',1,CAST(1 AS bit)),
+(N'se-deal-support-technical-validation',N'sales-agent',1,CAST(1 AS bit)),
+(N'se-technical-risk-mitigation',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'se-pre-sales-to-delivery-handoff',N'sales-agent',1,CAST(1 AS bit)),
+(N'se-plan-vs-reality-reflection-30-60',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'se-knowledge-development',N'm365-copilot',1,CAST(1 AS bit)),
+(N'se-knowledge-development',N'researcher',2,CAST(0 AS bit)),
+(N'se-demo-asset-environment-creation',N'researcher',1,CAST(1 AS bit)),
+(N'se-demo-asset-environment-creation',N'cowork',2,CAST(0 AS bit)),
+(N'se-rfp-proposal-response',N'researcher',1,CAST(1 AS bit)),
+(N'se-technical-workshop-delivery',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-daily-account-brief',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-acr-trend-comparison',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-azure-migration-priority',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-pre-meeting-customer-context',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-technical-research-customer-profiling',N'researcher',1,CAST(1 AS bit)),
+(N'csa-qbr-trend-insights',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'csa-kpi-clarification',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'csa-qbr-prep-brief',N'cowork',1,CAST(1 AS bit)),
+(N'csa-architecture-design',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-operational-readiness-planning',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-consumption-acceleration',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'csa-cost-optimization-finops-advisory',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-per-account-consumption-alerting',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'csa-customer-advisory',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-tech-to-value-summary',N'm365-copilot',1,CAST(1 AS bit)),
+(N'csa-post-sales-technical-continuity',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'csa-customer-skilling-workshop-prep',N'cowork',1,CAST(1 AS bit)),
+(N'csa-tech-to-business-value-translation',N'm365-copilot',1,CAST(1 AS bit)),
+(N'csa-competitive-differentiator-surfacing',N'researcher',1,CAST(1 AS bit)),
+(N'csa-cross-team-coordination',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-technical-skills-development-innovation',N'm365-copilot',1,CAST(1 AS bit)),
+(N'csa-partner-technical-enablement',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-eng-support-coordination-escalation',N'sales-agent',1,CAST(1 AS bit)),
+(N'csa-learning-prioritization-by-customer-need',N'm365-copilot',1,CAST(1 AS bit)),
+(N'csam-customer-health-plan',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'csam-customer-health-monitoring',N'proactive-insights-in-msxi',1,CAST(1 AS bit)),
+(N'csam-renewal-risk-identification',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-daily-customer-pulse',N'researcher',1,CAST(1 AS bit)),
+(N'csam-adoption-acceleration',N'm365-copilot',1,CAST(1 AS bit)),
+(N'csam-adoption-planning',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-value-realization-measurement',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'csam-customer-success-plans-csps',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-renewal-support-view',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-opportunity-tracking-across-handoffs',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-early-stage-opportunity-identification',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-early-stage-opportunity-identification',N'researcher',2,CAST(0 AS bit)),
+(N'csam-delivery-governance',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-delivery-execution-oversight',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-ecif-milestone-tracking',N'ecif-agent',1,CAST(1 AS bit)),
+(N'csam-ecif-escalation-management',N'ecif-agent',1,CAST(1 AS bit)),
+(N'csam-ecif-administration',N'ecif-agent',1,CAST(1 AS bit)),
+(N'csam-consumption-forecasting',N'intelligent-snapshots-msxi',1,CAST(1 AS bit)),
+(N'csam-internal-azure-consumption-forecasting',N'intelligent-snapshots-msxi',1,CAST(1 AS bit)),
+(N'csam-macc-usage-consumption-tracking',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-cross-team-orchestration',N'cowork',1,CAST(1 AS bit)),
+(N'csam-internal-partner-orchestration',N'm365-copilot',1,CAST(1 AS bit)),
+(N'csam-customer-stakeholder-engagement',N'sales-agent',1,CAST(1 AS bit)),
+(N'csam-multi-source-account-aggregation',N'cowork',1,CAST(1 AS bit)),
+(N'csam-csdr-merp-prep',N'm365-copilot',1,CAST(1 AS bit)),
+(N'csam-meeting-recap-with-account-team-routing',N'm365-copilot',1,CAST(1 AS bit)),
+(N'sm-territory-pipeline-rollup',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'sm-team-forecast-governance',N'sales-agent',1,CAST(1 AS bit)),
+(N'sm-weekly-portfolio-health-delivery',N'sales-agent',1,CAST(1 AS bit)),
+(N'sm-forecast-comment-hygiene',N'scout',1,CAST(1 AS bit)),
+(N'sm-pipeline-governance-review',N'research-canvas',1,CAST(1 AS bit)),
+(N'sm-pipeline-governance-review',N'cowork',2,CAST(0 AS bit)),
+(N'sm-1-1-seller-prep-territory-brief',N'sales-agent',1,CAST(1 AS bit)),
+(N'sm-territory-level-1-1-trends',N'msxi-copilot',1,CAST(1 AS bit)),
+(N'sm-territory-level-1-1-trends',N'sales-agent',2,CAST(0 AS bit)),
+(N'sm-deal-inspection-with-coaching-summary',N'cowork',1,CAST(1 AS bit)),
+(N'sm-deal-inspection-w-partner-alignment',N'deal-making-capabilities-in-sales-agent',1,CAST(1 AS bit)),
+(N'sm-deal-inspection-w-partner-alignment',N'cowork',2,CAST(0 AS bit)),
+(N'sm-pre-pipeline-business-development',N'researcher',1,CAST(1 AS bit)),
+(N'sm-new-c-suite-change-detection',N'researcher',1,CAST(1 AS bit)),
+(N'sm-customer-exec-meeting-research',N'researcher',1,CAST(1 AS bit)),
+(N'sm-customer-exec-meeting-research',N'cowork',2,CAST(0 AS bit)),
+(N'sm-weekly-ir-rob-prep',N'cowork',1,CAST(1 AS bit)),
+(N'sm-ir-weekly-business-review-prep',N'sales-agent',1,CAST(1 AS bit)),
+(N'sm-partner-pipeline-sharing-visibility',N'sales-agent',1,CAST(1 AS bit)),
+(N'sm-ecif-portfolio-visibility',N'ecif-agent',1,CAST(1 AS bit)),
+(N'sm-fy27-renewal-call-orchestration',N'scout',1,CAST(1 AS bit)),
+(N'sm-change-comms-team-talk-track',N'cowork',1,CAST(1 AS bit)),
+(N'sm-change-leadership-message-translation',N'm365-copilot',1,CAST(1 AS bit)),
+(N'sm-change-leadership-message-translation',N'cowork',2,CAST(0 AS bit)),
+(N'sm-team-skill-gap-analysis',N'm365-copilot',1,CAST(1 AS bit)),
+(N'ae-pipeline-health-review-msx-cleanup',N'sales-agent',2,CAST(0 AS bit));
+
+    IF EXISTS (
+        SELECT 1 FROM @Source src
+        WHERE NOT EXISTS (SELECT 1 FROM dbo.Activities a WHERE a.ExternalId=src.ActivityExternalId)
+           OR NOT EXISTS (SELECT 1 FROM dbo.AiTools t WHERE t.ExternalId=src.ToolExternalId)
+    )
+        THROW 50002, 'One or more Activity or AiTool dependencies are missing. Run scripts 001-004 first.', 1;
+
+    UPDATE target
+    SET target.SortOrder=src.SortOrder,
+        target.IsPrimary=src.IsPrimary
+    FROM dbo.ActivityAiTools target
+    INNER JOIN dbo.Activities a ON a.Id=target.ActivityId
+    INNER JOIN dbo.AiTools t ON t.Id=target.AiToolId
+    INNER JOIN @Source src ON src.ActivityExternalId=a.ExternalId
+                          AND src.ToolExternalId=t.ExternalId;
+
+    INSERT dbo.ActivityAiTools(ActivityId,AiToolId,SortOrder,IsPrimary)
+    SELECT a.Id,t.Id,src.SortOrder,src.IsPrimary
+    FROM @Source src
+    INNER JOIN dbo.Activities a ON a.ExternalId=src.ActivityExternalId
+    INNER JOIN dbo.AiTools t ON t.ExternalId=src.ToolExternalId
+    WHERE NOT EXISTS (
+        SELECT 1 FROM dbo.ActivityAiTools target
+        WHERE target.ActivityId=a.Id AND target.AiToolId=t.Id
+    );
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
+GO

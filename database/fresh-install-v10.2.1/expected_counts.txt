@@ -1,0 +1,45 @@
+Expected row counts after running every script in this folder in order (01 -> 40).
+See 40_Validate_Everything.sql for the authoritative, runnable version of this list.
+
+Workflow module
+  Roles                    21   (8 Workflow Builder + 13 Huddle -- see 40's own note)
+  AiTools                  14
+  WorkflowBuckets           9
+  Activities              186
+  ActivityAiTools         215
+
+Huddle module
+  HuddleSegments            2
+  HuddleSegmentRoles       15
+  HuddleFocusAreas          8
+  HuddleMcemStages          5
+  HuddleTopics             25
+  HuddleTopicRoles        118
+  HuddlePlacements        103
+  HuddleRolePathItems      74
+  HuddlePhases            309
+  HuddleFacilitatorGuides 103
+  HuddleAgents             18
+  HuddleResources          51
+  HuddleActivities        403
+  HuddleTopicMcemStages    23
+  HuddleTopicAgents        63   (65 physically in the workbook; 2 rows for WF-X-TRANSITION-01
+                                 are missing required fields and were skipped -- see SKIPPED_ROWS.md)
+  HuddleTopicResources     21
+  HuddleActivityAgents    433
+  HuddleActivityResources 152
+  HuddleAgentResources     23
+
+Practice tier split (403 activities total: 264 Featured, 139 Extended)
+  Role path            165 Featured / 120 Extended
+  Additional content     99 Featured /  19 Extended
+
+Additional content placements per segment-role (29 total)
+  AE 4, ALL 8, ATS 5, CE(Enterprise) 1, CSA 1, CSAM 2, SE 2, SSP 2, DCSA 1, DSE 1, PSS 2
+  (CE-SME&C, DAE and DSS have none)
+
+Role-path week counts (contiguous from week 1, see 40_Validate_Everything.sql)
+  8 weeks: AE, ATS, CE(Enterprise), CSA, CSAM, SE, SSP, DAE(SME&C)
+  6 weeks: DSS(SME&C)
+  4 weeks: CE(SME&C)
+  0 weeks (Additional content only): ALL, DCSA(SME&C), DSE(SME&C), PSS(SME&C)

@@ -19,6 +19,7 @@ import openpyxl
 XLSX, OUT = sys.argv[1], sys.argv[2]
 os.makedirs(OUT, exist_ok=True)
 CORRECTIONS = []
+SKIPPED = []  # rows dropped outright because a required field (e.g. DisplayOrder) is missing/invalid
 wb = openpyxl.load_workbook(XLSX, data_only=True)
 
 
@@ -111,10 +112,20 @@ def write(fname, title, body, note=""):
 
 
 def renumber(rows, owner_key, label):
-    """Makes DisplayOrder unique per owner, preserving workbook row order. Logs every change."""
+    """Makes DisplayOrder unique per owner, preserving workbook row order. Logs every change.
+
+    A row whose DisplayOrder is missing or non-numeric is dropped (not loaded) and logged to
+    SKIPPED rather than crashing the whole run -- the workbook can carry rows for content that
+    is still being finished (e.g. a topic's agent links not filled in yet), and one incomplete
+    row should not block every other correct row in the same script from generating."""
     seen, out = collections.defaultdict(set), []
     for r in rows:
-        owner, order = r[owner_key], int(float(str(r["DisplayOrder"])))
+        owner = r[owner_key]
+        try:
+            order = int(float(str(r["DisplayOrder"])))
+        except (TypeError, ValueError):
+            SKIPPED.append((label, owner, repr(r)))
+            continue
         original = order
         while order in seen[owner]:
             order += 1
@@ -132,10 +143,22 @@ body = "-- Segments\n" + merge(
     "HuddleSegments", ["ExternalId"], ["ExternalId", "Name"],
     [{"ExternalId": txt(r["SegmentID"]), "Name": txt(r["SegmentName"])} for r in sheet("Segments")])
 
-body += "\n-- Roles. Segment is denormalised onto Role in this schema and the workbook has one segment.\n"
+# Segment is denormalised onto Role in this schema. A role can now legitimately belong to more
+# than one segment (Commercial Executive spans Enterprise and SME&C) -- Role.Segment keeps the
+# segment the role first appears under in Segment_Roles (workbook row order), which preserves the
+# prior "Enterprise" value for every pre-existing role and correctly labels a segment-exclusive
+# role (e.g. Digital Account Executive) with its own segment instead of defaulting to Enterprise.
+_segment_name_by_id = {r["SegmentID"]: r["SegmentName"] for r in sheet("Segments")}
+_role_primary_segment_id = {}
+for r in sheet("Segment_Roles"):
+    _role_primary_segment_id.setdefault(r["RoleID"], r["SegmentID"])
+
+body += "\n-- Roles. Segment is denormalised onto Role; a role spanning multiple segments keeps the\n"
+body += "-- segment it first appears under in Segment_Roles (see comment above).\n"
 body += merge("Roles", ["ExternalId"], ["ExternalId", "Name", "Abbreviation", "Segment", "SortOrder", "IsActive"],
               [{"ExternalId": txt(r["RoleID"]), "Name": txt(r["RoleName"]), "Abbreviation": txt(r["RoleCode"]),
-                "Segment": txt("Enterprise"), "SortOrder": str(i + 1), "IsActive": "1"}
+                "Segment": txt(_segment_name_by_id.get(_role_primary_segment_id.get(r["RoleID"]), "Enterprise")),
+                "SortOrder": str(i + 1), "IsActive": "1"}
                for i, r in enumerate(sheet("Roles"))])
 
 body += "\n-- Segment roles\n" + merge(
@@ -169,11 +192,19 @@ body = merge("HuddleTopics", ["ExternalId"],
               for r in topics], joins=(J_FOCUS,), label="HuddleTopics")
 
 body += "\n-- Aligned roles, split from the semicolon-separated Topics.AlignedRoles column.\n"
-tr = [{"TopicExternalId": txt(r["TopicID"]), "RoleAbbreviation": txt(code)}
-      for r in topics
-      for code in [c.strip() for c in str(r["AlignedRoles"] or "").split(";") if c.strip()]]
+body += "-- Resolved to the Huddle Roles.ExternalId directly (not by Abbreviation) because\n"
+body += "-- dbo.Roles is shared with the Workflow Builder module, whose own pre-existing roles\n"
+body += "-- reuse the same abbreviations (AE, ATS, CE, CSA, CSAM, SE, SSP) -- joining by\n"
+body += "-- Abbreviation would match both a Huddle role and a Workflow role for the same code.\n"
+_role_id_by_abbr = {r["RoleCode"]: r["RoleID"] for r in sheet("Roles")}
+tr = []
+for r in topics:
+    for code in [c.strip() for c in str(r["AlignedRoles"] or "").split(";") if c.strip()]:
+        if code not in _role_id_by_abbr:
+            raise SystemExit("Topics!AlignedRoles on %s references role code %r, which is not in the Roles sheet" % (r["TopicID"], code))
+        tr.append({"TopicExternalId": txt(r["TopicID"]), "RoleExternalId": txt(_role_id_by_abbr[code])})
 body += merge("HuddleTopicRoles", ["HuddleTopicId", "RoleId"], ["HuddleTopicId", "RoleId"],
-              tr, joins=(J_TOPIC, J_ROLE_ABBR), audited=False, label="HuddleTopicRoles")
+              tr, joins=(J_TOPIC, J_ROLE), audited=False, label="HuddleTopicRoles")
 write("03_Seed_Huddle_Topics.sql", "Huddle topics and their aligned roles", body)
 
 # ------------------------------------------------------------------ 04 placements
@@ -331,22 +362,31 @@ body = ("%s\nUPDATE a SET\n    a.PrerequisiteHuddleActivityId = pre.Id,\n    a.U
         "%s\nSELECT @unresolved = %d - COUNT(*) FROM raw%s;\n"
         "IF @unresolved <> 0\n    THROW 51000, 'Activity prerequisites: not every reference resolved. "
         "Run script 09 first.', 1;\n" % (cte, joins, cte, len(prereq), joins))
-body += ("\n-- Guard: the workbook keeps prerequisites inside one placement. Enforced here rather than\n"
-         "-- as a constraint, because a cross-placement prerequisite is a content error, not a schema rule.\n"
+body += ("\n-- Guard: a prerequisite may span two placements for the same topic and role (e.g. the CSA\n"
+         "-- architecture Huddle's two-part chain), which is by design -- see 13_Validate_Import.sql's own\n"
+         "-- \'Prerequisite crosses a topic or role\' check, which already treats that case as fine. Only a\n"
+         "-- cross-topic or cross-role reference is a genuine content error, so this guard matches that same\n"
+         "-- rule instead of requiring the exact same placement.\n"
          "IF EXISTS (SELECT 1 FROM dbo.HuddleActivities a\n"
          "    INNER JOIN dbo.HuddleActivities pre ON pre.Id = a.PrerequisiteHuddleActivityId\n"
-         "    WHERE a.HuddlePlacementId IS NOT NULL AND pre.HuddlePlacementId <> a.HuddlePlacementId)\n"
-         "    THROW 51000, 'An activity prerequisite points outside its own placement. Check the workbook.', 1;\n")
+         "    INNER JOIN dbo.HuddlePlacements ap ON ap.Id = a.HuddlePlacementId\n"
+         "    INNER JOIN dbo.HuddlePlacements pp ON pp.Id = pre.HuddlePlacementId\n"
+         "    WHERE ap.HuddleTopicId <> pp.HuddleTopicId OR ap.HuddleSegmentRoleId <> pp.HuddleSegmentRoleId)\n"
+         "    THROW 51000, 'An activity prerequisite crosses a topic or role. Check the workbook.', 1;\n")
 write("10_Seed_Huddle_Activity_Prerequisites.sql", "Self-referencing activity prerequisites", body,
       note="%d of %d activities consume another activity's output. Run after script 09." % (len(prereq), len(acts)))
 
 # ------------------------------------------------------------------ 11 topic and agent joins
 print("11 topic and agent joins")
+# dbo.HuddleTopicMcemStages has a UNIQUE index on (HuddleTopicId, DisplayOrder) -- same rule as
+# Topic_Agents/Topic_Resources/Agent_Resources below -- so this needs the same renumber() pass;
+# the workbook has several topics listing more than one MCEM stage all at position 1.
 body = "-- Topic to MCEM stage\n" + merge(
     "HuddleTopicMcemStages", ["HuddleTopicId", "HuddleMcemStageId"],
     ["HuddleTopicId", "HuddleMcemStageId", "DisplayOrder"],
     [{"TopicExternalId": txt(r["TopicID"]), "McemExternalId": txt(r["MCEMStageID"]),
-      "DisplayOrder": num(r["DisplayOrder"])} for r in sheet("Topic_MCEM")],
+      "DisplayOrder": str(order)}
+     for r, order in renumber(sheet("Topic_MCEM"), "TopicID", "Topic_MCEM")],
     joins=(J_TOPIC, J_MCEM), audited=False, label="HuddleTopicMcemStages")
 
 body += "\n-- Topic to agent\n" + merge(
@@ -420,5 +460,14 @@ io.open(os.path.join(OUT, "DATA_CORRECTIONS.md"), "w", encoding="utf-8", newline
     "| Sheet | Owner | Field | Workbook value | Written value | Reason |\n|---|---|---|---|---|---|\n"
     + "".join("| %s | %s | %s | %s | %s | %s |\n" % c for c in CORRECTIONS)
     + "\n**Total corrections: %d**\n" % len(CORRECTIONS))
+io.open(os.path.join(OUT, "SKIPPED_ROWS.md"), "w", encoding="utf-8", newline="\r\n").write(
+    "# Rows skipped at generation time (not loaded)\n\n"
+    "These source rows are missing a required field (DisplayOrder) and were left out of the\n"
+    "generated SQL entirely -- nothing was guessed. Complete these rows in the workbook and\n"
+    "re-run the generator to bring them in.\n\n"
+    "| Sheet | Owner | Row |\n|---|---|---|\n"
+    + "".join("| %s | %s | %s |\n" % s for s in SKIPPED)
+    + ("\n**Total skipped: %d**\n" % len(SKIPPED) if SKIPPED else "\n**Total skipped: 0**\n"))
 print("\ncorrections: %d (see DATA_CORRECTIONS.md)" % len(CORRECTIONS))
+print("skipped: %d (see SKIPPED_ROWS.md)" % len(SKIPPED))
 print("counts:", ", ".join("%s=%d" % kv for kv in sorted(COUNTS.items())))

@@ -7,6 +7,11 @@ import {
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 
+import managerImage from '@/assets/huddle/onboarding/manager.avif';
+import facilitatorImage from '@/assets/huddle/onboarding/facilitator.avif';
+import memberImage from '@/assets/huddle/onboarding/team-member.avif';
+import coachImage from '@/assets/huddle/onboarding/coach.avif';
+
 import type { HuddlePersona } from '../../types/huddlePersona.types';
 
 interface HuddleOnboardingExperienceProps {
@@ -17,12 +22,14 @@ interface HuddleOnboardingExperienceProps {
   onChangePersona: () => void;
 }
 
+// Locally bundled placeholder illustrations -- replace with approved brand photography when
+// available. These exist only so the app never depends on an externally hosted image
+// (previously images.unsplash.com); no network request is made to render them.
 const IMAGES = {
-  hero: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1600&q=86',
-  manager: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1000&q=84',
-  facilitator: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1000&q=84',
-  member: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=84',
-  coach: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=1200&q=84',
+  manager: managerImage,
+  facilitator: facilitatorImage,
+  member: memberImage,
+  coach: coachImage,
 };
 
 const personas = [
