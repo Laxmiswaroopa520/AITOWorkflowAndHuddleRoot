@@ -5,6 +5,7 @@ using AitoWorkflowAndHuddleGenerator.Application.Common.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AitoWorkflowAndHuddleGenerator.IntegrationTests.Middleware;
@@ -97,6 +98,57 @@ public sealed class ExceptionHandlingMiddlewareTests
         Assert.DoesNotContain("Sensitive detail", body.ToString());
     }
 
+    // WI-05: proves both halves of the "safe to the client, fully logged on the server" contract
+    // together, against a payload shaped like a real secret (connection string + password) rather
+    // than a generic placeholder string. The earlier test above already showed the *response*
+    // doesn't leak "Sensitive detail" -- this one additionally proves the *actual* exception
+    // instance (not a sanitized copy, not just its type) reaches the logger, which none of the
+    // existing tests checked: they all construct the middleware with NullLogger, which discards
+    // everything it's given.
+    [Fact]
+    public async Task InvokeAsync_HidesSensitiveDetailFromClientButLogsTheRealExceptionServerSide()
+    {
+        var sensitiveException = new InvalidOperationException(
+            "Failed executing DbCommand. Connection: " +
+            "Server=sql-prod-01;Database=Aito;User Id=sa;Password=Sup3rSecret!;");
+
+        var capturingLogger = new CapturingLogger<ExceptionHandlingMiddleware>();
+        var middleware = new ExceptionHandlingMiddleware(
+            _ => Task.FromException(sensitiveException),
+            capturingLogger);
+
+        DefaultHttpContext context = CreateContext();
+
+        await middleware.InvokeAsync(context);
+
+        // Client: generic response only. No connection string, no password, no exception type
+        // name, regardless of environment -- this middleware has no
+        // IWebHostEnvironment.IsDevelopment() branch, so there is no way for a Development build
+        // to accidentally relax this.
+        Assert.Equal(
+            StatusCodes.Status500InternalServerError,
+            context.Response.StatusCode);
+
+        JsonElement body = await ReadResponseAsync(context);
+        string rawBody = body.ToString();
+
+        Assert.Equal("An unexpected error occurred.", body.GetProperty("title").GetString());
+        Assert.DoesNotContain("Sup3rSecret!", rawBody);
+        Assert.DoesNotContain("Password=", rawBody);
+        Assert.DoesNotContain("sql-prod-01", rawBody);
+        Assert.DoesNotContain(nameof(InvalidOperationException), rawBody);
+
+        // Server log: the real exception object, sensitive detail and all, must still reach the
+        // logger so a developer can actually diagnose the failure.
+        (LogLevel Level, EventId EventId, Exception? Exception, string Message) errorEntry =
+            Assert.Single(
+                capturingLogger.Entries,
+                entry => entry.Level == LogLevel.Error);
+
+        Assert.Same(sensitiveException, errorEntry.Exception);
+        Assert.Contains("Sup3rSecret!", errorEntry.Exception!.Message);
+    }
+
     [Fact]
     public async Task InvokeAsync_DoesNotWriteAnErrorForClientCancelledRequest()
     {
@@ -155,5 +207,31 @@ public sealed class ExceptionHandlingMiddlewareTests
             await JsonDocument.ParseAsync(context.Response.Body);
 
         return document.RootElement.Clone();
+    }
+
+    /// <summary>
+    /// Minimal <see cref="ILogger{T}"/> test double that records every call it receives, so a
+    /// test can assert on what was logged. The project has no mocking library installed
+    /// (Moq/NSubstitute), so this is hand-rolled rather than pulling one in for a single test.
+    /// </summary>
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public List<(LogLevel Level, EventId EventId, Exception? Exception, string Message)>
+            Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Entries.Add((logLevel, eventId, exception, formatter(state, exception)));
+        }
     }
 }

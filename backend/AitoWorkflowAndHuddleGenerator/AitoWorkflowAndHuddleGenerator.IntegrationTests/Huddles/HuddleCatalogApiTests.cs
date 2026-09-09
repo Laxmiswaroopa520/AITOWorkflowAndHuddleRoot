@@ -90,42 +90,69 @@ public sealed class HuddleCatalogApiTests
     }
 
     [Fact]
-    public async Task RecommendedPath_ShouldReturnSevenUniqueTopicsForWeeksSixThroughTwelve()
+    public async Task RecommendedPath_ShouldReturnContiguousWeeksWithARevisitedTopic()
     {
+        // Rewritten for the HuddlePlacements model (see GetRecommendedPathQueryHandler's own
+        // remarks: the path is read from HuddlePlacements, keyed by each placement's Sequence),
+        // because a role can revisit the same topic in more than one week -- the real ATS and SE
+        // role paths each repeat one topic three times. This seeds that same shape: seven topics
+        // across a contiguous eight-week path, with topic-1 shown again at week 8, and proves
+        // both visits are kept -- neither dropped nor collapsed into one -- which is the specific
+        // bug this data model migration fixed (the old HuddleRolePathItem read could not tell
+        // apart a topic's two visits, so it silently lost weeks).
         await using ApplicationDbContext db = CreateContext();
         Role role = NewRole("role-a", 1);
         var segment = new HuddleSegment { ExternalId = "segment", Name = "Segment" };
         var segmentRole = new HuddleSegmentRole { ExternalId = "segment-role", DisplayName = "Role", Role = role, HuddleSegment = segment };
         List<HuddleTopic> topics = Enumerable.Range(1, 7).Select(i => NewTopic($"topic-{i}", $"Topic {i}", "Published", i)).ToList();
-        for (int i = 0; i < topics.Count; i++) segmentRole.PathItems.Add(new HuddleRolePathItem { HuddleSegmentRole = segmentRole, HuddleTopic = topics[i], WeekPosition = i + 1 });
-        segmentRole.PathItems.Add(new HuddleRolePathItem { HuddleSegmentRole = segmentRole, HuddleTopic = topics[0], WeekPosition = 8 });
-        db.AddRange(role, segment, segmentRole); db.AddRange(topics);
+        List<HuddlePlacement> placements = [];
+        for (int i = 0; i < topics.Count; i++)
+            placements.Add(NewPlacement($"placement-{i + 1}", segmentRole, topics[i], i + 1));
+        // Week 8 revisits topic-1, the same shape as ATS repeating WF-X-CONV-01 across its path.
+        placements.Add(NewPlacement("placement-8", segmentRole, topics[0], 8));
+        db.AddRange(role, segment, segmentRole);
+        db.AddRange(topics);
+        db.AddRange(placements);
         await db.SaveChangesAsync();
 
         var response = await new GetRecommendedPathQueryHandler(db).Handle(new GetRecommendedPathQuery("role-a"), default);
 
         Assert.True(response.IsComplete);
-        Assert.Equal(7, response.Items.Count);
-        Assert.Equal(Enumerable.Range(2, 7), response.Items.Select(x => x.Week));
+        Assert.Equal(8, response.Items.Count);
+        Assert.Equal(Enumerable.Range(1, 8), response.Items.Select(x => x.Week));
+        // Six topics appear once and topic-1 appears twice: seven distinct topics across eight items.
         Assert.Equal(7, response.Items.Select(x => x.Huddle.ExternalId).Distinct().Count());
+        Assert.Equal("topic-1", response.Items[0].Huddle.ExternalId);
+        Assert.Equal("topic-1", response.Items[7].Huddle.ExternalId);
     }
 
     [Fact]
-    public async Task RecommendedPath_ShouldReportIncompleteConfiguration()
+    public async Task RecommendedPath_ShouldReportIncompleteConfigurationForANonContiguousPath()
     {
+        // Rewritten for the HuddlePlacements model. Completeness is now defined by
+        // HuddleRolePathReader.IsContiguousFromWeekOne -- a run of weeks starting at 1 with no
+        // gaps -- not by reaching some fixed total. Three sequential weeks (1-2-3) is therefore a
+        // valid, complete three-week path under the current rule, so the incomplete case this
+        // test needs to prove is a gap in the sequence: weeks 1, 2 and 4, with week 3 missing.
         await using ApplicationDbContext db = CreateContext();
         Role role = NewRole("role-a", 1);
         var segment = new HuddleSegment { ExternalId = "segment", Name = "Segment" };
         var segmentRole = new HuddleSegmentRole { ExternalId = "segment-role", DisplayName = "Role", Role = role, HuddleSegment = segment };
-        for (int i = 1; i <= 3; i++) segmentRole.PathItems.Add(new HuddleRolePathItem { HuddleSegmentRole = segmentRole, HuddleTopic = NewTopic($"topic-{i}", $"Topic {i}", "Published", i), WeekPosition = i });
+        int[] sequences = [1, 2, 4];
+        List<HuddleTopic> topics = sequences.Select(week => NewTopic($"topic-{week}", $"Topic {week}", "Published", week)).ToList();
+        List<HuddlePlacement> placements = [];
+        for (int i = 0; i < sequences.Length; i++)
+            placements.Add(NewPlacement($"placement-{i + 1}", segmentRole, topics[i], sequences[i]));
         db.AddRange(role, segment, segmentRole);
+        db.AddRange(topics);
+        db.AddRange(placements);
         await db.SaveChangesAsync();
 
         var response = await new GetRecommendedPathQueryHandler(db).Handle(new GetRecommendedPathQuery("role-a"), default);
 
         Assert.False(response.IsComplete);
         Assert.Equal(3, response.Items.Count);
-        Assert.Contains("only 3", response.ConfigurationMessage);
+        Assert.Contains("must be a contiguous run of weeks starting at 1", response.ConfigurationMessage);
     }
 
     [Fact]
@@ -152,5 +179,16 @@ public sealed class HuddleCatalogApiTests
     {
         ExternalId = externalId, Name = name, Type = "Prescriptive", PublicationStatus = status,
         RecommendationPriority = priority
+    };
+
+    private static HuddlePlacement NewPlacement(string externalId, HuddleSegmentRole segmentRole, HuddleTopic topic, int sequence) => new()
+    {
+        ExternalId = externalId,
+        HuddleSegmentRole = segmentRole,
+        HuddleTopic = topic,
+        PathSection = "SEC-ROLEPATH",
+        Sequence = sequence,
+        RoleTopicName = topic.Name,
+        IsActive = true,
     };
 }

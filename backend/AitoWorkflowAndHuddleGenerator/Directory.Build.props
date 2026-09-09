@@ -1,0 +1,20 @@
+<Project>
+  <!--
+    WI-06: enables Microsoft's built-in Roslyn security analyzers for every project under this
+    solution. These analyzers ship inside the .NET SDK itself (no NuGet package needed), so this
+    file is the only change required to turn them on; see the WI-06 report for why Microsoft
+    DevSkim was documented as a recommended follow-up instead of also being wired in here.
+
+    AnalysisModeSecurity=All turns on every rule in the "Security" category (the CA2100-CA5399
+    range: SQL/XML/XPath/LDAP/process-command injection, weak cryptography and hashing, insecure
+    deserialization, TLS/certificate validation, and similar). It is scoped to just that one
+    category deliberately; setting the overall AnalysisMode to All as well would also turn on
+    hundreds of unrelated design/performance/naming rules across the whole codebase, which is out
+    of scope for a security work item and would produce a large, unrelated diff.
+  -->
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisModeSecurity>All</AnalysisModeSecurity>
+  </PropertyGroup>
+</Project>

@@ -28,7 +28,6 @@ Part 8 establishes the safe baseline for the future Huddle implementation. It do
 
 ### Existing APIs
 
-- `GET /api/health`
 - `GET /api/auth/me`
 - `GET /api/roles`
 - `GET /api/ai-tools`

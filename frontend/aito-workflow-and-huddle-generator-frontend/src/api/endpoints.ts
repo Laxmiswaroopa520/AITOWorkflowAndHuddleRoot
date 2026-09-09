@@ -7,8 +7,6 @@
 } as const;
  */
 export const apiEndpoints = {
-  health: "/api/health",
-
   auth: {
     currentUser: "/api/auth/me",
   },

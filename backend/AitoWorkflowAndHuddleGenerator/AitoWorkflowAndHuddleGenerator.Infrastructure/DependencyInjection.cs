@@ -17,6 +17,7 @@ using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Coaching;
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Calendar;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Calendar;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Coaching;
+using AitoWorkflowAndHuddleGenerator.Infrastructure.Http;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Options;
 
 namespace AitoWorkflowAndHuddleGenerator.Infrastructure;
@@ -89,19 +90,27 @@ public static class DependencyInjection
         {
             client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
             client.Timeout = TimeSpan.FromSeconds(30);
-        });
+        })
+        // WI-02: Microsoft.Security.AntiSSRF protects this outbound Graph client. See
+        // GraphAntiSsrfPolicyFactory for why ConfigurePrimaryHttpMessageHandler (not
+        // AddHttpMessageHandler) is the correct hook for this package's handler.
+        .ConfigurePrimaryHttpMessageHandler(GraphAntiSsrfPolicyFactory.CreateHandler);
         services.AddScoped<ICoachSchedulingService, GraphCoachSchedulingService>();
         services.AddHttpClient(GraphWorkflowCalendarService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
             client.Timeout = TimeSpan.FromSeconds(30);
-        });
+        })
+        // WI-02: see GraphAntiSsrfPolicyFactory.
+        .ConfigurePrimaryHttpMessageHandler(GraphAntiSsrfPolicyFactory.CreateHandler);
         services.AddScoped<IWorkflowCalendarService, GraphWorkflowCalendarService>();
         services.AddHttpClient(GraphHuddleLaunchMailService.HttpClientName, client =>
         {
             client.BaseAddress = new Uri("https://graph.microsoft.com/v1.0/");
             client.Timeout = TimeSpan.FromSeconds(30);
-        });
+        })
+        // WI-02: see GraphAntiSsrfPolicyFactory.
+        .ConfigurePrimaryHttpMessageHandler(GraphAntiSsrfPolicyFactory.CreateHandler);
         services.AddScoped<IHuddleLaunchMailService, GraphHuddleLaunchMailService>();
 
         return services;

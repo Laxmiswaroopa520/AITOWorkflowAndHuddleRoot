@@ -21,7 +21,7 @@ public sealed class HuddlePlanApiTests
         HuddlePlanResponse initial = await query.Handle(new GetMyHuddlePlanQuery("role-1"), default);
 
         SaveHuddlePlanItemRequest[] reversed = initial.Items.Reverse()
-            .Select((item, index) => new SaveHuddlePlanItemRequest(2 + index, item.Huddle.ExternalId)).ToArray();
+            .Select((item, index) => new SaveHuddlePlanItemRequest(1 + index, item.Huddle.ExternalId, item.Huddle.PlacementExternalId)).ToArray();
         HuddlePlanResponse saved = await new SaveHuddlePlanCommandHandler(db, user)
             .Handle(new SaveHuddlePlanCommand("role-1", null, reversed), default);
 
@@ -44,7 +44,7 @@ public sealed class HuddlePlanApiTests
         HuddlePlanResponse initial = await new GetMyHuddlePlanQueryHandler(db, new TestCurrentUserService("user-1"))
             .Handle(new GetMyHuddlePlanQuery("role-1"), default);
         SaveHuddlePlanItemRequest[] reversed = initial.Items.Reverse()
-            .Select((item, index) => new SaveHuddlePlanItemRequest(2 + index, item.Huddle.ExternalId)).ToArray();
+            .Select((item, index) => new SaveHuddlePlanItemRequest(1 + index, item.Huddle.ExternalId, item.Huddle.PlacementExternalId)).ToArray();
         await new SaveHuddlePlanCommandHandler(db, new TestCurrentUserService("user-1"))
             .Handle(new SaveHuddlePlanCommand("role-1", null, reversed), default);
 
@@ -54,6 +54,32 @@ public sealed class HuddlePlanApiTests
         Assert.Null(otherUser.RowVersion);
     }
 
+    // Rewritten for the HuddlePlacements model (see GetRecommendedPathQueryHandler's remarks, and
+    // HuddleCatalogApiTests' RecommendedPath tests): GetMyHuddlePlanQueryHandler reads the role
+    // path from HuddlePlacements via HuddleRolePathReader, not from HuddleRolePathItem, so seeding
+    // the old entity produced an empty path and an empty plan here.
+    //
+    // The first attempt at this rewrite kept the original test's week numbers (2 through 8)
+    // unchanged, which was wrong: IsContiguousFromWeekOne requires the run to start at week 1, so
+    // that produced "must be a contiguous run of weeks starting at 1, but 7 placement(s) are
+    // configured" instead of a usable path. Weeks are 1 through 7 here instead, and the two test
+    // methods' own SaveHuddlePlanItemRequest week numbers were shifted to match -- a saved plan's
+    // weeks have to exactly equal the recommended path's weeks (see CoversPath in
+    // GetMyHuddlePlanQueryHandler) or reading it back throws too.
+    //
+    // A third fix was needed in the two tests' own "reversed" SaveHuddlePlanItemRequest arrays:
+    // they only passed (Week, HuddleExternalId), leaving the request's optional PlacementExternalId
+    // null. SaveHuddlePlanCommandHandler.ResolvePlacement falls back to that week's own recommended
+    // placement whenever PlacementExternalId isn't supplied -- it exists specifically so a caller
+    // can say which placement of a topic they mean, since one topic can appear at more than one
+    // placement (see the doc comment on SaveHuddlePlanItemRequest, citing AE weeks 3 and 4). With no
+    // PlacementExternalId, every saved week resolved back to its own recommended placement, so
+    // HuddlePlanMappings.IsCustomized (which compares by placement whenever a recommended placement
+    // is known, and only falls back to comparing topics when it isn't) found every week unchanged
+    // and reported IsCustomized = false for the whole plan, even though the topics had been
+    // reversed. Passing item.Huddle.PlacementExternalId (already present on the recommended
+    // response) as the third argument fixes this: the save now names the actual placement being
+    // requested for each week instead of implicitly keeping the recommended one.
     private static async Task SeedCatalog(ApplicationDbContext db)
     {
         Role role = new() { ExternalId = "role-1", Name = "Role", Abbreviation = "R", IsActive = true };
@@ -61,7 +87,16 @@ public sealed class HuddlePlanApiTests
         for (int index = 0; index < 7; index++)
         {
             HuddleTopic topic = new() { ExternalId = $"topic-{index + 1}", Name = $"Topic {index + 1}", Type = "Evergreen", PublicationStatus = "Published" };
-            db.HuddleRolePathItems.Add(new HuddleRolePathItem { HuddleSegmentRole = segmentRole, WeekPosition = 2 + index, HuddleTopic = topic });
+            db.HuddlePlacements.Add(new HuddlePlacement
+            {
+                ExternalId = $"placement-{index + 1}",
+                HuddleSegmentRole = segmentRole,
+                HuddleTopic = topic,
+                PathSection = "SEC-ROLEPATH",
+                Sequence = 1 + index,
+                RoleTopicName = topic.Name,
+                IsActive = true,
+            });
         }
         await db.SaveChangesAsync();
     }

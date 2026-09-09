@@ -52,6 +52,15 @@ app.UseResponseCompression();
 // OpenAPI document and Swagger UI.
 app.UseSwaggerDocumentation();
 
+// WI-11: enforces HTTP Strict Transport Security for non-Development environments, so browsers
+// remember to only ever reach this API over HTTPS afterward. Skipped in Development because
+// local HTTPS normally runs on a self-signed dev certificate, and HSTS's browser-side caching
+// would outlast that certificate and get in the way of local testing.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 // Redirect HTTP requests to HTTPS.
 app.UseHttpsRedirection();
 
@@ -80,21 +89,6 @@ app.Run();
 /// Represents the Program model.
 /// </summary>
 public partial class Program;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

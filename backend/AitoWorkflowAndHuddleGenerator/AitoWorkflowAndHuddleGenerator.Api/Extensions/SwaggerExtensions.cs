@@ -64,10 +64,18 @@ public static class SwaggerExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
+        // The OpenAPI JSON document (/openapi/v1.json) must be reachable
+        // in every environment (Development, QA, UAT, Production) so it can be
+        // scanned by the URSA Web Scanner. Mapped unconditionally, with no
+        // environment-name check, so it does not depend on how any particular
+        // environment happens to be named.
+        app.MapOpenApi();
+
+        // The interactive Swagger UI stays Development-only: WI-03 only
+        // requires the OpenAPI JSON specification to be reachable, not the
+        // interactive UI, so the UI is kept restricted exactly as before.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
-
             app.UseSwaggerUI(options =>
             {
                 options.SwaggerEndpoint(
