@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  ArrowLeft,
   Loader2,
 } from "lucide-react";
 
@@ -360,6 +361,31 @@ export function SavedWorkflowsPage() {
         pt-5
       "
     >
+      <button
+        type="button"
+        className="
+          mb-4
+          inline-flex
+          items-center
+          gap-1.5
+          text-sm
+          font-medium
+          text-muted-foreground
+          transition-colors
+          hover:text-foreground
+        "
+        onClick={() =>
+          navigate("/workflow")
+        }
+      >
+        <ArrowLeft
+          className="h-3.5 w-3.5"
+          aria-hidden="true"
+        />
+
+        Back to Activity Selection
+      </button>
+
       <div>
         <p
           className="

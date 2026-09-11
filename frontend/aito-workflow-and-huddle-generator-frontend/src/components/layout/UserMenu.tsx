@@ -11,8 +11,8 @@ export function UserMenu({ isWorkflowMode }: { isWorkflowMode: boolean }) {
   const account = instance.getActiveAccount();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  //const name = currentUser.data?.displayName ?? account?.name ?? "User";
-  const name = "User";
+  const name = currentUser.data?.displayName ?? account?.name ?? "User";
+  //const name = "User";
   const email = currentUser.data?.email ?? account?.username ?? "";
   useEffect(() => { const close = (event: MouseEvent) => { if (!rootRef.current?.contains(event.target as Node)) setOpen(false); }; document.addEventListener("mousedown", close); return () => document.removeEventListener("mousedown", close); }, []);
   if (!account) return null;

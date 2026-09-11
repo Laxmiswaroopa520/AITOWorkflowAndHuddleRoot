@@ -1,14 +1,13 @@
-import { Bell, FolderOpen, HelpCircle, Menu, Search, X } from "lucide-react";
+import { Bell, HelpCircle, Menu, Search, X } from "lucide-react";
 import { useAtom } from "jotai";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import aitoLogo from "@/assets/AITO New Logo.png";
 import { Button } from "@/components/ui/button";
 import { HuddleExperienceSelector } from "@/features/huddle/components/onboarding";
 import { huddlePersonaAtom, huddleViewModeAtom } from "@/features/huddle/store";
 import type { HuddlePersona } from "@/features/huddle/types/huddlePersona.types";
-import { cn } from "@/lib/utils";
 import { ModeToggle } from "./ModeToggle";
 import { UserMenu } from "./UserMenu";
 import { GlobalSearch } from "./GlobalSearch";
@@ -39,8 +38,8 @@ export function Header() {
 
       <div className="hidden items-center gap-3 md:flex">
         <div data-tour="mode-toggle"><ModeToggle /></div>
-        {!isHuddleRoute && <NavLink data-tour="saved-workflows" to="/workflows" className={({ isActive }) => cn("flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors hover:bg-accent", isActive && "bg-accent text-primary")}><FolderOpen className="h-4 w-4" />My Workflows</NavLink>}
-        {isHuddleRoute && <div data-tour="huddle-role"><HuddleExperienceSelector value={huddlePersona} onChange={changeHuddleExperience} className="hidden lg:block" /></div>}
+        {/* Rendered on every route (not just Huddle) so this slot always reserves the same width; this keeps the Workflow/Huddle switcher's horizontal position identical between Workflow and Huddle mode. Hidden visually (but still occupying layout space) outside Huddle via `invisible`. */}
+        <div data-tour="huddle-role" className={isHuddleRoute ? undefined : "invisible"}><HuddleExperienceSelector value={huddlePersona} onChange={changeHuddleExperience} className="hidden lg:block" /></div>
       </div>
 
       <div className="flex items-center gap-1">
@@ -53,6 +52,6 @@ export function Header() {
       </div>
     </div>
     <AnimatePresence>{searchOpen && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-visible px-4 pb-3 xl:hidden"><GlobalSearch autoFocus onNavigate={() => setSearchOpen(false)} /></motion.div>}</AnimatePresence>
-    <AnimatePresence>{mobileMenuOpen && <motion.nav initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="absolute inset-x-0 top-full border-b border-border bg-background p-4 shadow-xl md:hidden"><div className="space-y-3"><ModeToggle />{!isHuddleRoute && <NavLink to="/workflows" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 text-sm font-medium"><FolderOpen className="h-5 w-5" />My Workflows</NavLink>}{isHuddleRoute && <HuddleExperienceSelector value={huddlePersona} onChange={changeHuddleExperience} className="w-full [&>button]:w-full" />}</div></motion.nav>}</AnimatePresence>
+    <AnimatePresence>{mobileMenuOpen && <motion.nav initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="absolute inset-x-0 top-full border-b border-border bg-background p-4 shadow-xl md:hidden"><div className="space-y-3"><ModeToggle />{isHuddleRoute && <HuddleExperienceSelector value={huddlePersona} onChange={changeHuddleExperience} className="w-full [&>button]:w-full" />}</div></motion.nav>}</AnimatePresence>
   </header>;
 }

@@ -26,7 +26,7 @@ export function RoleSelector(props: RoleSelectorProps) {
 
   return <section className="mx-auto w-full max-w-[1800px] space-y-4 px-4 pb-8 pt-4 lg:px-10 xl:px-16">
     <div className="relative min-h-[140px] overflow-hidden rounded-2xl">
-      <div className="relative z-10 max-w-2xl">
+      <div className="relative z-10 max-w-2xl px-6 py-5 lg:px-8 lg:py-6">
         <p className="flex items-center gap-1.5 text-sm font-bold">Welcome 👋</p>
         <h1 className="mt-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-fuchsia-500 bg-clip-text text-2xl font-bold leading-tight text-transparent lg:text-[30px]">Let&apos;s build your ideal workflow.</h1>
         <p className="mt-2 hidden max-w-[560px] text-sm text-muted-foreground sm:block">Based on your role, I&apos;ll recommend the most impactful activities, AI tools, and time allocations.</p>
