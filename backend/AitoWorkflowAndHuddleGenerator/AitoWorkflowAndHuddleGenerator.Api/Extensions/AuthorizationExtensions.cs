@@ -19,6 +19,13 @@ public static class AuthorizationExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        // WI-12: required now that AddMicrosoftIdentityWebApi() no longer registers these
+        // implicitly (MISE owns inbound authentication instead). RequireScope(...) below is a
+        // Microsoft.Identity.Web policy-builder extension whose requirement handler depends on
+        // these service registrations.
+        services.AddRequiredScopeAuthorization();
+        services.AddRequiredScopeOrAppPermissionAuthorization();
+
         services.AddAuthorization(options =>
         {
             options.AddPolicy(
