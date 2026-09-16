@@ -64,7 +64,7 @@
   /*
      --accent is the surface behind hover states (outline/ghost buttons, menu rows),
      not a brand fill. It was a saturated violet (262 83% 58%), which is why hovering
-     the role selector or "Explore Additional Topics" flooded them in purple. A light
+     the role selector or "Explore All Topics" flooded them in purple. A light
      blue tint matching the app's #E8F2FF family keeps hovers subtle and on-palette.
      Dark mode already used a neutral surface here and is unchanged.
   */

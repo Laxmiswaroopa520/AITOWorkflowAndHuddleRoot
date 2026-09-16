@@ -202,7 +202,7 @@ export interface HuddleCatalogFilters {
   placementRoleExternalId?: string;
   /**
    * Restricts the result to the additional content the workbook defines for this role
-   * (Additional_Content, PathSection SEC-ADDITIONAL). This is what Additional Topics shows.
+   * (Additional_Content, PathSection SEC-ADDITIONAL). This is what All Topics shows.
    */
   additionalContentRoleExternalId?: string;
   /** Restricts the result to additional content across every role. */

@@ -5,7 +5,7 @@ import { escapeHtml, safeHtmlFileName } from "./htmlSanitizer";
 import type { CustomLearningPlanHtmlExportOptions, HtmlExportFile } from "./html.types";
 
 /**
- * Renders the Additional Topics custom learning plan as a standalone HTML file.
+ * Renders the All Topics custom learning plan as a standalone HTML file.
  * `huddles` must already be in the facilitator's chosen order.
  */
 export function createCustomLearningPlanHtmlExport(
@@ -17,7 +17,7 @@ export function createCustomLearningPlanHtmlExport(
   const audienceLabel = options.personaLabel?.trim() ? escapeHtml(options.personaLabel.trim()) : "All experiences";
   const totalMinutes = huddles.reduce((total, huddle) => total + (huddle.durationMinutes ?? 0), 0);
 
-  const body = `<main class="page"><header class="hero"><p class="eyebrow">Frontier Accelerator</p><h1>Custom Learning Plan</h1><p class="hero-description">A self-selected sequence of published Huddles from Additional Topics.</p><div class="meta"><span class="pill">${audienceLabel}</span><span class="pill">${huddles.length} ${huddles.length === 1 ? "Huddle" : "Huddles"}</span>${totalMinutes > 0 ? `<span class="pill">${escapeHtml(totalMinutes)} minutes total</span>` : ""}</div></header><div class="content"><section class="plan-summary"><div><span class="label">Selected experience</span><strong>${audienceLabel}</strong></div><div><span class="label">Topics in plan</span><strong>${huddles.length}</strong></div></section><section class="timeline">${huddles.map((huddle, index) => {
+  const body = `<main class="page"><header class="hero"><p class="eyebrow">Frontier Accelerator</p><h1>Custom Learning Plan</h1><p class="hero-description">A self-selected sequence of published Huddles from All Topics.</p><div class="meta"><span class="pill">${audienceLabel}</span><span class="pill">${huddles.length} ${huddles.length === 1 ? "Huddle" : "Huddles"}</span>${totalMinutes > 0 ? `<span class="pill">${escapeHtml(totalMinutes)} minutes total</span>` : ""}</div></header><div class="content"><section class="plan-summary"><div><span class="label">Selected experience</span><strong>${audienceLabel}</strong></div><div><span class="label">Topics in plan</span><strong>${huddles.length}</strong></div></section><section class="timeline">${huddles.map((huddle, index) => {
     const primary = huddle.primaryAgents.map((agent) => agent.name);
     const secondary = huddle.secondaryAgents.map((agent) => agent.name);
     const audience = huddle.roles.map((role) => role.abbreviation || role.name);

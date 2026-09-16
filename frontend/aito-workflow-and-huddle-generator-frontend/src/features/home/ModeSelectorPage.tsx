@@ -18,7 +18,7 @@ const experiences = [
     description: "Build AI fluency through guided team learning, role-based Huddle paths, practical prompts, and repeatable adoption habits.",
     href: "/huddle",
     icon: Users,
-    bullets: ["Onboard your team", "Follow a role path", "Explore additional topics"],
+    bullets: ["Onboard your team", "Follow a role path", "Explore all topics"],
     accent: "from-[#087C72] to-[#0A6BBA]",
   },
 ];

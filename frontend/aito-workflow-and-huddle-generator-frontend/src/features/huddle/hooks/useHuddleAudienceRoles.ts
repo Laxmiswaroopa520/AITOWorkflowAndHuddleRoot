@@ -5,7 +5,7 @@ import type { HuddleRoleResponse } from "../types";
 import { huddleQueryKeys } from "./huddleQueryKeys";
 
 /**
- * The role list backing the Huddle audience picker and the Additional Topics filter.
+ * The role list backing the Huddle audience picker and the All Topics filter.
  *
  * This used to be derived from the full Huddle catalogue read (every published topic's roles,
  * deduplicated client-side), which meant the audience dropdown could not render until the

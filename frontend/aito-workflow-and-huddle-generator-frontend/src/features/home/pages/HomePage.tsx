@@ -95,7 +95,7 @@ export function HomePage() {
             features={[
               { icon: Compass, label: "Start with Orientation" },
               { icon: Map, label: "Follow your Role Path" },
-              { icon: ListChecks, label: "Explore Additional Topics" },
+              { icon: ListChecks, label: "Explore All Topics" },
             ]}
             cta="Explore Huddles"
             onClick={() => navigate("/huddle")}

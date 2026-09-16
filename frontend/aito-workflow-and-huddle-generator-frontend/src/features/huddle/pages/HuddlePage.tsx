@@ -21,7 +21,7 @@ function buildNavigationItems(persona: HuddlePersona | null): { id: HuddleViewMo
   return [
     { id: "orientation", label: persona === "team-member" ? "Orientation" : "Onboarding" },
     { id: "guided", label: "Role Path" },
-    { id: "evergreen", label: "Additional Topics" },
+    { id: "evergreen", label: "All Topics" },
   ];
 }
 
@@ -56,16 +56,16 @@ export function HuddlePage() {
   }, [feedback]);
 
   const referenceCatalogQuery = useHuddleCatalog({});
-  // Additional Topics is the workbook's Additional_Content sheet, scoped to the chosen audience or
+  // All Topics is the workbook's Additional_Content sheet, scoped to the chosen audience or
   // to the reader's own Role Path role. It is not "every topic whose AlignedRoles mentions me",
-  // which is what previously surfaced a role's own Role Path topics under Additional Topics.
+  // which is what previously surfaced a role's own Role Path topics under All Topics.
   const additionalRoleExternalId = (audienceRoleIds.length === 1 ? audienceRoleIds[0] : selectedRoleExternalId) ?? undefined;
-  // Additional Topics silently inherits the Role Path role above when no explicit audience has
+  // All Topics silently inherits the Role Path role above when no explicit audience has
   // been chosen here (see additionalRoleExternalId). Reflect that inherited role in the picker
   // itself too, so it doesn't read "Select Audience" while a role is actually filtering the list.
   const evergreenAudienceDisplayIds = audienceRoleIds.length === 0 && selectedRoleExternalId ? [selectedRoleExternalId] : audienceRoleIds;
   const evergreenAudienceNote = audienceRoleIds.length === 0 && selectedRoleExternalId ? "Matches your Role Path audience" : null;
-  // Only the Additional Topics tab reads this. It used to run unconditionally alongside
+  // Only the All Topics tab reads this. It used to run unconditionally alongside
   // referenceCatalogQuery on every visit to the Huddle page -- two full catalogue reads in
   // parallel, competing for the same backend and database, before the reader had even chosen a
   // tab. Scoping it to its own tab (the same pattern already used for the Role Path query below)

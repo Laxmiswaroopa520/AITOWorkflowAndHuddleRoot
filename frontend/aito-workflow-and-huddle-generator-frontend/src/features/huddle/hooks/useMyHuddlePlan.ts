@@ -7,7 +7,7 @@ import { huddleQueryKeys } from "./huddleQueryKeys";
  * The saved or recommended Role Path for a role.
  *
  * `enabled` exists so the caller can scope this to the tab that shows it. Loading the Role Path
- * while the reader is on Additional Topics meant a Role Path problem surfaced on a tab that does
+ * while the reader is on All Topics meant a Role Path problem surfaced on a tab that does
  * not use it, and it cost a request nobody was waiting for.
  */
 export function useMyHuddlePlan(roleExternalId: string | null, enabled = true) {

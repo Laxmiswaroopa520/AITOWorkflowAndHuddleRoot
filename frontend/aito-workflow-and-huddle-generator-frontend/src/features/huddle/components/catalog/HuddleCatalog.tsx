@@ -95,7 +95,7 @@ export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audi
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><h2 className="text-2xl font-bold">Additional Topics</h2><p className="mt-1 text-sm text-muted-foreground">Build your own learning plan from additional workflows, tools, and role-relevant Huddles.</p></div>
+        <div><h2 className="text-2xl font-bold">All Topics</h2><p className="mt-1 text-sm text-muted-foreground">Build your own learning plan from additional workflows, tools, and role-relevant Huddles.</p></div>
         <div className="flex items-center gap-2">
           {plan && plan.selectedIds.length > 0 && <span className="rounded-full bg-[#E8F2FF] px-2.5 py-1 text-xs font-semibold text-[#0F6CBD]">{plan.selectedIds.length} {plan.selectedIds.length === 1 ? "topic" : "topics"} selected</span>}
           {selectedExternalId && onCloseDetails && <Button variant="ghost" size="sm" onClick={onCloseDetails}>Close details</Button>}
@@ -107,7 +107,7 @@ export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audi
       <div className="space-y-3">{pagedCards.map((huddle) => <HuddleCatalogCard showManagementMenu key={huddle.id} huddle={huddle} selected={selectedExternalId === huddle.id} vote={votes.get(huddle.id)} votePending={votePending} primaryAccessUrl={huddle.primaryAccessUrl} planChecked={plan?.isSelected(huddle.id) ?? false} onTogglePlan={plan ? plan.toggle : undefined} onSelect={onSelect} onVote={onVote} />)}</div>
       {/* A role can have a Role Path and no additional content, which is the mirror of All Roles
           having additional content and no Role Path. Say which of the two happened. */}
-      {cards.length === 0 && <div className="rounded-xl border border-dashed bg-white py-10 text-center text-sm text-muted-foreground">{filtersActive ? "No Huddles match this filter." : "No Additional Topics are configured for this audience."}</div>}
+      {cards.length === 0 && <div className="rounded-xl border border-dashed bg-white py-10 text-center text-sm text-muted-foreground">{filtersActive ? "No Huddles match this filter." : "No  Topics are configured for this audience."}</div>}
       {cards.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 pt-1"><p className="text-xs text-muted-foreground">Showing {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, cards.length)} of {cards.length} Huddles</p>{totalPages > 1 && <div className="flex items-center gap-2"><Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</Button><span className="min-w-16 text-center text-xs font-medium text-muted-foreground">Page {currentPage} of {totalPages}</span><Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next</Button></div>}</div>}
       {plan && planOpen && <CustomLearningPlanDialog huddles={planHuddles} exporting={exporting} onMove={plan.move} onRemove={plan.remove} onClear={clearPlan} onExport={exportPlan} onClose={() => setPlanOpen(false)} />}
     </section>

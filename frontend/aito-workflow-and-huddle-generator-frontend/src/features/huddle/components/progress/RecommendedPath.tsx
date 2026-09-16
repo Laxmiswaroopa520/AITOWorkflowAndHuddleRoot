@@ -52,7 +52,7 @@ export function RecommendedPath(props: RecommendedPathProps) {
   // A role with no weekly path, which is true of All Roles: the workbook gives it additional
   // content but no Weeks 1 to 8. Say so and point at the tab that does have content for it.
   if (props.data.items.length === 0) {
-    return <div className="rounded-xl border border-dashed border-[#8A8886] bg-white px-6 py-10 text-center"><Route className="mx-auto h-8 w-8 text-[#8A8886]" /><h3 className="mt-3 text-lg font-semibold">No Role Path for {props.roleName ?? props.data.roleExternalId}</h3><p className="mt-1 text-sm text-muted-foreground">This audience has no weekly Huddle sequence configured. Its Huddles are under Additional Topics.</p></div>;
+    return <div className="rounded-xl border border-dashed border-[#8A8886] bg-white px-6 py-10 text-center"><Route className="mx-auto h-8 w-8 text-[#8A8886]" /><h3 className="mt-3 text-lg font-semibold">No Role Path for {props.roleName ?? props.data.roleExternalId}</h3><p className="mt-1 text-sm text-muted-foreground">This audience has no weekly Huddle sequence configured. Its Huddles are under All Topics.</p></div>;
   }
 
   const update = (week: number, action: "up" | "down" | "reset", targetWeek?: number, replacement?: string) => {

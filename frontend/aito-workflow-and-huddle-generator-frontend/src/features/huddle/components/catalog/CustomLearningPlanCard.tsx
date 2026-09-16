@@ -9,7 +9,7 @@ interface CustomLearningPlanCardProps {
 }
 
 /**
- * Sticky action bar for the Additional Topics custom learning plan.
+ * Sticky action bar for the All Topics custom learning plan.
  * Rendered only while at least one topic is selected.
  */
 export function CustomLearningPlanCard({ selectedCount, exporting, onBuild, onExport, onClear }: CustomLearningPlanCardProps) {

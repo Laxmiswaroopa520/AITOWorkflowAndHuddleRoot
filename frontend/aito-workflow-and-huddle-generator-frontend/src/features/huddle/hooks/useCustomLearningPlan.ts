@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { HuddlePersona } from "../types";
 
 /**
- * Persona-scoped "Additional Topics" custom learning plan.
+ * Persona-scoped "All Topics" custom learning plan.
  *
  * `selectedIds` is membership (which cards are ticked) and `sequence` is the ordered
  * plan the facilitator builds from that selection. They are kept in step: ticking a card

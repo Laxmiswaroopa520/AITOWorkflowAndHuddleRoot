@@ -48,7 +48,7 @@ export function CustomLearningPlanDialog({ huddles, exporting, onMove, onRemove,
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           {huddles.length === 0 ? (
             <div className="rounded-xl border border-dashed bg-white py-10 text-center text-sm text-muted-foreground">
-              No topics selected yet. Tick a Huddle in Additional Topics to start a plan.
+              No topics selected yet. Tick a Huddle in All Topics to start a plan.
             </div>
           ) : (
             <ol className="space-y-3">

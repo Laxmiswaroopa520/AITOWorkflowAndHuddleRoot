@@ -26,7 +26,7 @@ interface HuddleAudienceSelectProps {
   roles: HuddleRoleResponse[];
   /**
    * "single" keeps exactly one role, because the Role Path, its saved plan, and its
-   * reset are all keyed to one role. "multi" filters Additional Topics by several.
+   * reset are all keyed to one role. "multi" filters All Topics by several.
    */
   mode?: "single" | "multi";
   selectedIds: string[];
