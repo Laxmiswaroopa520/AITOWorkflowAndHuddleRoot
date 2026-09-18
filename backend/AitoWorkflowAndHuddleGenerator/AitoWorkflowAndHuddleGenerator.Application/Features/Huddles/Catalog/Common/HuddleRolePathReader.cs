@@ -19,7 +19,8 @@ internal sealed record HuddleRolePathEntry(
     int ExtendedActivityCount)
 {
     public HuddlePlacementSummary ToSummary() => new(
-        PlacementExternalId, FeaturedActivityCount, ExtendedActivityCount, RoleTopicName, RoleTopicDescription);
+        HuddlePlacementId, PlacementExternalId, FeaturedActivityCount, ExtendedActivityCount,
+        RoleTopicName, RoleTopicDescription);
 }
 
 /// <summary>

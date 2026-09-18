@@ -81,8 +81,16 @@ public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCata
         IReadOnlyDictionary<int, HuddlePlacementSummary> placements =
             HuddlePlacementLookup.WithFallback(rolePlacements, defaultPlacements);
 
+        // A card's Primary Agents come from its own placement's activities, not the topic's shared
+        // TopicAgents (see HuddleMappings.ToPrimaryAgents) -- one batched read for every placement in
+        // play on this page, not one query per card.
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleActivityAgent>> placementPrimaryAgents =
+            await HuddlePlacementActivityAgents.LoadPrimaryAsync(
+                dbContext, placements.Values.Select(x => x.Id).Distinct().ToList(), cancellationToken);
+
         return topics
-            .Select(x => HuddleMappings.ToCatalogItem(x, activityCounts, HuddlePlacementLookup.For(placements, x.Id)))
+            .Select(x => HuddleMappings.ToCatalogItem(
+                x, activityCounts, HuddlePlacementLookup.For(placements, x.Id), placementPrimaryAgents))
             .ToList();
     }
 

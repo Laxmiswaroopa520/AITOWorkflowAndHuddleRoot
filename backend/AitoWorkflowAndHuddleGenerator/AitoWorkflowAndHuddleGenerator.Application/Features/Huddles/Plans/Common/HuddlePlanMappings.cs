@@ -24,17 +24,23 @@ internal static class HuddlePlanMappings
     /// Maps the resolved weeks to the plan response. Week numbers come from the data, never from a
     /// list index, so a path that starts at W1 stays at W1.
     /// </summary>
+    /// <param name="placementPrimaryAgents">
+    /// The Primary-tagged agents for each week's placement's own activities, keyed by placement id,
+    /// as loaded by <see cref="HuddlePlacementActivityAgents.LoadPrimaryAsync"/>. Determines each
+    /// week's Primary Agents; see <c>HuddleMappings.ToPrimaryAgents</c>.
+    /// </param>
     public static HuddlePlanResponse ToResponse(
         string roleExternalId,
         byte[]? rowVersion,
         IReadOnlyList<HuddlePlanWeek> weeks,
-        IReadOnlyDictionary<int, int> activityCounts)
+        IReadOnlyDictionary<int, int> activityCounts,
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleActivityAgent>>? placementPrimaryAgents = null)
     {
         List<HuddlePlanItemResponse> items = weeks.Select(week => new HuddlePlanItemResponse(
             week.Week,
             week.RecommendedTopicExternalId,
             IsCustomized(week),
-            HuddleMappings.ToCatalogItem(week.Topic, activityCounts, week.Placement))).ToList();
+            HuddleMappings.ToCatalogItem(week.Topic, activityCounts, week.Placement, placementPrimaryAgents))).ToList();
 
         return new HuddlePlanResponse(
             roleExternalId,

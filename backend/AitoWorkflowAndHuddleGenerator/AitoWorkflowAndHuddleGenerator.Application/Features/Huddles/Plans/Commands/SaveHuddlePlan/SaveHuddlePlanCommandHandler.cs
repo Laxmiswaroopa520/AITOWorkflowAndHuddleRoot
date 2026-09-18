@@ -148,7 +148,15 @@ public sealed class SaveHuddlePlanCommandHandler(
 
         IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
             dbContext, weekTopics.Select(item => item.Id).Distinct().ToList(), cancellationToken);
-        return HuddlePlanMappings.ToResponse(roleExternalId, savedPlan.RowVersion, weeks, activityCounts);
+        // Each week's Primary Agents come from its own placement's activities, not the topic's
+        // shared TopicAgents (see HuddleMappings.ToPrimaryAgents).
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleActivityAgent>> placementPrimaryAgents =
+            await HuddlePlacementActivityAgents.LoadPrimaryAsync(
+                dbContext,
+                weeks.Where(week => week.Placement is not null).Select(week => week.Placement!.Id).Distinct().ToList(),
+                cancellationToken);
+        return HuddlePlanMappings.ToResponse(
+            roleExternalId, savedPlan.RowVersion, weeks, activityCounts, placementPrimaryAgents);
     }
 
     /// <summary>

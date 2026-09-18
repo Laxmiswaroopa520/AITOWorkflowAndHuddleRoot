@@ -41,7 +41,9 @@ public sealed class GetMyHuddlePlanQueryHandler(
         // Role Path, not a broken one, and returning a conflict gave the caller an error it could
         // not act on. An empty plan lets the UI say so plainly.
         if (!HuddleRolePathReader.HasWeeklyPath(path))
-            return HuddlePlanMappings.ToResponse(roleExternalId, null, [], new Dictionary<int, int>());
+            return HuddlePlanMappings.ToResponse(
+                roleExternalId, null, [], new Dictionary<int, int>(),
+                new Dictionary<int, IReadOnlyList<HuddleActivityAgent>>());
 
         if (!HuddleRolePathReader.IsContiguousFromWeekOne(path))
             throw new ConflictException(HuddleMessages.RolePathNotContiguous(roleExternalId, path.Count));
@@ -63,8 +65,16 @@ public sealed class GetMyHuddlePlanQueryHandler(
 
         IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
             dbContext, weeks.Select(week => week.Topic.Id).Distinct().ToList(), cancellationToken);
+        // Each week's Primary Agents come from its own placement's activities, not the topic's
+        // shared TopicAgents (see HuddleMappings.ToPrimaryAgents).
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleActivityAgent>> placementPrimaryAgents =
+            await HuddlePlacementActivityAgents.LoadPrimaryAsync(
+                dbContext,
+                weeks.Where(week => week.Placement is not null).Select(week => week.Placement!.Id).Distinct().ToList(),
+                cancellationToken);
 
-        return HuddlePlanMappings.ToResponse(roleExternalId, plan?.RowVersion, weeks, activityCounts);
+        return HuddlePlanMappings.ToResponse(
+            roleExternalId, plan?.RowVersion, weeks, activityCounts, placementPrimaryAgents);
     }
 
     private static bool CoversPath(ICollection<UserHuddlePlanItem> items, IReadOnlyList<HuddleRolePathEntry> path) =>

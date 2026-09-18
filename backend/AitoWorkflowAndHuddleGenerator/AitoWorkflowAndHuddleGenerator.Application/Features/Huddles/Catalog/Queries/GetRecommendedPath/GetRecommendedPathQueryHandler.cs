@@ -39,13 +39,19 @@ public sealed class GetRecommendedPathQueryHandler : IRequestHandler<GetRecommen
             dbContext, path.Select(x => x.HuddleTopicId).ToList(), cancellationToken);
         IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
             dbContext, topics.Select(x => x.Id).Distinct().ToList(), cancellationToken);
+        // Each item's Primary Agents come from its own placement's activities, not the topic's
+        // shared TopicAgents (see HuddleMappings.ToPrimaryAgents).
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleActivityAgent>> placementPrimaryAgents =
+            await HuddlePlacementActivityAgents.LoadPrimaryAsync(
+                dbContext, path.Select(x => x.HuddlePlacementId).Distinct().ToList(), cancellationToken);
 
         List<RecommendedHuddlePathItemResponse> items = [];
         for (int index = 0; index < path.Count && index < topics.Count; index++)
             items.Add(new RecommendedHuddlePathItemResponse(
                 path[index].Week,
                 index + 1,
-                HuddleMappings.ToCatalogItem(topics[index], activityCounts, path[index].ToSummary())));
+                HuddleMappings.ToCatalogItem(
+                    topics[index], activityCounts, path[index].ToSummary(), placementPrimaryAgents)));
 
         bool complete = HuddleRolePathReader.IsContiguousFromWeekOne(path) && items.Count == path.Count;
         string? message = complete

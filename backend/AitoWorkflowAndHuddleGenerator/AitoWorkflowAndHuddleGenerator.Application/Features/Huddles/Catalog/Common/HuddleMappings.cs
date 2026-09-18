@@ -21,10 +21,17 @@ internal static class HuddleMappings                //static class means no need
     /// When supplied, the card reports that placement's identifier and its Featured and Extended
     /// counts, so a Role Path card shows one role's activity numbers rather than every role's.
     /// </param>
+    /// <param name="placementPrimaryAgents">
+    /// The Primary-tagged agents for one or more placements' own activities, keyed by placement id,
+    /// as loaded by <see cref="HuddlePlacementActivityAgents.LoadPrimaryAsync"/>. When
+    /// <paramref name="placement"/> is supplied this is what determines the card's Primary Agents,
+    /// not the topic's shared TopicAgents -- see <see cref="ToPrimaryAgents"/>.
+    /// </param>
     public static HuddleCatalogItemResponse ToCatalogItem(
         HuddleTopic topic,
         IReadOnlyDictionary<int, int> activityCounts,
-        HuddlePlacementSummary? placement = null)            //Small summary card information
+        HuddlePlacementSummary? placement = null,            //Small summary card information
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleActivityAgent>>? placementPrimaryAgents = null)
     {
         return new HuddleCatalogItemResponse(
             topic.ExternalId,
@@ -38,7 +45,7 @@ internal static class HuddleMappings                //static class means no need
             topic.AudienceDescription,
             topic.DesiredOutcome,
             topic.TopicRoles.OrderBy(x => x.Role.SortOrder).Select(ToRole).ToList(),
-            topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Primary).OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList(),
+            ToPrimaryAgents(topic, placement, placementPrimaryAgents),
             topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Secondary).OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList(),
             topic.McemStages.OrderBy(x => x.HuddleMcemStage.ExternalId).Select(x => new HuddleMcemStageResponse(
                 x.HuddleMcemStage.ExternalId, x.HuddleMcemStage.Name,
@@ -49,6 +56,35 @@ internal static class HuddleMappings                //static class means no need
             placement?.ExtendedActivityCount,
             placement?.RoleTopicName,
             placement?.RoleTopicDescription);
+    }
+
+    /// <summary>
+    /// The card's Primary Agents. A placement scopes this to its own activities' Primary-tagged
+    /// HuddleActivityAgents -- role/segment-specific -- rather than the topic's shared TopicAgents,
+    /// which only proves broad topic-level relevance and can leak an agent (Sales Home on
+    /// WF-X-DEAL-01, for Enterprise) into a segment whose own activities never use it. An empty list
+    /// here is a legitimate result, not a gap to fill: it means this placement's activities tag no
+    /// agent Primary, and must not silently fall back to the shared topic mapping, which is exactly
+    /// the leak this projection exists to close. TopicAgents is used only when there is no placement
+    /// to scope by at all, which is pre-V4 topic-only content with no Activities/Placements of its
+    /// own.
+    /// </summary>
+    private static IReadOnlyList<HuddleAgentResponse> ToPrimaryAgents(
+        HuddleTopic topic,
+        HuddlePlacementSummary? placement,
+        IReadOnlyDictionary<int, IReadOnlyList<HuddleActivityAgent>>? placementPrimaryAgents)
+    {
+        if (placement is not null)
+        {
+            IReadOnlyList<HuddleActivityAgent> rows = placementPrimaryAgents is not null
+                && placementPrimaryAgents.TryGetValue(placement.Id, out IReadOnlyList<HuddleActivityAgent>? found)
+                ? found
+                : [];
+            return rows.Select(x => ToAgent(x, [])).ToList();
+        }
+
+        return topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Primary)
+            .OrderBy(x => x.DisplayOrder).Select(ToAgent).ToList();
     }
 
     /// <summary>
@@ -73,6 +109,7 @@ internal static class HuddleMappings                //static class means no need
             ? topic.Phases.Where(x => x.HuddlePlacementId is null)
             : placement.Phases).ToList();
         HuddleFacilitatorGuide? guide = placement is null ? SelectGuide(topic) : placement.FacilitatorGuide;
+        IReadOnlyList<HuddleActivityAgent> primaryActivityAgents = PrimaryActivityAgents(placement);
         return new HuddleDetailResponse(
             placement?.ExternalId,
             placement?.RoleTopicName,
@@ -91,8 +128,10 @@ internal static class HuddleMappings                //static class means no need
             topic.McemStages.OrderBy(x => x.DisplayOrder).Select(x => new HuddleMcemStageResponse(
                 x.HuddleMcemStage.ExternalId, x.HuddleMcemStage.Name,
                 x.HuddleMcemStage.Description, x.DisplayOrder, x.HuddleMcemStage.StageNumber)).ToList(),
-            topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Primary)
-                .OrderBy(x => x.DisplayOrder).Select(x => ToAgent(x, GetResources(agentResources, x.HuddleAgentId))).ToList(),
+            placement is not null
+                ? primaryActivityAgents.Select(x => ToAgent(x, GetResources(agentResources, x.HuddleAgentId))).ToList()
+                : topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Primary)
+                    .OrderBy(x => x.DisplayOrder).Select(x => ToAgent(x, GetResources(agentResources, x.HuddleAgentId))).ToList(),
             topic.TopicAgents.Where(x => x.UsageType == HuddleAgentUsageType.Secondary)
                 .OrderBy(x => x.DisplayOrder).Select(x => ToAgent(x, GetResources(agentResources, x.HuddleAgentId))).ToList(),
             phases.OrderBy(x => x.DisplayOrder).Select(phase => new HuddlePhaseResponse(
@@ -126,6 +165,25 @@ internal static class HuddleMappings                //static class means no need
     /// </remarks>
     private static HuddleFacilitatorGuide? SelectGuide(HuddleTopic topic) =>
         topic.FacilitatorGuides.SingleOrDefault(x => x.HuddlePlacementId is null);
+
+    /// <summary>
+    /// The distinct Primary-tagged agents across a placement's own activities, in phase, activity
+    /// and mapping display order, deduplicated by HuddleAgentId so an agent tagged Primary on more
+    /// than one activity is listed once. Null placement (topic-scoped, pre-V4 content) yields none;
+    /// the caller falls back to the topic's own TopicAgents in that case. See
+    /// <see cref="ToPrimaryAgents"/> for the equivalent used where activities are not already loaded.
+    /// </summary>
+    private static IReadOnlyList<HuddleActivityAgent> PrimaryActivityAgents(HuddlePlacement? placement)
+    {
+        if (placement is null) return [];
+        return placement.Phases.OrderBy(phase => phase.DisplayOrder)
+            .SelectMany(phase => phase.Activities.OrderBy(activity => activity.DisplayOrder))
+            .SelectMany(activity => activity.ActivityAgents.OrderBy(mapping => mapping.DisplayOrder))
+            .Where(mapping => mapping.UsageType == HuddleAgentUsageType.Primary)
+            .GroupBy(mapping => mapping.HuddleAgentId)
+            .Select(group => group.First())
+            .ToList();
+    }
 
     private static HuddleFacilitatorGuideResponse? ToFacilitatorGuide(HuddleFacilitatorGuide? guide) =>
         guide is null ? null : new HuddleFacilitatorGuideResponse(

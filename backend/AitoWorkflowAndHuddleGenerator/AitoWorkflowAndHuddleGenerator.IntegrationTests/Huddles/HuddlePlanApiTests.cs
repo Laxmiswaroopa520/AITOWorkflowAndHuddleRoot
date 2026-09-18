@@ -4,6 +4,7 @@ using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Commands
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Queries.GetMyHuddlePlan;
 using AitoWorkflowAndHuddleGenerator.Contracts.Huddles;
 using AitoWorkflowAndHuddleGenerator.Domain.Entities;
+using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,6 +53,40 @@ public sealed class HuddlePlanApiTests
             .Handle(new GetMyHuddlePlanQuery("role-1"), default);
         Assert.False(otherUser.IsCustomized);
         Assert.Null(otherUser.RowVersion);
+    }
+
+    // The saved-plan response reuses HuddleMappings.ToCatalogItem, the same mapper the catalog and
+    // detail surfaces use, so it must show the same placement-derived Primary Agents, not the
+    // topic's shared TopicAgents. Regression coverage for the same Enterprise Sales Home leak,
+    // exercised through the plan's recommended-week path (GetMyHuddlePlanQueryHandler.RecommendedWeeks).
+    [Fact]
+    public async Task Plan_ShouldProjectPrimaryAgentsFromPlacementActivitiesNotSharedTopicAgents()
+    {
+        await using ApplicationDbContext db = CreateContext();
+        Role role = new() { ExternalId = "role-plan", Name = "Role", Abbreviation = "RP", IsActive = true };
+        var segment = new HuddleSegment { ExternalId = "segment-plan", Name = "Segment" };
+        HuddleSegmentRole segmentRole = new() { ExternalId = "sr-plan", DisplayName = "Role", Role = role, HuddleSegment = segment };
+        HuddleTopic topic = new() { ExternalId = "topic-plan-1", Name = "Topic 1", Type = "Evergreen", PublicationStatus = "Published" };
+        var salesAgent = new HuddleAgent { ExternalId = "sales-agent-plan", Name = "Sales Agent" };
+        var salesHome = new HuddleAgent { ExternalId = "sales-home-plan", Name = "Sales Home" };
+        topic.TopicAgents.Add(new HuddleTopicAgent { HuddleTopic = topic, HuddleAgent = salesHome, UsageType = HuddleAgentUsageType.Primary, DisplayOrder = 1 });
+        var placement = new HuddlePlacement
+        {
+            ExternalId = "placement-plan-1", HuddleSegmentRole = segmentRole, HuddleTopic = topic,
+            PathSection = "SEC-ROLEPATH", Sequence = 1, RoleTopicName = topic.Name, IsActive = true,
+        };
+        var phase = new HuddlePhase { ExternalId = "phase-plan-1", Name = "Phase", DisplayOrder = 1, HuddleTopic = topic };
+        var activity = new HuddleActivity { ExternalId = "activity-plan-1", Name = "Activity", DisplayOrder = 1, HuddleTopic = topic, HuddlePhase = phase, HuddlePlacement = placement };
+        activity.ActivityAgents.Add(new HuddleActivityAgent { HuddleActivity = activity, HuddleAgent = salesAgent, UsageType = HuddleAgentUsageType.Primary, DisplayOrder = 1 });
+        db.AddRange(role, segment, segmentRole, topic, placement, phase, activity);
+        await db.SaveChangesAsync();
+
+        HuddlePlanResponse plan = await new GetMyHuddlePlanQueryHandler(db, new TestCurrentUserService("plan-user"))
+            .Handle(new GetMyHuddlePlanQuery("role-plan"), default);
+
+        HuddlePlanItemResponse week = Assert.Single(plan.Items);
+        Assert.Equal(new[] { "Sales Agent" }, week.Huddle.PrimaryAgents.Select(x => x.Name));
+        Assert.DoesNotContain(week.Huddle.PrimaryAgents, x => x.Name == "Sales Home");
     }
 
     // Rewritten for the HuddlePlacements model (see GetRecommendedPathQueryHandler's remarks, and

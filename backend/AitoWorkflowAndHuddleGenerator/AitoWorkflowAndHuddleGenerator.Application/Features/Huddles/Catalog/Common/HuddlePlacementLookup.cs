@@ -7,10 +7,18 @@ using Microsoft.EntityFrameworkCore;
 namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Catalog.Common;
 
 /// <summary>
-/// The three values a catalogue card needs from a placement: which placement to open, and how the
-/// role's activities split across the two practice tiers.
+/// The values a catalogue card needs from a placement: which placement to open, its own internal
+/// identifier (so callers can look up that placement's activity-scoped agents), and how the role's
+/// activities split across the two practice tiers.
 /// </summary>
 internal sealed record HuddlePlacementSummary(
+    /// <summary>
+    /// The placement's own int Id. Required (no default) so every existing construction site had to
+    /// be updated for this to compile, rather than silently defaulting to 0 -- a bad key with no
+    /// entry in HuddlePlacementActivityAgents' dictionary would collapse into the "no data" branch
+    /// there wherever a call site was missed, without a build error to say so.
+    /// </summary>
+    int Id,
     string ExternalId,
     int FeaturedActivityCount,
     int ExtendedActivityCount,
@@ -20,6 +28,7 @@ internal sealed record HuddlePlacementSummary(
     string? RoleTopicDescription = null);
 
 internal sealed record HuddlePlacementRow(
+    int Id,
     int HuddleTopicId,
     string ExternalId,
     int FeaturedActivityCount,
@@ -55,6 +64,7 @@ internal static class HuddlePlacementLookup
     /// </summary>
     private static readonly Expression<Func<HuddlePlacement, HuddlePlacementRow>> ToRow = x =>
         new HuddlePlacementRow(
+            x.Id,
             x.HuddleTopicId,
             x.ExternalId,
             x.Activities.Count(activity => activity.PracticeTier == HuddlePracticeTier.Featured),
@@ -124,7 +134,7 @@ internal static class HuddlePlacementLookup
         return rows.ToDictionary(
             row => row.Id,
             row => new HuddlePlacementSummary(
-                row.ExternalId, row.Featured, row.Extended, row.RoleTopicName, row.RoleTopicDescription));
+                row.Id, row.ExternalId, row.Featured, row.Extended, row.RoleTopicName, row.RoleTopicDescription));
     }
 
     /// <summary>
@@ -169,6 +179,7 @@ internal static class HuddlePlacementLookup
             .ToDictionary(
                 group => group.Key,
                 group => new HuddlePlacementSummary(
+                    group.First().Id,
                     group.First().ExternalId,
                     group.First().FeaturedActivityCount,
                     group.First().ExtendedActivityCount,
