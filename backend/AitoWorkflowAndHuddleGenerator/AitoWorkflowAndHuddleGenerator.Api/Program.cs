@@ -79,10 +79,6 @@ app.UseAuthentication();
 // Checks [Authorize] attributes and authorization policies.
 app.UseAuthorization();
 
-// WI-12: MISE v2.0 inbound authentication middleware. Per the MISE v2.0 migration guide,
-// this must run after UseAuthentication()/UseAuthorization() and before endpoints are mapped.
-app.UseMise();
-
 // Maps attribute-routed API controllers.
 app.MapControllers();
 

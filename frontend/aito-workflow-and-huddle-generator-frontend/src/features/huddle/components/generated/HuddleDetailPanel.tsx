@@ -34,11 +34,11 @@ export function HuddleDetailPanel({ data, isLoading, error, hasSelection, onRetr
   const onOpenWorkspace = openWorkspace;
 
   if (!hasSelection) {
-    return <aside className="w-full self-start rounded-xl border bg-white px-6 py-10 text-center shadow-sm"><span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F2F1]"><Presentation className="h-5 w-5 text-[#605E5C]" /></span><p className="font-semibold">Select a Huddle</p><p className="mx-auto mt-1 max-w-[230px] text-sm leading-5 text-muted-foreground">Review the outcome, resources, and actions before generating your session.</p></aside>;
+    return <aside className="sticky top-[88px] w-full self-start rounded-xl border bg-white px-6 py-10 text-center shadow-sm"><span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#F3F2F1]"><Presentation className="h-5 w-5 text-[#605E5C]" /></span><p className="font-semibold">Select a Huddle</p><p className="mx-auto mt-1 max-w-[230px] text-sm leading-5 text-muted-foreground">Review the outcome, resources, and actions before generating your session.</p></aside>;
   }
 
-  if (isLoading) return <aside className="rounded-xl border bg-white"><LoadingSpinner message="Loading Huddle details..." /></aside>;
-  if (error) return <aside><ErrorState title="Unable to load Huddle" message={error.message} onRetry={onRetry} /></aside>;
+  if (isLoading) return <aside className="sticky top-[88px] rounded-xl border bg-white"><LoadingSpinner message="Loading Huddle details..." /></aside>;
+  if (error) return <aside className="sticky top-[88px]"><ErrorState title="Unable to load Huddle" message={error.message} onRetry={onRetry} /></aside>;
   if (!data) return null;
 
   const activityCount = data.phases.reduce((total, phase) => total + phase.activities.length, 0);
@@ -49,7 +49,7 @@ export function HuddleDetailPanel({ data, isLoading, error, hasSelection, onRetr
   const takeaways = [data.keyTakeaway, data.reflectionPrompt, data.commitmentPrompt].filter((value): value is string => Boolean(value));
   const mcemStageLabel = formatMcemStageLabel(data.mcemStages ?? []);
 
-  return <aside className="w-full self-start overflow-visible rounded-xl border bg-white shadow-sm [font-family:var(--aito-font-sans)]">
+  return <aside className="sticky top-[88px] w-full self-start overflow-visible rounded-xl border bg-white shadow-sm [font-family:var(--aito-font-sans)]">
     <header className="space-y-4 rounded-t-xl border-b bg-gradient-to-br from-[#F8FBFF] via-white to-[#F3FAF3] p-5">
       <div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">Selected Huddle</span></div><h2 className="text-xl font-bold leading-7 text-[#242424]">{data.roleTopicName ?? data.name}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{data.roleTopicDescription ?? data.description ?? "Description unavailable."}</p></div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><Layers3 className="h-3.5 w-3.5" />{data.phases.length} phases</span><span className="flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5" />{activityCount} activities</span>{mcemStageLabel && <span className="flex items-center gap-1.5"><Target className="h-3.5 w-3.5" />{mcemStageLabel}</span>}</div>

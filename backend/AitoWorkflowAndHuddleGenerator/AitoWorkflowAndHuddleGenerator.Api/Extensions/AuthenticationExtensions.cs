@@ -1,7 +1,7 @@
 /*Configures JWT bearer validation using Microsoft Entra tenant, authority, issuer, audience, and token-validation rules.*/
 
 using AitoWorkflowAndHuddleGenerator.Api.Authentication;
-using Microsoft.Identity.ServiceEssentials.Authentication.AspNet;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 
 namespace AitoWorkflowAndHuddleGenerator.Api.Extensions;
@@ -38,25 +38,19 @@ public static class AuthenticationExtensions
                 "AzureAd:ClientId is required.")
             .ValidateOnStart();
 
-        // WI-12: inbound authentication is handled by MISE v2.0. MISE reads its own
-        // configuration directly from the "AzureAd" section of the root configuration
-        // (MiseVersion, AzureAd:Audiences, AzureAd:Protocols:Bearer:TokenTypes:AccessToken).
+        // Inbound authentication is handled by Microsoft.Identity.Web, which validates the
+        // bearer token against the tenant/client configured in the "AzureAd" section above.
+        // EnableTokenAcquisitionToCallDownstreamApi() + AddInMemoryTokenCaches() register the
+        // outbound delegated Microsoft Graph token acquisition (ITokenAcquisition) that
+        // GraphWorkflowCalendarService, GraphHuddleLaunchMailService, and
+        // GraphCoachSchedulingService resolve and call GetAccessTokenForUserAsync(...) on,
+        // exactly as before.
         services
             .AddAuthentication(
-                MiseAuthenticationDefaults.AuthenticationScheme)
-            .AddMiseWithDefaultModules(configuration);
-
-        // Outbound delegated Microsoft Graph token acquisition continues to be provided by
-        // Microsoft.Identity.Web, independent of the inbound authentication handler above.
-        // AddMicrosoftIdentityWebApi() is intentionally NOT called here, since MISE now owns
-        // inbound authentication (WI-12, Decision 1). AddTokenAcquisition() and
-        // AddInMemoryTokenCaches() are standalone IServiceCollection extension methods
-        // (Microsoft.Identity.Web.TokenAcquisition / Microsoft.Identity.Web.TokenCache) that do
-        // not require AddMicrosoftIdentityWebApi() to be registered first. GraphWorkflowCalendarService,
-        // GraphHuddleLaunchMailService, and GraphCoachSchedulingService continue to resolve
-        // ITokenAcquisition and call GetAccessTokenForUserAsync(...) exactly as before.
-        services.AddTokenAcquisition();
-        services.AddInMemoryTokenCaches();
+                JwtBearerDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApi(azureAdSection)
+            .EnableTokenAcquisitionToCallDownstreamApi()
+            .AddInMemoryTokenCaches();
 
         return services;
     }
