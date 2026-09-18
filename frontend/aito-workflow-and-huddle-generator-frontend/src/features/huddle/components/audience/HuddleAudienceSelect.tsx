@@ -141,7 +141,7 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
         aria-haspopup="listbox"
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-lg border bg-white px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0F6CBD]/25",
+          "flex h-10 w-full items-center justify-between rounded-lg border bg-white px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0F6CBD]/25",
           selected.length > 0 ? "border-[#0F6CBD]/60" : "border-input",
         )}
       >

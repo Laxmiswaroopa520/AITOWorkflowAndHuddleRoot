@@ -78,7 +78,7 @@ public sealed class ApplicationDbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(
-            typeof(ApplicationDbContext).Assembly);
+            typeof(ApplicationDbContext).Assembly);                                                 //Configuration files will run automatically and apply the configurations to the model builder. This is a convenient way to keep the configuration separate from the DbContext class and maintain a clean architecture.
 
     }
 }

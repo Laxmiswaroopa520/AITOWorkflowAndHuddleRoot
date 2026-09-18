@@ -1,0 +1,59 @@
+Expected row counts after running every script in this folder in order (01 -> 40).
+See 40_Validate_Everything.sql for the authoritative, runnable version of this list.
+
+This folder (fresh-install-v11.78) merges the fresh-install-v10.2.1 baseline with the new-only
+Huddle rows from database/huddle-2026.09.15-update, plus (as of 2026-09-17) the Deal Agent
+(AGT-016) and its 2 topic joins from database/huddle-2026.09.16-update. Numbers in parentheses
+show the V10.2.1 baseline count where it changed. See 00_README_Fresh_Install.md for the full
+merge report.
+
+Workflow module (unchanged from V10.2.1)
+  Roles                    22   (8 Workflow Builder + 14 Huddle -- see 40's own note)     [was 21]
+  AiTools                  14
+  WorkflowBuckets           9
+  Activities              186
+  ActivityAiTools         215
+
+Huddle module
+  HuddleSegments            2
+  HuddleSegmentRoles       15
+  HuddleFocusAreas          8
+  HuddleMcemStages          5
+  HuddleTopics             27   [was 25]
+  HuddleTopicRoles        170   [was 118]
+  HuddlePlacements        138   [was 103]
+  HuddleRolePathItems     100   [was 74]
+  HuddlePhases            414   [was 309]
+  HuddleFacilitatorGuides 138   [was 103]
+  HuddleAgents             22   [was 18]
+  HuddleResources          54   [was 51]
+  HuddleActivities        506   [was 403]
+  HuddleTopicMcemStages    23
+  HuddleTopicAgents       130   (133 physically across all three source workbooks; 3 rows for
+                                 WF-X-TRANSITION-01 -- AGT-001, AGT-003, AGT-013 -- are missing
+                                 required fields and were skipped; see SKIPPED_ROWS.md; includes
+                                 +2 for AGT-016 added 2026-09-17)  [was 63]
+  HuddleTopicResources     21
+  HuddleActivityAgents    648   [was 433]
+  HuddleActivityResources 154   [was 152]
+  HuddleAgentResources     28   [was 23]
+
+Practice tier split (506 activities total: 340 Featured, 166 Extended)             [was 403: 264/139]
+  Role path            225 Featured / 140 Extended
+  Additional content    115 Featured /  26 Extended
+
+Additional content placements per segment-role (38 total)                          [was 29]
+  AE 4, ALL 9, ATS 5, CE(Enterprise) 1, CSA 3, CSAM 2, SE 2, SSP 2, DCSA 2, DSE 2, PSS 3,
+  CE(SME&C) 1 (DAE and DSS have none)
+
+Role-path week counts (contiguous from week 1, see 40_Validate_Everything.sql)
+  8 weeks: AE, ATS, CE(Enterprise), CSA, CSAM, SE, SSP, DAE(SME&C), DSS(SME&C), CE(SME&C)
+           -- DSS and CE(SME&C) were extended from 6 and 4 weeks respectively by the
+              9.15.2026 update
+  0 weeks (Additional content only): ALL
+  PARTIAL / GAPPED (documented, not yet resolved -- see 00_README_Fresh_Install.md):
+    DCSA(SME&C) 6 role-path entries, gap at week 2
+    DSE(SME&C)  6 role-path entries, gap at week 3
+    PSS(SME&C)  5 role-path entries, gaps at weeks 2-3
+  These three are carved out of 40_Validate_Everything.sql's contiguity THROW so the rest of
+  the script still runs to completion; they still print as BROKEN in that script's own report.

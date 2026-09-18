@@ -64,7 +64,8 @@ export function HuddlePage() {
   // been chosen here (see additionalRoleExternalId). Reflect that inherited role in the picker
   // itself too, so it doesn't read "Select Audience" while a role is actually filtering the list.
   const evergreenAudienceDisplayIds = audienceRoleIds.length === 0 && selectedRoleExternalId ? [selectedRoleExternalId] : audienceRoleIds;
-  const evergreenAudienceNote = audienceRoleIds.length === 0 && selectedRoleExternalId ? "Matches your Role Path audience" : null;
+  const evergreenAudienceNote = null;
+  //const evergreenAudienceNote = audienceRoleIds.length === 0 && selectedRoleExternalId ? "Matches your Role Path audience" : null;
   // Only the All Topics tab reads this. It used to run unconditionally alongside
   // referenceCatalogQuery on every visit to the Huddle page -- two full catalogue reads in
   // parallel, competing for the same backend and database, before the reader had even chosen a
