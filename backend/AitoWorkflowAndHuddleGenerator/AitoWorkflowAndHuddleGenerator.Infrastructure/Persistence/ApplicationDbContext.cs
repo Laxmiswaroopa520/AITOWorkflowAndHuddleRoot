@@ -42,9 +42,6 @@ public sealed class ApplicationDbContext
     public DbSet<UserWorkflowActivity> UserWorkflowActivities =>
         Set<UserWorkflowActivity>();
 
-    public DbSet<WorkflowShare> WorkflowShares =>
-        Set<WorkflowShare>();
-
     public DbSet<HuddleSegment> HuddleSegments => Set<HuddleSegment>();
     public DbSet<HuddleSegmentRole> HuddleSegmentRoles => Set<HuddleSegmentRole>();
     public DbSet<HuddleFocusArea> HuddleFocusAreas => Set<HuddleFocusArea>();

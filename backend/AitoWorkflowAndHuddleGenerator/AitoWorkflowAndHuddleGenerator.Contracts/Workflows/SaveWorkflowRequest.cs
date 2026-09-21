@@ -16,8 +16,6 @@ public sealed record SaveWorkflowRequest(
 /*The frontend must not send:
 
 OwnerObjectId
-OwnerEmail
-OwnerDisplayName
 TotalDurationMinutes
 CreatedAtUtc
 UpdatedAtUtc

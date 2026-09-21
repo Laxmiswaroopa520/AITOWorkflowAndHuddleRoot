@@ -44,12 +44,4 @@ public sealed class EntityDefaultsTests
 
         Assert.False(workflow.IsFavorite);
     }
-
-    [Fact]
-    public void WorkflowShare_ShouldNotBeRevokedByDefault()
-    {
-        var share = new WorkflowShare();
-
-        Assert.False(share.IsRevoked);
-    }
 }

@@ -122,10 +122,6 @@ internal static class WorkflowMappings
                 workflow.Description,
             OwnerObjectId:
                 workflow.OwnerObjectId,
-            OwnerEmail:
-                workflow.OwnerEmail,
-            OwnerDisplayName:
-                workflow.OwnerDisplayName,
             RoleExternalId:
                 workflow.Role.ExternalId,
             RoleName:

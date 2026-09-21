@@ -14,10 +14,6 @@ public sealed class UserWorkflow : AuditableEntity<Guid>
 
     public string OwnerObjectId { get; set; } = string.Empty;
 
-    public string OwnerEmail { get; set; } = string.Empty;
-
-    public string OwnerDisplayName { get; set; } = string.Empty;
-
     public int RoleId { get; set; }
 
     public Role Role { get; set; } = null!;
@@ -30,7 +26,4 @@ public sealed class UserWorkflow : AuditableEntity<Guid>
 
     public ICollection<UserWorkflowActivity> UserWorkflowActivities
     { get; set; } = new List<UserWorkflowActivity>();
-
-    public ICollection<WorkflowShare> WorkflowShares { get; set; } =
-        new List<WorkflowShare>();
 }

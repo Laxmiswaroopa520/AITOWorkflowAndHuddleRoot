@@ -43,8 +43,6 @@ export interface SavedWorkflow {
   description: string | null;
 
   ownerObjectId: string;
-  ownerEmail: string;
-  ownerDisplayName: string;
 
   roleExternalId: string;
   roleName: string;

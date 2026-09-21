@@ -23,7 +23,6 @@ Activity
 Use GUID IDs for user-generated records:
 
 UserWorkflow
-WorkflowShare
 
 Use composite keys for junction tables:
 

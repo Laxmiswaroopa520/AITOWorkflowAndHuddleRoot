@@ -169,21 +169,6 @@ public sealed class
                 OwnerObjectId =
                     ownerObjectId,
 
-                OwnerEmail =
-                    currentUserService
-                        .Email?
-                        .Trim()
-                    ?? string.Empty,
-
-                OwnerDisplayName =
-                    currentUserService
-                        .DisplayName?
-                        .Trim()
-                    ?? currentUserService
-                        .Email?
-                        .Trim()
-                    ?? "Unknown user",
-
                 Name = normalizedName,
 
                 Description =

@@ -10,8 +10,6 @@ public sealed record WorkflowResponse(
     string Name,
     string? Description,
     string OwnerObjectId,
-    string OwnerEmail,
-    string OwnerDisplayName,
     string RoleExternalId,
     string RoleName,
     string RoleAbbreviation,

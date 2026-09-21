@@ -30,8 +30,6 @@ public interface IApplicationDbContext
 
     DbSet<UserWorkflowActivity> UserWorkflowActivities { get; }
 
-    DbSet<WorkflowShare> WorkflowShares { get; }
-
     DbSet<HuddleSegment> HuddleSegments { get; }
     DbSet<HuddleSegmentRole> HuddleSegmentRoles { get; }
     DbSet<HuddleFocusArea> HuddleFocusAreas { get; }

@@ -39,15 +39,6 @@ public sealed class UserWorkflowConfiguration
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(workflow => workflow.OwnerEmail)
-            .HasMaxLength(320)
-            .IsRequired();
-
-        builder.Property(workflow =>
-                workflow.OwnerDisplayName)
-            .HasMaxLength(200)
-            .IsRequired();
-
         builder.Property(workflow =>
                 workflow.TotalDurationMinutes)
             .IsRequired();
