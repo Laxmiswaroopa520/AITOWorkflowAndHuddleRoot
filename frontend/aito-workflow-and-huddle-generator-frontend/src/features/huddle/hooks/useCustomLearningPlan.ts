@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { HuddlePersona } from "../types";
 
 /**
@@ -60,11 +60,17 @@ export function useCustomLearningPlan(persona: HuddlePersona | null): CustomLear
   const storageKey = `${storagePrefix}:${persona ?? "general"}`;
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sequence, setSequence] = useState<string[]>([]);
-  // Skips the very first persist after a load so switching persona never writes the
-  // outgoing persona's plan into the incoming persona's key.
-  const hydratedKey = useRef<string | null>(null);
+  // Tracks which storageKey `selectedIds`/`sequence` currently reflect, so a persona
+  // switch can be detected and re-hydrated directly during render -- React's documented
+  // pattern for adjusting state when a prop changes -- instead of in a post-commit effect.
+  // This also removes the one-frame flash of empty state that used to show before the old
+  // hydration effect ran. The persist effect below also reads this (instead of a ref, since
+  // refs can't be written during render) to skip the very first persist after a load, so
+  // switching persona never writes the outgoing persona's plan into the incoming persona's
+  // key.
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
-  useEffect(() => {
+  if (loadedKey !== storageKey) {
     const stored = readStoredPlan(storageKey);
     // Tolerates the legacy single-array shape written by earlier builds.
     const storedSelected = uniqueIds(stored?.selectedIds ?? stored?.sequence ?? []);
@@ -72,11 +78,11 @@ export function useCustomLearningPlan(persona: HuddlePersona | null): CustomLear
     const retained = storedSequence.filter((id) => storedSelected.includes(id));
     setSelectedIds(storedSelected);
     setSequence([...retained, ...storedSelected.filter((id) => !retained.includes(id))]);
-    hydratedKey.current = storageKey;
-  }, [storageKey]);
+    setLoadedKey(storageKey);
+  }
 
   useEffect(() => {
-    if (hydratedKey.current !== storageKey) return;
+    if (loadedKey !== storageKey) return;
     try {
       if (selectedIds.length === 0 && sequence.length === 0) {
         // Must remove rather than skip, otherwise an emptied plan reappears on reload.
@@ -87,7 +93,7 @@ export function useCustomLearningPlan(persona: HuddlePersona | null): CustomLear
     } catch {
       // Storage can be unavailable (private mode, quota). The in-memory plan still works.
     }
-  }, [storageKey, selectedIds, sequence]);
+  }, [storageKey, selectedIds, sequence, loadedKey]);
 
   const selectedLookup = useMemo(() => new Set(selectedIds), [selectedIds]);
 

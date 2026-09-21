@@ -76,7 +76,14 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
 
   const selected = roles.filter((role) => selectedIds.includes(role.externalId));
   const allSelected = roles.length > 0 && selected.length === roles.length;
-  const TriggerIcon = selected.length === 1 ? roleIcon(selected[0].externalId) : Briefcase;
+
+  /** Renders the trigger icon. A helper (like renderRole below) rather than a JSX-tag
+   * variable, since the icon can switch between different components as the selection
+   * changes. */
+  const renderTriggerIcon = () => {
+    const Icon = selected.length === 1 ? roleIcon(selected[0].externalId) : Briefcase;
+    return <Icon className="h-4 w-4 flex-none text-[#0F6CBD]" />;
+  };
 
   const toggle = (externalId: string) => {
     if (!multi) {
@@ -153,7 +160,7 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
           // A single selected role always reads by its full name here, in both single- and
           // multi-select mode -- the abbreviation ("AE") only appears once two or more roles are
           // selected and space is genuinely tight (see the chip row just below).
-          <span className="flex min-w-0 items-center gap-2"><TriggerIcon className="h-4 w-4 flex-none text-[#0F6CBD]" /><span className="truncate">{selected[0].name}</span></span>
+          <span className="flex min-w-0 items-center gap-2">{renderTriggerIcon()}<span className="truncate">{selected[0].name}</span></span>
         ) : (
           <span className="flex min-w-0 flex-wrap items-center gap-1.5">
             {selected.slice(0, 2).map((role) => <span key={role.externalId} className="rounded-full border border-[#0F6CBD]/20 bg-[#0F6CBD]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#115EA3]">{role.abbreviation}</span>)}

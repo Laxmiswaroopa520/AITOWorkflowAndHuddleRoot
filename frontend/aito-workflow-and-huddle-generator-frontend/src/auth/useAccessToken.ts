@@ -57,6 +57,7 @@ export function useAccessToken():
 
           throw new Error(
             "Interactive token acquisition was started.",
+            { cause: error },
           );
         }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { LoadingSpinner } from "@/components/feedback/LoadingSpinner";
@@ -45,6 +45,10 @@ const PAGE_SIZE = 10;
 
 export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audienceRoleIds, filterKey, filtersActive = false, votes, votePending, continueLearning, plan, planAudienceLabel, onSelect, onVote, onRetry, onContinue, onCloseDetails }: HuddleCatalogProps) {
   const [page, setPage] = useState(1);
+  // Tracks the filterKey that `page` was last reset for, so paging can restart at page one
+  // without an effect (adjusting state during render instead of in a useEffect, per React's
+  // guidance -- avoids the extra render pass a post-commit effect would trigger).
+  const [pagingFilterKey, setPagingFilterKey] = useState(filterKey);
   const [planOpen, setPlanOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
@@ -87,7 +91,10 @@ export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audi
   const pagedCards = cards.slice(pageStart, pageStart + PAGE_SIZE);
 
   // Filters live above this component now, so restart paging when they change.
-  useEffect(() => { setPage(1); }, [filterKey]);
+  if (filterKey !== pagingFilterKey) {
+    setPagingFilterKey(filterKey);
+    setPage(1);
+  }
 
   if (isLoading) return <LoadingSpinner message="Loading Huddles..." />;
   if (error) return <ErrorState title="Unable to load Huddles" message={error.message} onRetry={onRetry} />;

@@ -91,70 +91,6 @@ export function AuthGate({
     }
   };
 
-  const Shell = ({
-    children: shellChildren,
-  }: PropsWithChildren) => (
-    <div
-      className="
-        relative
-        min-h-screen
-        overflow-hidden
-        bg-background
-      "
-    >
-      <div
-        className="
-          pointer-events-none
-          fixed
-          inset-0
-          overflow-hidden
-        "
-        aria-hidden="true"
-      >
-        <div
-          className="
-            absolute
-            right-0
-            top-0
-            h-[500px]
-            w-[500px]
-            rounded-full
-            bg-primary/20
-            opacity-30
-            blur-3xl
-          "
-        />
-
-        <div
-          className="
-            absolute
-            bottom-0
-            left-0
-            h-[400px]
-            w-[400px]
-            rounded-full
-            bg-accent/10
-            blur-3xl
-          "
-        />
-      </div>
-
-      <div
-        className="
-          relative
-          z-10
-          flex
-          min-h-screen
-          items-center
-          justify-center
-          px-4
-        "
-      >
-        {shellChildren}
-      </div>
-    </div>
-  );
-
   if (isLoading) {
     return (
       <Shell>
@@ -376,6 +312,72 @@ export function AuthGate({
   }
 
   return <>{children}</>;
+}
+
+function Shell({
+  children: shellChildren,
+}: PropsWithChildren) {
+  return (
+    <div
+      className="
+        relative
+        min-h-screen
+        overflow-hidden
+        bg-background
+      "
+    >
+      <div
+        className="
+          pointer-events-none
+          fixed
+          inset-0
+          overflow-hidden
+        "
+        aria-hidden="true"
+      >
+        <div
+          className="
+            absolute
+            right-0
+            top-0
+            h-[500px]
+            w-[500px]
+            rounded-full
+            bg-primary/20
+            opacity-30
+            blur-3xl
+          "
+        />
+
+        <div
+          className="
+            absolute
+            bottom-0
+            left-0
+            h-[400px]
+            w-[400px]
+            rounded-full
+            bg-accent/10
+            blur-3xl
+          "
+        />
+      </div>
+
+      <div
+        className="
+          relative
+          z-10
+          flex
+          min-h-screen
+          items-center
+          justify-center
+          px-4
+        "
+      >
+        {shellChildren}
+      </div>
+    </div>
+  );
 }
 
 function MicrosoftLogo() {

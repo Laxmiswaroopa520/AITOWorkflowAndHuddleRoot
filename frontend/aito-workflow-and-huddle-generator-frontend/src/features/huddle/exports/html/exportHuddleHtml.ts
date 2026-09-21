@@ -1107,6 +1107,20 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
 `;
 
 /**
+ * THINK/FEEL/DO copy is called uniformly as `entry.copy(topicName)` (see the
+ * think-feel-do-grid render below), so every entry needs the same `(topic: string) =>
+ * string` signature even though FEEL and DO don't use the topic in their copy. Typed
+ * explicitly here (rather than inferred inline inside TEMPLATE) so those two entries can
+ * simply omit the unused parameter -- TypeScript allows a function with fewer parameters
+ * to satisfy a type that declares more, so calls still pass `topicName` as before.
+ */
+const THINK_FEEL_DO: Array<{ label: string; copy: (topic: string) => string }> = [
+  { label: "THINK", copy: (topic) => `See where AI can improve ${topic.toLowerCase()} in your work.` },
+  { label: "FEEL", copy: () => "Build confidence using AI while keeping your judgment in the loop." },
+  { label: "DO", copy: () => "Apply the workflow to a real scenario and leave with one action to try." },
+];
+
+/**
  * Copy that belongs to the guide template rather than to any Huddle record. The
  * reference export renders these identical strings for every Huddle, so they are
  * layout furniture and not database content. If the content model gains fields for
@@ -1124,11 +1138,7 @@ const TEMPLATE = {
     { key: "practice", title: "Explore & Practice", copy: "Use AI on real work, compare approaches, and validate the output together." },
     { key: "commit", title: "Commit to Action", copy: "Choose one action to try after the Huddle and decide what you will bring back next time." },
   ],
-  thinkFeelDo: [
-    { label: "THINK", copy: (topic: string) => `See where AI can improve ${topic.toLowerCase()} in your work.` },
-    { label: "FEEL", copy: (_topic: string) => "Build confidence using AI while keeping your judgment in the loop." },
-    { label: "DO", copy: (_topic: string) => "Apply the workflow to a real scenario and leave with one action to try." },
-  ],
+  thinkFeelDo: THINK_FEEL_DO,
   shareYourExperience: [
     { title: "What did you try with AI since the last Huddle?", copy: "Share a real task, prompt, workflow, or moment where you used AI." },
     { title: "What worked well, and what did not?", copy: "Compare useful approaches with outputs, dead ends, or situations where AI was less helpful." },
