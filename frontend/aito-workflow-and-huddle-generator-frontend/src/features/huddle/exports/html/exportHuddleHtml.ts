@@ -5,6 +5,7 @@ import type { HtmlExportFile, HuddleHtmlExportOptions } from "./html.types";
 import { huddleGuideInteractions } from "./huddleGuideInteractions";
 import { huddleGuideStyles } from "./huddleGuideStyles";
 import { agentArtwork, frontierAcceleratorLogo } from "./huddleGuideAssets";
+import { HUDDLE_FONT_STACK } from "./fontStack";
 
 const text = (value: string | number) => escapeHtml(value);
 
@@ -98,12 +99,12 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .huddle-page button,
   .huddle-page input,
   .huddle-page textarea {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
   }
 
   /* Main Huddle title */
   .hero-copy h1 {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 44px;
     font-weight: 700;
     line-height: 1.08;
@@ -111,7 +112,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
 
   /* Stage titles */
   .stage-header h2 {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 24px;
     font-weight: 700;
     line-height: 1.2;
@@ -123,7 +124,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .tool-card-title h2,
   .business-workflow-heading h2,
   .tfd-section-heading h2 {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 18px;
     font-weight: 700;
     line-height: 1.3;
@@ -144,7 +145,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-copy strong,
   .tool-info h3,
   .flow-stage-card h3 {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 600;
     line-height: 1.4;
@@ -175,7 +176,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .tfd-card p,
   .overview-next-note span {
     color: #263660;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 400;
     line-height: 1.55;
@@ -186,7 +187,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .practice-activity-heading small,
   .additional-activities-copy small,
   .featured-activities-header p {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 13px;
     font-weight: 400;
     line-height: 1.5;
@@ -199,7 +200,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .transition-kicker,
   .stage-topic-context > span,
   .overview-outcome > span {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 11px;
     font-weight: 700;
     line-height: 1.3;
@@ -207,14 +208,14 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
 
   /* Role / AI Tools / MCEM metadata */
   .meta-item small {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 12px;
     font-weight: 400;
     line-height: 1.3;
   }
 
   .meta-item strong {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 600;
     line-height: 1.4;
@@ -225,7 +226,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   /* Navigation and section controls */
   .huddle-section-tab,
   .section-action-button {
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 13px;
     font-weight: 600;
     line-height: 1.3;
@@ -327,7 +328,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     border-radius: 999px;
     color: #0f6cbd;
     background: #e8f2ff;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 10.5px;
     font-weight: 700;
     line-height: 1;
@@ -376,7 +377,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .activity-tool-name {
     min-width: 0;
     color: var(--ink);
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 600;
     line-height: 1.35;
@@ -393,7 +394,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     border-radius: 9px;
     color: #0f6cbd;
     background: #eef6ff;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 12px;
     font-weight: 600;
     line-height: 1.2;
@@ -430,7 +431,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .activity-detail-card > p {
     margin: 10px 0 0;
     color: #263660;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 400;
     line-height: 1.55;
@@ -439,7 +440,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .activity-wiifm-card > p {
     margin: 10px 0 0;
     color: #263660;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 400;
     line-height: 1.55;
@@ -479,7 +480,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     border-radius: 9px;
     color: #0f6cbd;
     background: #eef6ff;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 12px;
     font-weight: 600;
     line-height: 1.2;
@@ -568,7 +569,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     padding: 0 7px;
     color: #0f6cbd;
     background: #ffffff;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 9px;
     font-weight: 700;
     line-height: 1.2;
@@ -611,7 +612,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     border-radius: 999px;
     color: #0f6cbd;
     background: #e8f2ff;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 11px;
     font-weight: 700;
     line-height: 1.2;
@@ -634,7 +635,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-section-heading h3 {
     margin: 0;
     color: var(--ink);
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 16px;
     font-weight: 700;
     line-height: 1.3;
@@ -643,7 +644,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-section-heading p {
     margin: 3px 0 0;
     color: #61739b;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 12.5px;
     font-weight: 400;
     line-height: 1.4;
@@ -703,7 +704,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-tool-identity h3 {
     margin: 0;
     color: var(--ink);
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 15px;
     font-weight: 700;
     line-height: 1.3;
@@ -713,7 +714,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     display: block;
     margin-top: 3px;
     color: #61739b;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 12px;
     font-weight: 500;
     line-height: 1.35;
@@ -726,7 +727,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     border-radius: 8px;
     color: #0f6cbd;
     background: #eef6ff;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 11px;
     font-weight: 600;
     line-height: 1.2;
@@ -761,7 +762,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     display: block;
     margin-bottom: 5px;
     color: #0f6cbd;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 11px;
     font-weight: 700;
     line-height: 1.25;
@@ -772,7 +773,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-tool-detail p {
     margin: 0;
     color: #263660;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 12.5px;
     font-weight: 400;
     line-height: 1.5;
@@ -792,7 +793,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     border-radius: 999px;
     color: #326b38;
     background: #eff9f0;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 10.5px;
     font-weight: 600;
     line-height: 1.25;
@@ -831,7 +832,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     display: block;
     margin-bottom: 5px;
     color: #61739b;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 10px;
     font-weight: 700;
     line-height: 1.2;
@@ -842,7 +843,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-link-copy strong {
     display: block;
     color: #0f6cbd;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 13.5px;
     font-weight: 700;
     line-height: 1.35;
@@ -851,7 +852,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-link-copy p {
     margin: 7px 0 0;
     color: #263660;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 12.5px;
     font-weight: 400;
     line-height: 1.45;
@@ -886,7 +887,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .closing-card h3 {
     margin: 0 0 12px;
     color: var(--ink);
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 600;
     line-height: 1.4;
@@ -895,7 +896,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .closing-card > p {
     margin: 0;
     color: #263660;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 14px;
     font-weight: 400;
     line-height: 1.55;
@@ -926,7 +927,7 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     gap: 2px;
     padding-right: 4px;
     color: #0f3f87;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-family: ${HUDDLE_FONT_STACK};
     font-size: 11px;
     font-weight: 700;
     line-height: 1.2;

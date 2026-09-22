@@ -40,7 +40,7 @@ describe("secure Huddle HTML exports", () => {
     expect(output.html).toContain('src="data:image/png;base64,');
     expect(output.html).not.toContain('src="http');
     // The eight-section guide layout from the Frontier Accelerator reference export.
-    ["overview", "best-practices", "preparation", "practice", "commit", "tool", "resources", "notes"]
+    ["overview", "best-practices", "preparation", "practice", "commit", "closing", "resources", "notes"]
       .forEach((section) => expect(output.html).toContain('data-section-panel="' + section + '"'));
     expect(output.html).toContain("Share Your Experience");
     expect(output.html).toContain("Featured activities");
@@ -64,7 +64,7 @@ describe("secure Huddle HTML exports", () => {
     // Letters run as one sequence across both stacks: A featured, B optional.
     expect(optionalStack).toContain(">B<");
     expect(output.html).toContain("1 featured activity");
-    expect(output.html).toContain("1 optional");
+    expect(output.html).toContain("1 extended");
     expect(output.html).not.toContain("No additional activities are configured");
   });
 
