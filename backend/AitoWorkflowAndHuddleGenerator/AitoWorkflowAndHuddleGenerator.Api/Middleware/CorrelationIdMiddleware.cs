@@ -1,5 +1,6 @@
 namespace AitoWorkflowAndHuddleGenerator.Api.Middleware;
-
+/*Its purpose is to give each HTTP request a unique ID so you can trace that request through logs and the API response.
+*/
 /// <summary>
 /// Represents the Correlation Id Middleware model.
 /// </summary>

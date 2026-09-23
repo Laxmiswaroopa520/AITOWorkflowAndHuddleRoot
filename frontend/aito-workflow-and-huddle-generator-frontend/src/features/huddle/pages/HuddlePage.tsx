@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { HuddleAudienceSelect } from "../components/audience";
 import { HuddleCatalog, HuddleDownvoteDialog, HuddleFilterBar } from "../components/catalog";
-import { HuddleDetailPanel, HuddleHtmlExportDialog, HuddlePreviewDialog, HuddleWorkspace } from "../components/generated";
+import { HuddleDetailPanel, HuddlePreviewDialog, HuddleWorkspace } from "../components/generated";
 import { MeetCoachDialog } from "../components/coach";
 import { HuddleOnboardingExperience } from "../components/onboarding";
 import { HuddleResourcesRepository } from "../components/resources";
@@ -37,7 +37,6 @@ export function HuddlePage() {
   const [downvoteTarget, setDownvoteTarget] = useState<{ id: string; name: string } | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [htmlExportOpen, setHtmlExportOpen] = useState(false);
   const [htmlExportPending, setHtmlExportPending] = useState(false);
   const [coachContext, setCoachContext] = useState<{ externalId: string; name: string } | null>(null);
   const [persona, setPersona] = useAtom(huddlePersonaAtom);
@@ -179,14 +178,13 @@ export function HuddlePage() {
     voteMutation.mutate({ externalId, request: value === null ? null : { value, downvoteReasons: null, comment: null } });
   };
 
-  const exportSelectedHuddleHtml = async (facilitatorNotes: string | null) => {
-    if (!presentationModel) return;
+  const exportSelectedHuddleHtml = async () => {
+    if (!presentationModel || htmlExportPending) return;
     setHtmlExportPending(true);
     setFeedback(null);
     try {
       const { exportHuddleHtml } = await import("../exports/html");
-      exportHuddleHtml(presentationModel, { facilitatorNotes });
-      setHtmlExportOpen(false);
+      exportHuddleHtml(presentationModel);
       setFeedback({ kind: "success", message: "HTML downloaded successfully." });
     } catch (error) {
       setFeedback({ kind: "error", message: error instanceof Error ? error.message : "Unable to download the HTML." });
@@ -205,7 +203,7 @@ export function HuddlePage() {
     }
   };
 
-  const detailPanel = <HuddleDetailPanel data={detailQuery.data} isLoading={detailQuery.isLoading} error={detailQuery.error} hasSelection={Boolean(selectedExternalId)} exportPending={exportPending} onRetry={() => void detailQuery.refetch()} onOpenWorkspace={() => setWorkspaceOpen(true)} onPreview={() => setPreviewOpen(true)} onExportHtml={() => setHtmlExportOpen(true)} onExportPowerPoint={() => void exportSelectedHuddlePowerPoint()} onMeetCoach={() => detailQuery.data && setCoachContext({ externalId: detailQuery.data.externalId, name: detailQuery.data.name })} />;
+  const detailPanel = <HuddleDetailPanel data={detailQuery.data} isLoading={detailQuery.isLoading} error={detailQuery.error} hasSelection={Boolean(selectedExternalId)} exportPending={exportPending} onRetry={() => void detailQuery.refetch()} onOpenWorkspace={() => setWorkspaceOpen(true)} onPreview={() => setPreviewOpen(true)} onExportHtml={() => void exportSelectedHuddleHtml()} onExportPowerPoint={() => void exportSelectedHuddlePowerPoint()} onMeetCoach={() => detailQuery.data && setCoachContext({ externalId: detailQuery.data.externalId, name: detailQuery.data.name })} />;
 
   return (
     <div className="mx-auto max-w-[1540px] space-y-6 p-4 [font-family:var(--aito-font-sans)] lg:p-6">
@@ -236,7 +234,6 @@ export function HuddlePage() {
       {downvoteTarget && <HuddleDownvoteDialog huddleName={downvoteTarget.name} onCancel={() => setDownvoteTarget(null)} onSubmit={(downvoteReasons, comment) => { voteMutation.mutate({ externalId: downvoteTarget.id, request: { value: -1, downvoteReasons, comment } }); setDownvoteTarget(null); }} />}
       {workspaceOpen && presentationModel && !sessionQuery.isLoading && <HuddleWorkspace key={presentationModel.identity.externalId} model={presentationModel} session={sessionQuery.data} sessionLoading={sessionQuery.isLoading} sessionError={sessionError} mutationPending={saveSessionMutation.isPending || activityCompletionMutation.isPending || completeSessionMutation.isPending} onRefreshSession={async () => (await sessionQuery.refetch()).data} onSaveSession={saveSession} onSetActivityCompletion={setActivityCompletion} onCompleteSession={completeSession} onMeetCoach={() => setCoachContext({ externalId: presentationModel.identity.externalId, name: presentationModel.identity.name })} onPreviewSlides={() => setPreviewOpen(true)} onClose={() => setWorkspaceOpen(false)} />}
       {previewOpen && presentationModel && <HuddlePreviewDialog open model={presentationModel} onClose={() => setPreviewOpen(false)} />}
-      {presentationModel && <HuddleHtmlExportDialog open={htmlExportOpen} pending={htmlExportPending} initialNotes={sessionQuery.data?.facilitatorNotes} onCancel={() => setHtmlExportOpen(false)} onDownload={(notes) => void exportSelectedHuddleHtml(notes)} />}
       {coachContext && <MeetCoachDialog open huddleExternalId={coachContext.externalId} huddleName={coachContext.name} onClose={() => setCoachContext(null)} />}
       <HuddleResourcesRepository open={resourcesOpen} catalog={referenceCatalogQuery.data ?? []} onClose={() => setResourcesOpen(false)} />
     </div>

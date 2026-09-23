@@ -39,9 +39,12 @@ describe("secure Huddle HTML exports", () => {
     // Brand artwork is inlined as data URIs, never fetched from the network.
     expect(output.html).toContain('src="data:image/png;base64,');
     expect(output.html).not.toContain('src="http');
-    // The eight-section guide layout from the Frontier Accelerator reference export.
-    ["overview", "best-practices", "preparation", "practice", "commit", "closing", "resources", "notes"]
+    // The seven-section guide layout from the Frontier Accelerator reference export.
+    // Facilitator Notes is deliberately not part of the Download HTML output.
+    ["overview", "best-practices", "preparation", "practice", "commit", "closing", "resources"]
       .forEach((section) => expect(output.html).toContain('data-section-panel="' + section + '"'));
+    expect(output.html).not.toContain('data-section-panel="notes"');
+    expect(output.html).not.toContain('data-section-target="notes"');
     expect(output.html).toContain("Share Your Experience");
     expect(output.html).toContain("Featured activities");
     expect(output.html).toContain('data-activity-tier="optional"');
@@ -66,14 +69,6 @@ describe("secure Huddle HTML exports", () => {
     expect(output.html).toContain("1 featured activity");
     expect(output.html).toContain("1 extended");
     expect(output.html).not.toContain("No additional activities are configured");
-  });
-
-  it("includes explicitly supplied facilitator notes and escapes untrusted markup", () => {
-    const output = createHuddleHtmlExport(huddle, { facilitatorNotes: '<img src=x onerror="alert(1)"> Follow up' });
-    // The panel heading follows the Frontier Accelerator reference export.
-    expect(output.html).toContain("Facilitator Notes");
-    expect(output.html).toContain("&lt;img src=x onerror=&quot;alert(1)&quot;&gt; Follow up");
-    expect(output.html).not.toContain('<img src=x onerror="alert(1)"> Follow up');
   });
 
   it("orders the persisted learning plan as Weeks 2 through 8", () => {

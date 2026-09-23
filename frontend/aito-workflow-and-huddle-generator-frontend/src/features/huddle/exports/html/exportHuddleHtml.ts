@@ -1341,9 +1341,36 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   const optionalActivities: readonly HuddlePresentationActivity[] =
     allActivities.filter((activity) => activity.practiceTier === "Extended");
 
-  const agents = [...model.agents.primary, ...model.agents.secondary]
+  // "Used" means an activity actually calls on the agent -- not just that the Huddle's
+  // author-curated agents.primary/secondary tags mention it. Those tags can list an agent no
+  // activity actually uses, which used to make it show as "Used in huddle" in the Top 5 band
+  // (and in the AI Tools summary / Resources tool grid below) even though nothing in the
+  // Huddle calls on it. Matching by agentArtwork (rather than externalId) keeps this
+  // label-tolerant, the same way topFiveAgentBand already matches artwork.
+  const declaredAgents = [...model.agents.primary, ...model.agents.secondary]
     .filter((agent, index, all) => all.findIndex((candidate) => candidate.externalId === agent.externalId) === index)
     .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId));
+
+  const activityAgentArtworkSources = new Set(
+    allActivities
+      .flatMap((activity) => activity.agents)
+      .map((agent) => agentArtwork(agent.name)?.source)
+      .filter((source): source is string => Boolean(source)),
+  );
+  const usedDeclaredAgents = declaredAgents.filter((agent) => {
+    const source = agentArtwork(agent.name)?.source;
+    return source ? activityAgentArtworkSources.has(source) : false;
+  });
+
+  // The Top 5 (in the official band order) that this Huddle actually uses, followed by
+  // whichever other used agents are not one of the five -- matching the "Top 5: ... . Also
+  // used: ... ." grouping in the AI Tools summary below and the order of the Resources tool grid.
+  const topFiveUsedAgents = TOP_FIVE_AGENT_NAMES
+    .map((name) => usedDeclaredAgents.find((agent) => agentArtwork(agent.name)?.source === agentArtwork(name)?.source))
+    .filter((agent): agent is HuddlePresentationAgent => Boolean(agent));
+  const alsoUsedAgents = usedDeclaredAgents.filter((agent) => !topFiveUsedAgents.includes(agent));
+
+  const agents = [...topFiveUsedAgents, ...alsoUsedAgents];
 
   const resources = [...model.resources, ...allActivities.flatMap((activity) => activity.resources), ...agents.flatMap((agent) => agent.resources)]
     .filter((resource, index, all) => all.findIndex((candidate) => candidate.externalId === resource.externalId) === index)
@@ -1355,17 +1382,23 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   // panel previously rendered its placeholders.
   const reflectPrompt = guide?.reflectPrompt ?? model.reflectionPrompt;
   const commitPrompt = guide?.commitPrompt ?? model.commitmentPrompt;
-  const facilitatorNotes = options.facilitatorNotes?.trim() || null;
   const topicName = model.identity.name;
-  const toolNames = agentNames(agents);
+  const aiToolsSummary = (() => {
+    const topFiveNames = agentNames(topFiveUsedAgents);
+    const alsoUsedNames = agentNames(alsoUsedAgents);
+    if (!topFiveNames.length && !alsoUsedNames.length) return "Not configured";
+    const topFivePart = topFiveNames.length ? `Top 5: ${topFiveNames.join(", ")}.` : "";
+    const alsoUsedPart = alsoUsedNames.length ? `Also used: ${alsoUsedNames.join(", ")}.` : "";
+    return [topFivePart, alsoUsedPart].filter(Boolean).join(" ");
+  })();
   const stageName = (index: number, fallback: string) => phases[index]?.name?.trim() || fallback;
   const stageDescription = (index: number) => phases[index]?.description ?? null;
 
   // "AI Tools" is no longer a standalone tab -- its content (the same `agents` array) now
   // renders inside Resources as the resource hub, matching the reference design. "Closing &
-  // Next Steps" is new. "Facilitator Notes" is kept (the reference design has no equivalent
-  // panel for it, and options.facilitatorNotes is real export-time content that would
-  // otherwise have nowhere to render) -- see the export report for why it was kept.
+  // Next Steps" is new. Facilitator Notes has no panel in the downloaded export (removed on
+  // the manager's instruction; options.facilitatorNotes still reaches this function -- see the
+  // export report for why the export itself no longer renders it).
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "best-practices", label: "Share Your Experience" },
@@ -1374,7 +1407,6 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     { key: "commit", label: stageName(2, "Commit to Action") },
     { key: "closing", label: "Closing & Next Steps" },
     { key: "resources", label: "Resources" },
-    { key: "notes", label: "Facilitator Notes" },
   ];
 
   const generated = new Date();
@@ -1393,7 +1425,7 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `<div class="meta-strip">`
     + `<div class="meta-item"><span class="round-icon meta-icon">${ROLE_SVG}</span><span><small>Role</small><strong>${text(model.audience.roleName?.trim() || "Not specified")}</strong></span></div>`
     + `<span class="meta-divider"></span>`
-    + `<div class="meta-item"><span class="round-icon meta-icon">${AI_TOOLS_SVG}</span><span><small>AI Tools</small><strong>${text(toolNames.length ? toolNames.join(", ") : "Not configured")}</strong></span></div>`
+    + `<div class="meta-item"><span class="round-icon meta-icon">${AI_TOOLS_SVG}</span><span><small>AI Tools</small><strong>${text(aiToolsSummary)}</strong></span></div>`
     + `<span class="meta-divider"></span>`
     + `<div class="meta-item"><span class="round-icon meta-icon">${MCEM_SVG}</span><span><small>MCEM Stages</small><strong>${text(model.mcemStages.length ? model.mcemStages.map((stage) => stage.name).join(", ") : "Not configured")}</strong></span></div>`
     + `</div></div>`
@@ -1416,7 +1448,14 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   const sharePanel = `<section class="huddle-section-panel" data-section-panel="best-practices">`
     + `<section class="card best-practices-shell"><div class="section-heading"><span class="sparkle-icon">\u2726</span><h2>Share Your Experience</h2></div>`
     + `<p class="best-practices-intro">Use this time to share what you tried with AI since the last Huddle. Compare what worked, what did not, what you learned, and where you ran into friction.</p>`
-    + `<div class="discussion-question-grid">${TEMPLATE.shareYourExperience.map((entry, index) => `<div class="discussion-question-card"><span>${String(index + 1).padStart(2, "0")}</span><div><strong>${text(entry.title)}</strong><p>${text(entry.copy)}</p></div></div>`).join("")}</div>`
+    // Stack the cards in one straight column for the three-prompt template, matching the
+    // reference guide; keep the CSS's own 2x2 fallback (`is-four`) if the template ever grows.
+    // (widened to `number` so the comparisons below aren't narrowed to this fixed tuple's literal length)
+    + (() => {
+      const shareCount: number = TEMPLATE.shareYourExperience.length;
+      const gridModifier = shareCount === 4 ? " is-four" : shareCount === 3 ? " is-stacked" : "";
+      return `<div class="discussion-question-grid${gridModifier}">${TEMPLATE.shareYourExperience.map((entry, index) => `<div class="discussion-question-card"><span>${String(index + 1).padStart(2, "0")}</span><div><strong>${text(entry.title)}</strong><p>${text(entry.copy)}</p></div></div>`).join("")}</div>`;
+    })()
     + `</section></section>`;
 
   const preparationPanel = `<section class="huddle-section-panel" data-section-panel="preparation">`
@@ -1425,7 +1464,7 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
       + `<section class="stage-content-card preparation-session-card"><h3>Session introduction</h3>${guide?.sessionIntroduction ? questionList([guide.sessionIntroduction], "") : placeholder("No session introduction is configured for this Huddle yet.")}</section>`
       + `<section class="stage-content-card preparation-talking-card"><h3>Key Talking Points</h3>${questionList(guide?.keyTalkingPoints ?? [], "No key talking points are configured for this Huddle yet.")}</section>`
       + `<section class="stage-content-card preparation-discuss-card"><h3>Discuss before practicing</h3>${questionList(guide?.discussionQuestions ?? [], "No discussion questions are configured for this Huddle yet.")}</section>`
-      + `<section class="stage-content-card preparation-checklist preparation-bring-card"><h3>Bring into the conversation</h3>${questionList(guide?.preparationChecklist?.length ? guide.preparationChecklist : TEMPLATE.bringIntoTheConversation, "")}</section>`
+      + `<section class="stage-content-card preparation-checklist preparation-bring-card"><h3>Facilitator to bring into the conversation</h3>${questionList(guide?.preparationChecklist?.length ? guide.preparationChecklist : TEMPLATE.bringIntoTheConversation, "")}</section>`
       + `</div>`)
     + `</section>`;
 
@@ -1463,6 +1502,10 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `<section class="closing-card"><h3>Weekly Pulse</h3><p class="weekly-pulse-question">${text(TEMPLATE.weeklyPulse)}</p></section>`
     + `</div>`
     + `</section>`
+    // Facilitator Notes (removed from this export) used to be the last panel, and this footer
+    // was rendered at its end. Closing & Next Steps is now the last panel, so the footer moved
+    // here with it.
+    + `<footer class="page-footer"><div class="generated-badge">${COPILOT_MARK}<span>Generated from the Frontier Accelerator App</span><i></i><span>${text(generatedDate)}</span><b>\u2022</b><span>${text(generatedTime)}</span></div><span class="page-number">1</span></footer>`
     + `</section>`;
 
   // Resources now doubles as the resource hub: the AI tools grid that used to be its own
@@ -1473,14 +1516,6 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `${agents.length ? `<div class="resource-tool-grid">${agents.map(resourceHubToolCard).join("")}</div>` : placeholder("No AI tools are configured for this Huddle yet.")}`
     + `<div class="resource-section-heading"><div><h3>Supporting resources</h3><p>Use portfolio, role, topic, activity, and agent resources that support this Huddle.</p></div></div>`
     + `${resources.length ? resourceHubLinks(resources) : placeholder("No resources are configured for this Huddle yet.")}`
-    + `</section>`;
-
-  const notesPanel = `<section class="huddle-section-panel" data-section-panel="notes">`
-    + `<section class="facilitator-notes-card card"><div class="section-heading"><span class="sparkle-icon">\u2726</span><h2>Facilitator Notes</h2></div>`
-    + `<p class="facilitator-notes-intro">These notes were added by the facilitator before downloading the Huddle.</p>`
-    + `<div class="facilitator-notes-content">${facilitatorNotes ? text(facilitatorNotes) : "No facilitator notes were added for this Huddle."}</div>`
-    + `</section>`
-    + `<footer class="page-footer"><div class="generated-badge">${COPILOT_MARK}<span>Generated from the Frontier Accelerator App</span><i></i><span>${text(generatedDate)}</span><b>\u2022</b><span>${text(generatedTime)}</span></div><span class="page-number">1</span></footer>`
     + `</section>`;
 
   const body = `<article class="huddle-page segmented-huddle-page workflow-huddle-page" id="huddle-1">`
@@ -1499,9 +1534,8 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `</div>`
     + `<button type="button" class="huddle-section-tab" data-section-target="closing"><span class="tab-label">Closing & Next Steps</span></button>`
     + `<button type="button" class="huddle-section-tab" data-section-target="resources"><span class="tab-label">Resources</span></button>`
-    + `<button type="button" class="huddle-section-tab" data-section-target="notes"><span class="tab-label">Facilitator Notes</span></button>`
     + `</div><div class="huddle-section-status"><small>Huddle section</small><strong><span data-section-index>1</span> of ${tabs.length} \u00b7 <span data-section-name>Overview</span></strong></div></nav>`
-    + `<main class="page-content">${overviewPanel}${sharePanel}${preparationPanel}${practicePanel}${commitPanel}${closingPanel}${resourcesPanel}${notesPanel}</main>`
+    + `<main class="page-content">${overviewPanel}${sharePanel}${preparationPanel}${practicePanel}${commitPanel}${closingPanel}${resourcesPanel}</main>`
     + `<div class="huddle-section-actions"><button type="button" class="section-action-button section-previous" data-section-previous>\u2190 Previous</button><button type="button" class="section-action-button section-next" data-section-next>Next \u2192</button></div>`
     + `</article><div class="toast" id="copyToast">Prompt copied</div>`;
 
