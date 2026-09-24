@@ -2,7 +2,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import type { HuddlePlanResponse, HuddlePresentationModel } from "../../types";
+import type { HuddlePlanResponse, HuddlePresentationAgent, HuddlePresentationModel } from "../../types";
 import { HUDDLE_FONT_STACK } from "./fontStack";
 import { createHuddleHtmlExport } from "./exportHuddleHtml";
 import { createLearningPlanHtmlExport } from "./exportLearningPlanHtml";
@@ -69,6 +69,29 @@ describe("secure Huddle HTML exports", () => {
     expect(output.html).toContain("1 featured activity");
     expect(output.html).toContain("1 extended");
     expect(output.html).not.toContain("No additional activities are configured");
+  });
+
+  it("shows the Open tool button on every activity tool row, as a placeholder until a URL exists", () => {
+    const agent: HuddlePresentationAgent = { externalId: "agent-sales", name: "Sales Agent", shortDescription: null, whatItIs: null, whatItHelpsYouDo: null, whenToUseIt: null, keyBenefits: [], usageType: "Primary", displayLabel: null, showAccessLink: false, accessUrl: null, accessLinkLabel: null, displayOrder: 1, resources: [] };
+    // Declared on the Huddle and used by an activity, so it also gets a Resources tool card.
+    const withAgent = (value: HuddlePresentationAgent) => createHuddleHtmlExport({ ...huddle, agents: { primary: [value], secondary: [] }, phases: [{ ...huddle.phases[0], activities: [{ ...huddle.phases[0].activities[0], agents: [value] }] }] }).html;
+
+    const placeholderHtml = withAgent(agent);
+    expect(placeholderHtml).toContain('<span class="activity-open-tool is-placeholder" aria-disabled="true" title="Link coming soon">Open Sales Agent ↗</span>');
+    expect(placeholderHtml).toContain('<span class="resource-tool-open is-placeholder" aria-disabled="true" title="Link coming soon">Open Sales Agent ↗</span>');
+
+    // showAccessLink stays false: the link follows accessUrl alone.
+    const linkedHtml = withAgent({ ...agent, accessUrl: "https://example.com/sales" });
+    expect(linkedHtml).toContain('<a class="activity-open-tool" href="https://example.com/sales"');
+    expect(linkedHtml).toContain('<a class="resource-tool-open" href="https://example.com/sales"');
+    expect(linkedHtml).not.toContain("is-placeholder\" aria-disabled");
+  });
+
+  it("puts Also used on its own line in the Overview AI Tools summary", () => {
+    const tool = (externalId: string, name: string): HuddlePresentationAgent => ({ externalId, name, shortDescription: null, whatItIs: null, whatItHelpsYouDo: null, whenToUseIt: null, keyBenefits: [], usageType: "Primary", displayLabel: null, showAccessLink: false, accessUrl: null, accessLinkLabel: null, displayOrder: 1, resources: [] });
+    const agents = [tool("a-1", "Cowork"), tool("a-2", "Microsoft 365 Copilot")];
+    const html = createHuddleHtmlExport({ ...huddle, agents: { primary: agents, secondary: [] }, phases: [{ ...huddle.phases[0], activities: [{ ...huddle.phases[0].activities[0], agents }] }] }).html;
+    expect(html).toContain("<small>AI Tools</small><strong>Top 5: Cowork.\nAlso used: Microsoft 365 Copilot.</strong>");
   });
 
   it("orders the persisted learning plan as Weeks 2 through 8", () => {
