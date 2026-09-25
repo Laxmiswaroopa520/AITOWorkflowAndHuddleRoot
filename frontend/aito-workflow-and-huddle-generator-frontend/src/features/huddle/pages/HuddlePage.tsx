@@ -54,7 +54,6 @@ export function HuddlePage() {
     return () => window.clearTimeout(timer);
   }, [feedback]);
 
-  const referenceCatalogQuery = useHuddleCatalog({});
   // All Topics is the workbook's Additional_Content sheet, scoped to the chosen audience or
   // to the reader's own Role Path role. It is not "every topic whose AlignedRoles mentions me",
   // which is what previously surfaced a role's own Role Path topics under All Topics.
@@ -90,6 +89,16 @@ export function HuddlePage() {
   // Only the Role Path tab reads the Role Path. A role can legitimately have no weekly path,
   // and a role-path problem must not reach a tab that does not show it.
   const recommendedPathQuery = useMyHuddlePlan(selectedRoleExternalId, viewMode === "guided");
+  // The full catalogue is the heaviest read on the page and nothing needs it to draw the Role
+  // Path (it feeds swap/reset, filters, the downvote name and Resources). Hold it back only while
+  // the Role Path loads, so the two no longer compete. It loads on All Topics (filters), when
+  // Resources opens, or once the Role Path has finished or failed (swap/reset/downvote names). The
+  // view mode starts as "orientation" before switching to Role Path, so a "not guided" test would
+  // start the full read at page load; the Onboarding view itself does not use the catalogue.
+  const referenceCatalogQuery = useHuddleCatalog(
+    {},
+    viewMode === "evergreen" || resourcesOpen || recommendedPathQuery.isSuccess || recommendedPathQuery.isError,
+  );
   // Which placement to open. The same topic sits on several role paths with different activities,
   // so the detail read has to name one, otherwise the API aggregates every role: a topic on five
   // placements comes back with fifteen phases. Role Path and catalogue cards both carry the id.

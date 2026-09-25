@@ -3,6 +3,7 @@ using AitoWorkflowAndHuddleGenerator
     .Application
     .Common
     .Behaviors;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Common;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +38,10 @@ public static class DependencyInjection
         services.AddTransient(
             typeof(IPipelineBehavior<,>),
             typeof(ValidationBehavior<,>));
+
+        // Short-lived in-memory copy of the governed Role Path content (never a user's saved plan).
+        services.AddMemoryCache();
+        services.AddSingleton<RecommendedRolePathCache>();
 
         return services;
     }

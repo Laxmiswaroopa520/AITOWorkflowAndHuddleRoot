@@ -13,9 +13,15 @@ namespace AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Quer
 /// <summary>
 /// Handles the Get My Huddle Plan query.
 /// </summary>
+/// <param name="rolePathCache">
+/// Optional. When supplied (the application registers one), the role's governed path and its
+/// recommended plan are served from memory; the user's own saved plan is always read fresh.
+/// Without it every read goes to the database, exactly as before.
+/// </param>
 public sealed class GetMyHuddlePlanQueryHandler(
     IApplicationDbContext dbContext,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    RecommendedRolePathCache? rolePathCache = null)
     : IRequestHandler<GetMyHuddlePlanQuery, HuddlePlanResponse>
 {
     /// <summary>
@@ -27,14 +33,12 @@ public sealed class GetMyHuddlePlanQueryHandler(
             ?? throw new UnauthorizedAccessException(AuthenticationMessages.MissingObjectIdClaim);
         string roleExternalId = request.RoleExternalId.Trim();
 
-        int segmentRoleId = await dbContext.HuddleSegmentRoles.AsNoTracking()
-            .Where(item => item.Role.ExternalId == roleExternalId && item.Role.IsActive)
-            .Select(item => (int?)item.Id)
-            .SingleOrDefaultAsync(cancellationToken)
+        RolePathSnapshot snapshot = (rolePathCache is null
+                ? await RecommendedRolePathCache.LoadRolePathAsync(dbContext, roleExternalId, cancellationToken)
+                : await rolePathCache.GetRolePathAsync(dbContext, roleExternalId, cancellationToken))
             ?? throw new NotFoundException(HuddleMessages.ActiveRoleNotFound(roleExternalId));
-
-        List<HuddleRolePathEntry> path = await HuddleRolePathReader.LoadWeeklyPathAsync(
-            dbContext, roleExternalId, cancellationToken);
+        int segmentRoleId = snapshot.SegmentRoleId;
+        IReadOnlyList<HuddleRolePathEntry> path = snapshot.Path;
 
         // A role can legitimately have no weekly path. The workbook's ROLE-ALL appears only in
         // Additional_Content, so it has additional Huddles but no Weeks 1 to 8. That is an empty
@@ -59,10 +63,33 @@ public sealed class GetMyHuddlePlanQueryHandler(
         if (plan is not null && !CoversPath(plan.Items, path))
             throw new ConflictException(HuddleMessages.SavedPlanInvalid);
 
-        List<HuddlePlanWeek> weeks = plan is null
-            ? await RecommendedWeeks(path, cancellationToken)
-            : await SavedWeeks(plan, path, cancellationToken);
+        // No saved plan: the response is the role's recommended plan, which holds nothing specific
+        // to this user, so it can be shared. A saved plan below is always built fresh.
+        if (plan is null)
+            return rolePathCache is null
+                ? await BuildRecommendedAsync(dbContext, roleExternalId, path, cancellationToken)
+                : await rolePathCache.GetRecommendedAsync(roleExternalId,
+                    () => BuildRecommendedAsync(dbContext, roleExternalId, path, cancellationToken));
 
+        List<HuddlePlanWeek> weeks = await SavedWeeks(plan, path, cancellationToken);
+        return await ToResponseAsync(dbContext, roleExternalId, plan.RowVersion, weeks, cancellationToken);
+    }
+
+    /// <summary>
+    /// The recommended plan for a role's weekly path, as returned to a user with no saved plan.
+    /// </summary>
+    private static async Task<HuddlePlanResponse> BuildRecommendedAsync(
+        IApplicationDbContext dbContext, string roleExternalId,
+        IReadOnlyList<HuddleRolePathEntry> path, CancellationToken cancellationToken)
+    {
+        List<HuddlePlanWeek> weeks = await RecommendedWeeks(dbContext, path, cancellationToken);
+        return await ToResponseAsync(dbContext, roleExternalId, null, weeks, cancellationToken);
+    }
+
+    private static async Task<HuddlePlanResponse> ToResponseAsync(
+        IApplicationDbContext dbContext, string roleExternalId, byte[]? rowVersion,
+        List<HuddlePlanWeek> weeks, CancellationToken cancellationToken)
+    {
         IReadOnlyDictionary<int, int> activityCounts = await HuddleActivityCounts.LoadAsync(
             dbContext, weeks.Select(week => week.Topic.Id).Distinct().ToList(), cancellationToken);
         // Each week's Primary Agents come from its own placement's activities, not the topic's
@@ -74,15 +101,15 @@ public sealed class GetMyHuddlePlanQueryHandler(
                 cancellationToken);
 
         return HuddlePlanMappings.ToResponse(
-            roleExternalId, plan?.RowVersion, weeks, activityCounts, placementPrimaryAgents);
+            roleExternalId, rowVersion, weeks, activityCounts, placementPrimaryAgents);
     }
 
     private static bool CoversPath(ICollection<UserHuddlePlanItem> items, IReadOnlyList<HuddleRolePathEntry> path) =>
         items.Count == path.Count
         && items.Select(item => item.WeekPosition).Order().SequenceEqual(path.Select(entry => entry.Week));
 
-    private async Task<List<HuddlePlanWeek>> RecommendedWeeks(
-        IReadOnlyList<HuddleRolePathEntry> path, CancellationToken cancellationToken)
+    private static async Task<List<HuddlePlanWeek>> RecommendedWeeks(
+        IApplicationDbContext dbContext, IReadOnlyList<HuddleRolePathEntry> path, CancellationToken cancellationToken)
     {
         List<HuddleTopic> topics = await HuddleTopicGraph.LoadCatalogGraphAsync(
             dbContext, path.Select(entry => entry.HuddleTopicId).ToList(), cancellationToken);

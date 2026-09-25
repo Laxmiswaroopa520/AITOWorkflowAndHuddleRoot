@@ -1,4 +1,5 @@
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Identity;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Common;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Commands.ResetHuddlePlan;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Commands.SaveHuddlePlan;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Queries.GetMyHuddlePlan;
@@ -7,6 +8,7 @@ using AitoWorkflowAndHuddleGenerator.Domain.Entities;
 using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AitoWorkflowAndHuddleGenerator.IntegrationTests.Huddles;
 
@@ -53,6 +55,36 @@ public sealed class HuddlePlanApiTests
             .Handle(new GetMyHuddlePlanQuery("role-1"), default);
         Assert.False(otherUser.IsCustomized);
         Assert.Null(otherUser.RowVersion);
+    }
+
+    [Fact]
+    public async Task PlanQuery_WithRolePathCache_ShouldReuseRecommendedPlanButNeverServeASavedPlan()
+    {
+        await using ApplicationDbContext db = CreateContext();
+        await SeedCatalog(db);
+        var cache = new RecommendedRolePathCache(new MemoryCache(new MemoryCacheOptions()));
+        var user1 = new TestCurrentUserService("user-1");
+        var cachedQuery = new GetMyHuddlePlanQueryHandler(db, user1, cache);
+
+        HuddlePlanResponse first = await cachedQuery.Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        HuddlePlanResponse second = await cachedQuery.Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        Assert.Same(first, second);
+        Assert.False(first.IsCustomized);
+
+        SaveHuddlePlanItemRequest[] reversed = first.Items.Reverse()
+            .Select((item, index) => new SaveHuddlePlanItemRequest(1 + index, item.Huddle.ExternalId, item.Huddle.PlacementExternalId)).ToArray();
+        await new SaveHuddlePlanCommandHandler(db, user1)
+            .Handle(new SaveHuddlePlanCommand("role-1", null, reversed), default);
+
+        // The owner's saved plan is read fresh even though the recommended plan is cached...
+        HuddlePlanResponse mine = await cachedQuery.Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        Assert.True(mine.IsCustomized);
+        Assert.Equal(reversed.Select(item => item.HuddleExternalId), mine.Items.Select(item => item.Huddle.ExternalId));
+
+        // ...and another user still gets the shared recommended plan, not user-1's customisation.
+        HuddlePlanResponse otherUser = await new GetMyHuddlePlanQueryHandler(db, new TestCurrentUserService("user-2"), cache)
+            .Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        Assert.Same(first, otherUser);
     }
 
     // The saved-plan response reuses HuddleMappings.ToCatalogItem, the same mapper the catalog and
