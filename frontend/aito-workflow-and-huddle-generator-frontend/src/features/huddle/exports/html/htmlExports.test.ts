@@ -96,10 +96,12 @@ describe("secure Huddle HTML exports", () => {
 
   it("orders the persisted learning plan as Weeks 2 through 8", () => {
     const html = createLearningPlanHtmlExport(plan).html;
-    const positions = [2, 3, 4, 5, 6, 7, 8].map((week) => html.indexOf(`W${week}</span>`));
+    const positions = [2, 3, 4, 5, 6, 7, 8].map((week) => html.indexOf(`<td>Week ${week}</td>`));
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
-    expect(html).toContain("Recommended replacement reference:");
-    expect(html).toContain("@media(max-width:760px)");
+    // Week 4 is the one customized item in the fixture (recommendedHuddleExternalId
+    // "recommended-topic" differs from its huddle's own "topic-4"), so its row should name what
+    // it replaced in the Customization column.
+    expect(html).toContain("recommended-topic");
   });
 
   it("renders every generated document in the one font stack", () => {

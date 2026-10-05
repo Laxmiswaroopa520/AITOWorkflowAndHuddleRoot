@@ -29,9 +29,22 @@ export function HuddleCatalogCard({ huddle, selected, vote, votePending, week, o
   // A single activation path for the card: tick the plan checkbox and make this the
   // Huddle shown in the detail panel. The checkbox and the card body must never
   // disagree, so every click routes through here.
+  //
+  // `onSelect` only toggles the shared single-selection state (select this huddle, or clear
+  // it when this huddle is already the one selected) -- it has no independent "set" mode. With
+  // no plan checkbox, that toggle is exactly what a card click should do (click again to close).
+  // With a checkbox, we must only let that toggle fire when it actually needs to flip the
+  // selection to match the checkbox's new state: checking an unselected topic should select it,
+  // and unchecking the currently-selected topic should clear it -- but unchecking a topic that
+  // was never the one shown in the detail panel must leave the panel alone, not reopen it.
   const activate = () => {
-    onTogglePlan?.(huddle.id);
-    onSelect(huddle.id);
+    if (!onTogglePlan) {
+      onSelect(huddle.id);
+      return;
+    }
+    const nextChecked = !planChecked;
+    onTogglePlan(huddle.id);
+    if (nextChecked !== selected) onSelect(huddle.id);
   };
 
   return (

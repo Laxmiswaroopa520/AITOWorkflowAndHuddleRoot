@@ -1176,6 +1176,7 @@ const TEMPLATE = {
     "What did you observe about how the team applied AI during this Huddle?",
     "What support, coaching, access, or follow-up would help the team make progress before the next Huddle?",
   ],
+  weeklyPulseIntro: "Rate this week\u2019s Huddle before you close.",
   weeklyPulse: "How useful was this week\u2019s huddle for helping you apply AI in your work (Scale of 1-10)?",
 } as const;
 
@@ -1199,13 +1200,18 @@ function resourceRows(resources: readonly HuddlePresentationResource[]): string 
   }).join("")}</ul>`;
 }
 
-/** Agent brand mark shared by the activity tool-action rows and the resource hub cards. */
+/**
+ * Agent brand mark shared by the activity tool-action rows and the resource hub cards.
+ * When an agent has no known artwork, this renders an empty, correctly sized placeholder
+ * (the parent-scoped `.agent-logo-placeholder` CSS rules) instead of a generic fallback logo,
+ * so the icon slot stays empty rather than showing an unrelated brand mark.
+ */
 function agentBrandMark(agent: HuddlePresentationAgent, className: string): string {
   const label = agent.displayLabel?.trim() || agent.name;
   const artwork = agentArtwork(agent.name);
   return artwork
     ? `<img class="${className} ${artwork.className}" src="${artwork.source}" alt="${text(label)}">`
-    : COPILOT_MARK;
+    : `<span class="agent-logo-placeholder" aria-hidden="true"></span>`;
 }
 
 /**
@@ -1525,7 +1531,7 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `<div class="closing-grid">`
     + `<section class="closing-card full-width"><h3>Close the Huddle</h3>${questionList(TEMPLATE.closeTheHuddle, "")}</section>`
     + `<section class="closing-card"><h3>Manager Reflection</h3>${questionList(TEMPLATE.managerReflection, "")}</section>`
-    + `<section class="closing-card"><h3>Weekly Pulse</h3><p class="weekly-pulse-question">${text(TEMPLATE.weeklyPulse)}</p></section>`
+    + `<section class="closing-card"><h3>Weekly Pulse</h3><p>${text(TEMPLATE.weeklyPulseIntro)}</p><p class="weekly-pulse-question">${text(TEMPLATE.weeklyPulse)}</p></section>`
     + `</div>`
     + `</section>`
     // Facilitator Notes (removed from this export) used to be the last panel, and this footer

@@ -26,5 +26,11 @@ public sealed record GetHuddleCatalogQuery(
     /// </summary>
     string? AdditionalContentRoleExternalId = null,
     /// <summary>When true, returns additional content for every role rather than one role's.</summary>
-    bool AdditionalContentOnly = false) : IRequest<IReadOnlyList<HuddleCatalogItemResponse>>;
+    bool AdditionalContentOnly = false,
+    /// <summary>
+    /// When true, also folds in the Role Path topics for the same audience (every role when
+    /// <see cref="AdditionalContentRoleExternalId"/> is null) so All Topics can show both; the
+    /// "Only All Topics" filter passes false to show just the additional content.
+    /// </summary>
+    bool IncludeRolePathTopics = false) : IRequest<IReadOnlyList<HuddleCatalogItemResponse>>;
 

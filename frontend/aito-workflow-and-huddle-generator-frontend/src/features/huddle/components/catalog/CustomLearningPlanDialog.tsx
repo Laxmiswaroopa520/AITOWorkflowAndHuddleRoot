@@ -56,7 +56,7 @@ export function CustomLearningPlanDialog({ huddles, exporting, onMove, onRemove,
                 <li key={huddle.externalId} className="grid gap-4 rounded-2xl border border-[#E0E6ED] bg-white p-4 md:grid-cols-[42px_1fr_auto] md:items-center">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8F2FF] text-sm font-bold text-[#0F6CBD]">{index + 1}</span>
                   <div className="min-w-0">
-                    <p className="font-semibold text-[#16233A]">{huddle.name}</p>
+                    <p className="font-semibold text-[#16233A]">{huddle.roleTopicName ?? huddle.name}</p>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{huddle.description ?? "Description unavailable."}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Bot className="h-3 w-3" />{agentLabel(huddle.primaryAgents.map((agent) => agent.name))}</span>

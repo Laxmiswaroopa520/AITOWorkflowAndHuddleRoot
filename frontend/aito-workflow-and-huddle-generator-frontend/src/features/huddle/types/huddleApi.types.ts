@@ -207,6 +207,11 @@ export interface HuddleCatalogFilters {
   additionalContentRoleExternalId?: string;
   /** Restricts the result to additional content across every role. */
   additionalContentOnly?: boolean;
+  /**
+   * Also includes each role's Role Path topics in the result (every role's when
+   * additionalContentRoleExternalId is unset), so All Topics can show both.
+   */
+  includeRolePathTopics?: boolean;
   focusAreaExternalId?: string;
   agentExternalId?: string;
   type?: string;

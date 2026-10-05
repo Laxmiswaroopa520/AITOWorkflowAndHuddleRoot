@@ -48,7 +48,7 @@ public sealed class HuddlesController : ControllerBase
             new GetHuddleCatalogQuery(filters.RoleExternalId, filters.FocusAreaExternalId,
                 filters.AgentExternalId, filters.Type, filters.Search, filters.Sort,
                 filters.PlacementRoleExternalId, filters.AdditionalContentRoleExternalId,
-                filters.AdditionalContentOnly), cancellationToken);
+                filters.AdditionalContentOnly, filters.IncludeRolePathTopics), cancellationToken);
         return Ok(response);
     }
 

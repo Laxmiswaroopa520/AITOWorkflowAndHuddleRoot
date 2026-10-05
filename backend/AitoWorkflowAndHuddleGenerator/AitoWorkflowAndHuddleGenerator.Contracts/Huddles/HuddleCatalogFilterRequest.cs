@@ -15,4 +15,6 @@ public sealed record HuddleCatalogFilterRequest(
     /// <summary>Restricts the result to the additional content defined for this role.</summary>
     string? AdditionalContentRoleExternalId = null,
     /// <summary>Restricts the result to additional content across all roles.</summary>
-    bool AdditionalContentOnly = false);
+    bool AdditionalContentOnly = false,
+    /// <summary>Also includes each role's Role Path topics, so All Topics can show both.</summary>
+    bool IncludeRolePathTopics = false);

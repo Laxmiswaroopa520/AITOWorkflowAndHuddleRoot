@@ -34,10 +34,19 @@ public sealed class GetHuddleCatalogQueryHandler : IRequestHandler<GetHuddleCata
         List<HuddleRolePathEntry>? additional = additionalRole is not null || request.AdditionalContentOnly
             ? await HuddleRolePathReader.LoadAdditionalAsync(dbContext, additionalRole, cancellationToken)
             : null;
-        if (additional is not null)
+        // All Topics can also fold in the Role Path topics for the same audience (every role when
+        // additionalRole is null, i.e. no audience chosen) so the default view shows both; the
+        // "Only All Topics" filter leaves IncludeRolePathTopics false so only the additional
+        // content above remains.
+        List<HuddleRolePathEntry>? rolePath = request.IncludeRolePathTopics
+            ? await HuddleRolePathReader.LoadRolePathAsync(dbContext, additionalRole, cancellationToken)
+            : null;
+        if (additional is not null || rolePath is not null)
         {
-            int[] additionalTopicIds = additional.Select(entry => entry.HuddleTopicId).Distinct().ToArray();
-            query = query.Where(x => additionalTopicIds.Contains(x.Id));
+            HashSet<int> projectedTopicIds = new();
+            if (additional is not null) projectedTopicIds.UnionWith(additional.Select(entry => entry.HuddleTopicId));
+            if (rolePath is not null) projectedTopicIds.UnionWith(rolePath.Select(entry => entry.HuddleTopicId));
+            query = query.Where(x => projectedTopicIds.Contains(x.Id));
         }
 
         string? role = Normalize(request.RoleExternalId);
