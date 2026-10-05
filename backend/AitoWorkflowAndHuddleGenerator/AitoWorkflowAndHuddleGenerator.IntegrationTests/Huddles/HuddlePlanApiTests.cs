@@ -57,6 +57,42 @@ public sealed class HuddlePlanApiTests
         Assert.Null(otherUser.RowVersion);
     }
 
+    // SQL Server compares role ids case-insensitively, so "role-ae" and "ROLE-AE" reach the same
+    // role. Caching every spelling separately would let a caller grow the cache without limit, so
+    // only the stored spelling is cached and every other spelling is built fresh (and still echoed
+    // back unchanged in the response).
+    [Fact]
+    public async Task RolePathCache_ShouldCacheOnlyTheStoredSpellingOfARoleId()
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var cache = new RecommendedRolePathCache(memory);
+        var snapshot = new RolePathSnapshot(1, "ROLE-AE", []);
+        int builds = 0;
+        Func<Task<HuddlePlanResponse>> Build(string role) => () =>
+        {
+            builds++;
+            return Task.FromResult(new HuddlePlanResponse(role, false, null, []));
+        };
+
+        string[] variants = ["role-ae", "Role-Ae", "rOLE-aE", "ROLE-ae", "role-AE"];
+        foreach (string variant in variants)
+        {
+            HuddlePlanResponse response = await cache.GetRecommendedAsync(snapshot, variant, Build(variant));
+            Assert.Equal(variant, response.RoleExternalId);
+        }
+        Assert.Equal(variants.Length, builds);
+        Assert.Equal(0, memory.Count);
+
+        HuddlePlanResponse first = await cache.GetRecommendedAsync(snapshot, "ROLE-AE", Build("ROLE-AE"));
+        HuddlePlanResponse second = await cache.GetRecommendedAsync(snapshot, "ROLE-AE", Build("ROLE-AE"));
+        Assert.Same(first, second);
+        Assert.Equal(variants.Length + 1, builds);
+        Assert.Equal(1, memory.Count);
+
+        Assert.True(snapshot.IsStoredSpelling("ROLE-AE"));
+        Assert.False(snapshot.IsStoredSpelling("role-ae"));
+    }
+
     [Fact]
     public async Task PlanQuery_WithRolePathCache_ShouldReuseRecommendedPlanButNeverServeASavedPlan()
     {

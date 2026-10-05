@@ -68,7 +68,7 @@ public sealed class GetMyHuddlePlanQueryHandler(
         if (plan is null)
             return rolePathCache is null
                 ? await BuildRecommendedAsync(dbContext, roleExternalId, path, cancellationToken)
-                : await rolePathCache.GetRecommendedAsync(roleExternalId,
+                : await rolePathCache.GetRecommendedAsync(snapshot, roleExternalId,
                     () => BuildRecommendedAsync(dbContext, roleExternalId, path, cancellationToken));
 
         List<HuddlePlanWeek> weeks = await SavedWeeks(plan, path, cancellationToken);

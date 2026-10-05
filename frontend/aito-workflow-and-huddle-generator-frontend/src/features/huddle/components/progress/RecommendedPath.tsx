@@ -3,6 +3,8 @@ import { Download, RefreshCcw, Route } from "lucide-react";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { LoadingSpinner } from "@/components/feedback/LoadingSpinner";
 import type { HuddleCatalogItemResponse, HuddlePlanResponse, HuddleVoteResponse } from "../../types";
+import { ComingSoonWeekCard } from "./ComingSoonWeekCard";
+import { upcomingWeeksFor } from "./commonRolePathWeeks";
 import { RecommendedPathCard } from "./RecommendedPathCard";
 import { RolePathWeekMenu } from "./RolePathWeekMenu";
 
@@ -29,6 +31,9 @@ interface RecommendedPathProps {
   savePending: boolean;
   onSelect: (externalId: string) => void;
   onVote: (externalId: string, value: -1 | 1 | null) => void;
+  /** The week card whose HTML download is in progress, if any. */
+  htmlExportExternalId: string | null;
+  onExportHtml: (huddle: HuddleCatalogItemResponse) => void;
   onSave: (plan: HuddlePlanResponse) => void;
   onReset: () => void;
   onRetry: () => void;
@@ -85,14 +90,18 @@ export function RecommendedPath(props: RecommendedPathProps) {
     setMenuWeek(null);
   };
 
+  // Common weeks with no Huddle yet (Week 9). They render after the real weeks but stay out of
+  // weeksOf() and update(), so they can't be moved to, replaced, saved or exported.
+  const upcomingWeeks = upcomingWeeksFor(props.data);
+
   return <section className="space-y-4 [font-family:var(--aito-font-sans)]">
     <div className="flex flex-col gap-3 rounded-xl border border-[#C7E0F4] bg-[#F5F9FF] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Route className="h-5 w-5 text-[#0F6CBD]" /><h2 className="text-xl font-bold">Role Path</h2>{props.data.isCustomized && <span className="rounded-md bg-[#FFF4CE] px-2 py-1 text-xs font-semibold text-[#8A4B08]">Customized</span>}</div><p className="mt-1 text-sm text-muted-foreground">{props.roleName ?? props.data.roleExternalId} · Weeks {props.data.items[0]?.week ?? 1}–{props.data.items[props.data.items.length - 1]?.week ?? props.data.items.length} · {props.data.items.length} Huddles · 30 minutes each</p></div>
+      <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Route className="h-5 w-5 text-[#0F6CBD]" /><h2 className="text-xl font-bold">Role Path</h2>{props.data.isCustomized && <span className="rounded-md bg-[#FFF4CE] px-2 py-1 text-xs font-semibold text-[#8A4B08]">Customized</span>}</div><p className="mt-1 text-sm text-muted-foreground">{props.roleName ?? props.data.roleExternalId} · Weeks {props.data.items[0]?.week ?? 1}–{props.data.items[props.data.items.length - 1]?.week ?? props.data.items.length} · {props.data.items.length} Huddles · 30 minutes each{upcomingWeeks.length > 0 && ` · ${upcomingWeeks.length === 1 ? "Week" : "Weeks"} ${upcomingWeeks.map((entry) => entry.week).join(", ")} coming soon`}</p></div>
       <div className="flex flex-wrap gap-2"><button type="button" disabled={!props.data.isCustomized || props.savePending} onClick={props.onReset} className="inline-flex h-9 items-center rounded-md border bg-white px-3 text-sm font-semibold hover:bg-[#E8F2FF] disabled:opacity-40"><RefreshCcw className="mr-2 h-4 w-4" />Reset</button><button type="button" onClick={() => void exportPlan(props.data!, props.roleName)} className="inline-flex h-9 items-center rounded-md bg-[#0F6CBD] px-3 text-sm font-semibold text-white hover:bg-[#115EA3]"><Download className="mr-2 h-4 w-4" />Export Learning Plan</button></div>
     </div>
     {props.mutationError && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{props.mutationError.message} Refresh the plan before trying again.</p>}
-    <div className="space-y-3">{props.data.items.map((item) => <RecommendedPathCard key={`${item.week}-${item.huddle.externalId}`} week={item.week} huddle={item.huddle} customized={item.isCustomized} selected={props.selectedExternalId === item.huddle.externalId} vote={props.votes.get(item.huddle.externalId)} votePending={props.votePending} onSelect={props.onSelect} onVote={props.onVote} managementMenuOpen={menuWeek === item.week} managementMenu={
+    <div className="space-y-3">{props.data.items.map((item) => <RecommendedPathCard key={`${item.week}-${item.huddle.externalId}`} week={item.week} huddle={item.huddle} customized={item.isCustomized} selected={props.selectedExternalId === item.huddle.externalId} vote={props.votes.get(item.huddle.externalId)} votePending={props.votePending} onSelect={props.onSelect} onVote={props.onVote} htmlExportPending={props.htmlExportExternalId === item.huddle.externalId} htmlExportDisabled={props.htmlExportExternalId !== null} onExportHtml={() => props.onExportHtml(item.huddle)} managementMenuOpen={menuWeek === item.week} managementMenu={
       <RolePathWeekMenu week={item.week} weeks={weeksOf(props.data!)} replacements={props.catalog.filter((candidate) => !props.data!.items.some((existing) => existing.huddle.externalId === candidate.externalId))} isCustomized={item.isCustomized} disabled={props.savePending} open={menuWeek === item.week} onOpenChange={(open) => setMenuWeek(open ? item.week : null)} onMoveToWeek={(targetWeek) => update(item.week, "up", targetWeek)} onReplace={(externalId) => update(item.week, "reset", undefined, externalId)} onReset={() => update(item.week, "reset")} />
-    } />)}</div>
+    } />)}{upcomingWeeks.map((upcoming) => <ComingSoonWeekCard key={`upcoming-${upcoming.week}`} upcoming={upcoming} />)}</div>
   </section>;
 }
