@@ -245,7 +245,13 @@ export function WorkflowPage() {
               workflow.setSelectedSegment
             }
             onContinue={() => {
-              workflow.goToActivities();
+              /*
+               * Called right after onSelectRole in the same click.
+               * goToActivities() would still see the previous
+               * (null) selectedRoleId from this render and refuse,
+               * forcing a second click, so switch step directly.
+               */
+              workflow.setCurrentStep("customize");
             }}
             onRetry={() => {
               void rolesQuery.refetch();

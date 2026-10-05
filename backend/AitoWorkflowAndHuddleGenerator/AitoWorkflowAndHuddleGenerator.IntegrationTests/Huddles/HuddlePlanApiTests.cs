@@ -1,4 +1,5 @@
 using AitoWorkflowAndHuddleGenerator.Application.Abstractions.Identity;
+using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Common;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Commands.ResetHuddlePlan;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Commands.SaveHuddlePlan;
 using AitoWorkflowAndHuddleGenerator.Application.Features.Huddles.Plans.Queries.GetMyHuddlePlan;
@@ -7,6 +8,7 @@ using AitoWorkflowAndHuddleGenerator.Domain.Entities;
 using AitoWorkflowAndHuddleGenerator.Domain.Enums;
 using AitoWorkflowAndHuddleGenerator.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AitoWorkflowAndHuddleGenerator.IntegrationTests.Huddles;
 
@@ -53,6 +55,72 @@ public sealed class HuddlePlanApiTests
             .Handle(new GetMyHuddlePlanQuery("role-1"), default);
         Assert.False(otherUser.IsCustomized);
         Assert.Null(otherUser.RowVersion);
+    }
+
+    // SQL Server compares role ids case-insensitively, so "role-ae" and "ROLE-AE" reach the same
+    // role. Caching every spelling separately would let a caller grow the cache without limit, so
+    // only the stored spelling is cached and every other spelling is built fresh (and still echoed
+    // back unchanged in the response).
+    [Fact]
+    public async Task RolePathCache_ShouldCacheOnlyTheStoredSpellingOfARoleId()
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var cache = new RecommendedRolePathCache(memory);
+        var snapshot = new RolePathSnapshot(1, "ROLE-AE", []);
+        int builds = 0;
+        Func<Task<HuddlePlanResponse>> Build(string role) => () =>
+        {
+            builds++;
+            return Task.FromResult(new HuddlePlanResponse(role, false, null, []));
+        };
+
+        string[] variants = ["role-ae", "Role-Ae", "rOLE-aE", "ROLE-ae", "role-AE"];
+        foreach (string variant in variants)
+        {
+            HuddlePlanResponse response = await cache.GetRecommendedAsync(snapshot, variant, Build(variant));
+            Assert.Equal(variant, response.RoleExternalId);
+        }
+        Assert.Equal(variants.Length, builds);
+        Assert.Equal(0, memory.Count);
+
+        HuddlePlanResponse first = await cache.GetRecommendedAsync(snapshot, "ROLE-AE", Build("ROLE-AE"));
+        HuddlePlanResponse second = await cache.GetRecommendedAsync(snapshot, "ROLE-AE", Build("ROLE-AE"));
+        Assert.Same(first, second);
+        Assert.Equal(variants.Length + 1, builds);
+        Assert.Equal(1, memory.Count);
+
+        Assert.True(snapshot.IsStoredSpelling("ROLE-AE"));
+        Assert.False(snapshot.IsStoredSpelling("role-ae"));
+    }
+
+    [Fact]
+    public async Task PlanQuery_WithRolePathCache_ShouldReuseRecommendedPlanButNeverServeASavedPlan()
+    {
+        await using ApplicationDbContext db = CreateContext();
+        await SeedCatalog(db);
+        var cache = new RecommendedRolePathCache(new MemoryCache(new MemoryCacheOptions()));
+        var user1 = new TestCurrentUserService("user-1");
+        var cachedQuery = new GetMyHuddlePlanQueryHandler(db, user1, cache);
+
+        HuddlePlanResponse first = await cachedQuery.Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        HuddlePlanResponse second = await cachedQuery.Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        Assert.Same(first, second);
+        Assert.False(first.IsCustomized);
+
+        SaveHuddlePlanItemRequest[] reversed = first.Items.Reverse()
+            .Select((item, index) => new SaveHuddlePlanItemRequest(1 + index, item.Huddle.ExternalId, item.Huddle.PlacementExternalId)).ToArray();
+        await new SaveHuddlePlanCommandHandler(db, user1)
+            .Handle(new SaveHuddlePlanCommand("role-1", null, reversed), default);
+
+        // The owner's saved plan is read fresh even though the recommended plan is cached...
+        HuddlePlanResponse mine = await cachedQuery.Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        Assert.True(mine.IsCustomized);
+        Assert.Equal(reversed.Select(item => item.HuddleExternalId), mine.Items.Select(item => item.Huddle.ExternalId));
+
+        // ...and another user still gets the shared recommended plan, not user-1's customisation.
+        HuddlePlanResponse otherUser = await new GetMyHuddlePlanQueryHandler(db, new TestCurrentUserService("user-2"), cache)
+            .Handle(new GetMyHuddlePlanQuery("role-1"), default);
+        Assert.Same(first, otherUser);
     }
 
     // The saved-plan response reuses HuddleMappings.ToCatalogItem, the same mapper the catalog and

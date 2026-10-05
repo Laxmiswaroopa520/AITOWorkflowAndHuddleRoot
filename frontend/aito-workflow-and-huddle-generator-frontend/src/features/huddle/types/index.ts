@@ -13,6 +13,7 @@ export type {
   HuddleVoteResponse,
   HuddlePlanItemResponse,
   HuddlePlanResponse,
+  HuddleUpcomingWeekResponse,
   SaveHuddlePlanRequest,
   RecommendedHuddlePathItemResponse,
   RecommendedHuddlePathResponse,

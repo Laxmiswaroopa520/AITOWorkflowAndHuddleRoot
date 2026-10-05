@@ -1,7 +1,7 @@
 import {
-  ArrowRight, BookOpen, BriefcaseBusiness, CalendarDays, CheckCircle2,
+  ArrowRight, BookOpen, CheckCircle2,
   Compass, Lightbulb, RefreshCw, Sparkles, Target,
-  TrendingUp, Users, Wrench, ShieldCheck, Presentation, Check,
+  TrendingUp, Users, ShieldCheck, Presentation, Check,
   Repeat2,
 } from 'lucide-react';
 import type { ElementType } from 'react';
@@ -11,7 +11,11 @@ import { Button } from '@/components/ui/button';
 import managerImage from '@/assets/huddle/onboarding/manager.avif';
 import facilitatorImage from '@/assets/huddle/onboarding/facilitator.avif';
 import memberImage from '@/assets/huddle/onboarding/team-member.avif';
-import coachImage from '@/assets/huddle/onboarding/coach.avif';
+import researcherLogo from '@/assets/agents/required-researcher.png';
+import coworkLogo from '@/assets/agents/required-cowork.png';
+import scoutLogo from '@/assets/agents/required-scout.png';
+import salesAgentLogo from '@/assets/agents/required-sales-agent.png';
+import agentJLogo from '@/assets/agents/required-agent-j.png';
 
 import type { HuddlePersona } from '../../types/huddlePersona.types';
 
@@ -30,7 +34,6 @@ const IMAGES = {
   manager: managerImage,
   facilitator: facilitatorImage,
   member: memberImage,
-  coach: coachImage,
 };
 
 const personas = [
@@ -90,16 +93,12 @@ const rhythm = [
   ['Bring Back', 'Return with evidence, learning, or a result.'],
 ];
 
-const toolkit = [
-  { title: 'Sales Agent', purpose: 'Prepare for customer engagements and opportunity planning.', when: 'Use when shaping account, opportunity, or deal work.', related: 'Customer prep · Opportunity planning', icon: BriefcaseBusiness },
-  { title: 'MSXI Assist', purpose: 'Research, analyse, and gather insights for customer readiness.', when: 'Use when you need context, signals, or structured research.', related: 'Research · Customer readiness', icon: Compass },
-  { title: 'Microsoft 365 Copilot', purpose: 'Create, summarise, and accelerate everyday work.', when: 'Use inside the flow of documents, meetings, mail, and collaboration.', related: 'Everyday productivity · Team rhythm', icon: Sparkles },
-  { title: 'Additional Role Tools', purpose: 'Discover AI experiences recommended for your role path.', when: 'Use when a Huddle calls for a specialised workflow capability.', related: 'Role-specific Huddles', icon: Wrench },
-];
-
-const updates = [
-  ['New AI tools', 'Toolkit'], ['Recommended activities', 'Recommended'], ['Recently added topics', 'New'],
-  ['Motion announcements', 'Update'], ['Upcoming events', 'Calendar'], ['Continue where you left off', 'In progress'],
+const topAgents = [
+  { name: 'Researcher', label: 'Research & validate', description: 'Build grounded insights through focused research and analysis.', logo: researcherLogo },
+  { name: 'Cowork', label: 'Create & orchestrate', description: 'Turn complex work into structured outputs and actionable next steps.', logo: coworkLogo },
+  { name: 'Scout', label: 'Monitor & discover', description: 'Surface relevant signals, changes and information worth exploring.', logo: scoutLogo },
+  { name: 'Sales Agent', label: 'Plan & progress', description: 'Support customer, account and opportunity workflows.', logo: salesAgentLogo },
+  { name: 'Agent J.ai', label: 'Prepare & practise', description: 'Prepare and practise for important customer conversations.', logo: agentJLogo },
 ];
 
 const journeySteps: Array<[string, string, string, string, string, ElementType, string]> = [
@@ -178,14 +177,50 @@ function ThinkFeelDo() {
             <h3 className="mt-2 text-lg font-semibold">{node.title}</h3>
             <p className="mt-0 max-h-0 overflow-hidden text-xs leading-5 opacity-0 transition-all duration-300 group-hover:mt-3 group-hover:max-h-32 group-hover:opacity-90">{node.detail}</p>
           </motion.article>)}
-          <div className="absolute left-[57%] top-[17%] text-xl text-[#0A6BBA]">↘</div>
-          <div className="absolute bottom-[20%] right-[31%] text-xl text-[#287C70]">↙</div>
-          <div className="absolute bottom-[20%] left-[30%] text-xl text-[#5B93B1]">↖</div>
+          {/* Clockwise cycle arrows (Think -> Do -> Feel -> Think), drawn as arcs on a circle around the
+              loop's centre so each sits in the gap between two cards and points at the next step. */}
+          <svg className="pointer-events-none absolute left-1/2 top-0 h-[430px] w-[400px] -translate-x-1/2" viewBox="0 0 400 430" fill="none" aria-hidden="true">
+            <defs>
+              {[['think-do', '#0A6BBA'], ['do-feel', '#287C70'], ['feel-think', '#5B93B1']].map(([id, color]) => (
+                <marker key={id} id={`tfd-arrow-${id}`} viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M1 1 L9 5 L1 9 Z" fill={color} />
+                </marker>
+              ))}
+            </defs>
+            <path d="M330.8 84.2 A185 185 0 0 1 367.7 293.2" stroke="#0A6BBA" strokeWidth="2.5" strokeLinecap="round" markerEnd="url(#tfd-arrow-think-do)" />
+            <path d="M263.3 388.8 A185 185 0 0 1 136.7 388.8" stroke="#287C70" strokeWidth="2.5" strokeLinecap="round" markerEnd="url(#tfd-arrow-do-feel)" />
+            <path d="M32.3 293.2 A185 185 0 0 1 69.2 84.2" stroke="#5B93B1" strokeWidth="2.5" strokeLinecap="round" markerEnd="url(#tfd-arrow-feel-think)" />
+          </svg>
         </div>
       </div>
       <div className="grid gap-3 md:hidden">{nodes.map((node, i) => <div key={node.label} className="rounded-2xl p-5" style={{background:node.color,color:node.text}}><div className="flex items-center justify-between"><span className="text-xs font-bold tracking-[.18em]">{node.label}</span><span className="text-lg">{i < 2 ? '↓' : '↻'}</span></div><h3 className="mt-2 font-semibold">{node.title}</h3><p className="mt-2 text-sm leading-6 opacity-90">{node.detail}</p></div>)}</div>
-      <div className="mt-5 rounded-2xl border border-[#BFDDE9] bg-white/85 px-5 py-4 text-sm font-medium text-[#2A446F]">Think influences action. Action builds confidence. Confidence changes how people feel. Feeling confident changes how teams think and work next.</div>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl border border-[#BFDDE9] bg-white/85 px-5 py-4 text-center text-sm font-medium text-[#2A446F]">{['Think influences action', 'Action builds confidence', 'Confidence changes how people feel', 'Feeling confident changes how teams think and work next'].map((statement, i) => <span key={statement} className="flex items-center gap-x-3">{i > 0 && <span className="text-[#9FC5DB]" aria-hidden="true">|</span>}{statement}</span>)}</div>
     </div>
+  </section>;
+}
+
+const huddleJourneyStages = [
+  { when: 'Before Week 1', stage: 'Onboarding', focus: 'Get ready' },
+  { when: 'Week 1', stage: 'Orientation', focus: 'Set the why' },
+  { when: 'Weeks 2–8', stage: 'Activation', focus: 'Build the habit' },
+  { when: 'Week 9', stage: 'Transition', focus: 'Take ownership' },
+  { when: 'Weeks 10+', stage: 'Sustain', focus: 'Keep it going' },
+];
+
+function HuddleJourney() {
+  return <section className="space-y-6">
+    <div className="max-w-3xl">
+      <p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Your Huddle Journey</p>
+      <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#16233A] md:text-4xl">From getting ready to making the rhythm your own</h2>
+      <p className="mt-2 text-sm leading-6 text-[#647185]">The goal is not simply to complete a set of Huddles. It is to build a team rhythm that continues beyond the guided path.</p>
+    </div>
+    <ol className="grid overflow-hidden rounded-[20px] border border-[#DDE6EC] bg-white divide-y divide-[#E6ECF1] sm:grid-cols-5 sm:divide-x sm:divide-y-0">
+      {huddleJourneyStages.map((step) => <li key={step.stage} className="p-5 md:p-6">
+        <p className="text-sm font-semibold text-[#0A6BBA]">{step.when}</p>
+        <h3 className="mt-1.5 text-lg font-semibold text-[#16233A]">{step.stage}</h3>
+        <p className="mt-2 text-sm text-[#647185]">{step.focus}</p>
+      </li>)}
+    </ol>
   </section>;
 }
 
@@ -268,6 +303,8 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
       </div>
     </section>
 
+    <section><div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Top 5 Agents</p><h2 className="mt-2 text-3xl font-semibold text-[#16233A]">Meet the agents that help you get work done</h2><p className="mt-2 text-sm leading-6 text-[#647185]">Explore the core AI agents used across Frontier Accelerator. Each agent supports a different part of your workflow, from research and preparation to execution and follow-through.</p></div><div className="-mx-1 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 xl:grid xl:grid-cols-5 xl:overflow-visible xl:pb-0">{topAgents.map(agent=><motion.article whileHover={{y:-3}} key={agent.name} className="flex w-[260px] shrink-0 snap-start flex-col rounded-[22px] border border-[#DEE6EC] bg-white p-5 shadow-[0_8px_24px_rgba(22,35,58,.05)] xl:w-auto"><div className="flex items-center gap-3"><img src={agent.logo} alt="" loading="lazy" className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm"/><h3 className="text-sm font-semibold uppercase tracking-[.08em] text-[#16233A]">{agent.name}</h3></div><p className="mt-4 font-semibold text-[#16233A]">{agent.label}</p><p className="mt-2 text-sm leading-6 text-[#5F6D80]">{agent.description}</p></motion.article>)}</div></section>
+
     {/* Rich role cards remain available for users who want more context before choosing. */}
     <section id="choose-experience" className="scroll-mt-24 space-y-5">
       <div className="max-w-3xl">
@@ -296,20 +333,16 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
       </div>
     </section>
 
-    <div id="how-huddles-work" className="scroll-mt-24"><ThinkFeelDo /></div>
+    <div id="how-huddles-work" className="scroll-mt-24"><HuddleJourney /></div>
 
-    <section className="overflow-hidden rounded-[28px] border border-[#DCE6ED] bg-gradient-to-br from-[#F7FBFD] via-white to-[#EDF7F2] shadow-[0_14px_42px_rgba(22,35,58,.06)]"><div className="grid lg:grid-cols-[1.05fr_.95fr]"><div className="p-7 md:p-10"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">What is Frontier Accelerator?</p><h2 className="mt-3 text-3xl font-semibold text-[#16233A]">A practical path from AI awareness to adoption</h2><p className="mt-5 max-w-2xl text-base leading-8 text-[#637085]">Frontier Accelerator helps teams adopt AI through structured conversations, guided practice, and real-world application.</p><p className="mt-3 max-w-2xl text-base leading-8 text-[#637085]">Rather than learning tools in isolation, team members learn how AI supports the workflows they already use every day.</p><div className="mt-7 rounded-2xl border border-[#C5DFF0] bg-white p-5 shadow-sm"><div className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0A6BBA] text-white"><Lightbulb className="h-5 w-5"/></div><div><p className="font-semibold text-[#2A446F]">The motion principle</p><p className="mt-2 text-sm leading-6 text-[#657286]">Start with the job to be done, then apply the right AI experience to improve the workflow.</p></div></div></div></div><div className="border-t border-[#E2E9EE] p-7 md:p-10 lg:border-l lg:border-t-0"><h3 className="text-xl font-semibold text-[#16233A]">Why it exists</h3><div className="mt-6 grid gap-4 sm:grid-cols-2">{whyItExists.map(([title,body,Icon],i)=><article key={title} className="rounded-[20px] border border-[#DDE6EC] bg-white/75 p-5"><div className="flex items-center gap-3"><div className="rounded-xl bg-[#E2F1F9] p-2.5"><Icon className="h-5 w-5 text-[#0A6BBA]"/></div><span className="text-xs font-bold text-[#8190A1]">0{i+1}</span></div><h4 className="mt-5 font-semibold text-[#16233A]">{title}</h4><p className="mt-2 text-sm leading-6 text-[#637085]">{body}</p></article>)}</div></div></div></section>
+    <ThinkFeelDo />
+
+    <section className="overflow-hidden rounded-[28px] border border-[#DCE6ED] bg-gradient-to-br from-[#F7FBFD] via-white to-[#EDF7F2] shadow-[0_14px_42px_rgba(22,35,58,.06)]"><div className="grid lg:grid-cols-[1.05fr_.95fr]"><div className="p-7 md:p-10"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">What is Frontier Accelerator?</p><h2 className="mt-3 text-3xl font-semibold text-[#16233A]">A practical path from AI awareness to adoption</h2><p className="mt-5 max-w-2xl text-base leading-8 text-[#637085]">Frontier Accelerator helps teams adopt AI through structured conversations, guided practice, and real-world application.</p><p className="mt-3 max-w-2xl text-base leading-8 text-[#637085]">Rather than learning tools in isolation, team members learn how AI supports the workflows they already use every day.</p><div className="mt-7 rounded-2xl border border-[#C5DFF0] bg-white p-5 shadow-sm"><div className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0A6BBA] text-white"><Lightbulb className="h-5 w-5"/></div><div><p className="font-semibold text-[#2A446F]">The motion principle</p><p className="mt-2 text-sm leading-6 text-[#657286]">Start with the job to be done, then apply the right AI experience to improve the workflow.</p></div></div></div></div><div className="border-t border-[#E2E9EE] p-7 md:p-10 lg:border-l lg:border-t-0"><h3 className="text-xl font-semibold text-[#16233A]">Why it exists</h3><div className="mt-6 grid gap-4 sm:grid-cols-2">{whyItExists.map(([title,body,Icon])=><article key={title} className="rounded-[20px] border border-[#DDE6EC] bg-white/75 p-5"><div className="flex items-center gap-3"><div className="rounded-xl bg-[#E2F1F9] p-2.5"><Icon className="h-5 w-5 text-[#0A6BBA]"/></div><h4 className="font-semibold text-[#16233A]">{title}</h4></div><p className="mt-4 text-sm leading-6 text-[#637085]">{body}</p></article>)}</div></div></div></section>
 
     <section className="space-y-5"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Learning Journey</p><h2 className="mt-2 text-3xl font-semibold text-[#16233A]">One motion. Three connected steps.</h2><p className="mt-2 text-sm text-[#647185]">Move from understanding the motion to role-based practice, then keep expanding through self-directed topics.</p></div><div className="relative rounded-[28px] border border-[#DDE6EC] bg-white p-6 md:p-8"><div className="absolute bottom-16 left-[12%] right-[12%] top-16 hidden rounded-full border-2 border-dashed border-[#C7DDE8] lg:block"/><div className="relative grid gap-4 lg:grid-cols-3">{journeySteps.map(([n,title,purpose,effort,outcome,Icon,surface],i)=><motion.article whileHover={{y:-4}} key={title} className="relative rounded-[22px] border border-[#DDE5EB] bg-white p-5 shadow-[0_10px_28px_rgba(22,35,58,.06)]"><div className="flex items-center justify-between"><div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{background:surface}}><Icon className="h-5 w-5 text-[#0A6BBA]"/></div><span className="text-xs font-bold tracking-[.14em] text-[#8390A0]">STEP {n}</span></div><h3 className="mt-5 text-xl font-semibold text-[#16233A]">{title}</h3><div className="mt-4 space-y-3"><div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8793A2]">Purpose</p><p className="mt-1 text-sm leading-6 text-[#5F6D80]">{purpose}</p></div><div className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-[#F7FAFC] p-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#8793A2]">Effort</p><p className="mt-1 text-sm font-semibold text-[#2A446F]">{effort}</p></div><div className="rounded-xl bg-[#F7FAFC] p-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#8793A2]">Outcome</p><p className="mt-1 text-xs font-medium leading-5 text-[#2A446F]">{outcome}</p></div></div></div>{i<2 && <div className="absolute -right-3 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border bg-white text-[#0A6BBA] shadow lg:flex">→</div>}</motion.article>)}</div></div></section>
 
     <section className="grid gap-5 xl:grid-cols-2"><div className="overflow-hidden rounded-[26px] border border-[#DCE5EC] bg-white"><div className="bg-gradient-to-r from-[#EEF7FC] to-white p-7"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Before you begin</p><h2 className="mt-2 text-2xl font-semibold text-[#16233A]">Readiness checklist</h2><p className="mt-2 text-sm text-[#647185]">Complete these steps before your first role-based Huddle.</p></div><div className="grid gap-3 p-6 sm:grid-cols-2">{readiness.map(([title,step])=><div key={title} className="flex gap-3 rounded-2xl border border-[#E1E7ED] p-4"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E7F6EA]"><Check className="h-4 w-4 text-[#24863A]"/></div><div><p className="text-sm font-semibold text-[#24344C]">{title}</p><p className="mt-1 text-xs text-[#8793A2]">{step}</p></div></div>)}</div></div><div className="overflow-hidden rounded-[26px] border border-[#DCE5EC] bg-white"><div className="bg-gradient-to-r from-[#F4EEFC] to-[#EEF8F2] p-7"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5E45A8]">Success looks like</p><h2 className="mt-2 text-2xl font-semibold text-[#16233A]">Practical, repeatable adoption</h2><p className="mt-2 text-sm text-[#647185]">The motion is successful when team members change how work gets done.</p></div><div className="grid gap-3 p-6 sm:grid-cols-2">{successSignals.map(([title,body,Icon],i)=><div key={title} className={`${i===4?'sm:col-span-2':''} flex gap-3 rounded-2xl border border-[#E1E7ED] p-4`}><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F0E9FA]"><Icon className="h-4 w-4 text-[#6743B5]"/></div><div><p className="text-sm font-semibold text-[#24344C]">{title}</p><p className="mt-1 text-xs leading-5 text-[#647185]">{body}</p></div></div>)}</div></div></section>
 
     <section className="rounded-[28px] border border-[#C9DDE9] bg-gradient-to-br from-[#193B63] to-[#2A446F] p-7 text-white md:p-9"><div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#BFE2F5]">Weekly Huddle Rhythm</p><h2 className="mt-2 text-3xl font-semibold">A continuous loop from reflection to action</h2><p className="mt-2 text-sm leading-6 text-white/70">Each Huddle picks up where the previous one ended. Teams reflect, practise, commit, and bring real examples back into the next conversation.</p></div><div className="mx-auto mt-8 hidden h-[500px] max-w-[780px] lg:block"><div className="relative h-full"><motion.div animate={{rotate:360}} transition={{duration:34,repeat:Infinity,ease:'linear'}} className="absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/35"/><div className="absolute left-1/2 top-1/2 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-white/20 bg-white/10 text-center backdrop-blur"><Repeat2 className="h-6 w-6 text-[#92D3C6]"/><p className="mt-2 text-sm font-semibold">Team rhythm</p><p className="mt-1 px-3 text-xs leading-5 text-white/65">Learn, apply, bring back, repeat.</p></div>{rhythm.map(([title,body],i)=>{const positions=['left-1/2 top-0 -translate-x-1/2','right-[2%] top-[22%]','right-[8%] bottom-[10%]','left-1/2 bottom-0 -translate-x-1/2','left-[8%] bottom-[10%]','left-[2%] top-[22%]'];return <motion.div whileHover={{scale:1.04}} key={title} className={`absolute w-[205px] rounded-[20px] border border-white/15 bg-white/[.08] p-4 backdrop-blur ${positions[i]}`}><span className="text-[10px] font-bold text-[#92D3C6]">0{i+1}</span><p className="mt-2 font-semibold">{title}</p><p className="mt-1 text-xs leading-5 text-white/65">{body}</p></motion.div>})}</div></div><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:hidden">{rhythm.map(([t,b],i)=><div key={t} className="rounded-2xl border border-white/12 bg-white/[.07] p-4"><span className="text-xs font-bold text-[#92D3C6]">0{i+1}</span><p className="mt-3 font-semibold">{t}</p><p className="mt-2 text-xs leading-5 text-white/70">{b}</p></div>)}</div></section>
-
-    <section><div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">AI Toolkit</p><h2 className="mt-2 text-3xl font-semibold text-[#16233A]">AI experiences that support common workflows</h2><p className="mt-2 text-sm leading-6 text-[#647185]">Choose the experience based on the job to be done, the workflow, and the outcome you need.</p></div><div className="mt-6 grid gap-4 md:grid-cols-2">{toolkit.map(tool=><motion.article whileHover={{y:-3}} key={tool.title} className="rounded-[22px] border border-[#DEE6EC] bg-white p-5 shadow-[0_8px_24px_rgba(22,35,58,.05)]"><div className="flex items-center gap-3"><div className="rounded-xl bg-[#E2F1F9] p-3"><tool.icon className="h-5 w-5 text-[#0A6BBA]"/></div><div><h3 className="font-semibold text-[#16233A]">{tool.title}</h3><p className="text-xs text-[#7A8798]">Workflow support</p></div></div><p className="mt-4 text-sm leading-6 text-[#5F6D80]">{tool.purpose}</p><div className="mt-4 grid gap-2 sm:grid-cols-2"><div className="rounded-xl bg-[#F7FAFC] p-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#8793A2]">When to use</p><p className="mt-1 text-xs leading-5 text-[#4F5E72]">{tool.when}</p></div><div className="rounded-xl bg-[#F7FAFC] p-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#8793A2]">Related Huddles</p><p className="mt-1 text-xs leading-5 text-[#4F5E72]">{tool.related}</p></div></div></motion.article>)}</div></section>
-
-    <section className="overflow-hidden rounded-[28px] border border-[#CFE0DA] bg-[#EAF5F1]"><div className="grid lg:grid-cols-[.85fr_1.15fr]"><div className="min-h-[250px]"><img src={IMAGES.coach} alt="Colleagues coaching and supporting one another in a work discussion" className="h-full w-full object-cover"/></div><div className="flex flex-col justify-center p-7 md:p-9"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#287C70]">Support the team rhythm</p><h2 className="mt-2 text-2xl font-semibold text-[#25443E]">Coaching is part of practical adoption</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-[#4C6863]">Strong Huddles create space for questions, peer coaching, shared examples, and practical guidance. The goal is not help-desk support. It is helping teams learn from real work together.</p></div></div></section>
-
-    <section><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Latest updates</p><h2 className="mt-2 text-3xl font-semibold text-[#16233A]">Stay current as the motion evolves</h2><div className="mt-5 grid gap-3 md:grid-cols-3">{updates.map(([t,m])=><div key={t} className="flex items-center gap-4 rounded-2xl border border-[#E1E7ED] bg-white p-4"><div className="rounded-xl bg-[#F0F5F8] p-2"><CalendarDays className="h-4 w-4 text-[#2A446F]"/></div><div><p className="font-semibold text-[#16233A]">{t}</p><p className="text-xs text-[#7B8798]">{m}</p></div></div>)}</div></section>
   </motion.section>;
 }
