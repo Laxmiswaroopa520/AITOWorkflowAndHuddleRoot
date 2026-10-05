@@ -91,7 +91,7 @@ export function HomePage() {
             tagline="Team learning and AI adoption"
             description="Build AI fluency through guided team discussions, hands-on practice, and role-relevant activities."
             icon={Users}
-            accent="green"
+            accent="blue"
             features={[
               { icon: Compass, label: "Start with Orientation" },
               { icon: Map, label: "Follow your Role Path" },

@@ -80,6 +80,32 @@ internal static class HuddleRolePathReader
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// The Role Path topics (orientation and weekly path, excluding Additional Topics) for a role, or
+    /// for every role when <paramref name="roleExternalId"/> is null. Used to fold Role Path topics
+    /// into All Topics; <see cref="LoadWeeklyPathAsync"/> exists for the single-role, week-ordered read
+    /// a Role Path page needs and does not support the "every role" case this one does.
+    /// </summary>
+    public static Task<List<HuddleRolePathEntry>> LoadRolePathAsync(
+        IApplicationDbContext dbContext,
+        string? roleExternalId,
+        CancellationToken cancellationToken)
+    {
+        IQueryable<Domain.Entities.HuddlePlacement> query = Query(dbContext)
+            .Where(x => x.PathSection == OrientationSection || x.PathSection == RolePathSection);
+
+        if (!string.IsNullOrWhiteSpace(roleExternalId))
+        {
+            string role = roleExternalId.Trim();
+            query = query.Where(x => x.HuddleSegmentRole.Role.ExternalId == role);
+        }
+
+        return query
+            .OrderBy(x => x.Sequence).ThenBy(x => x.ExternalId)
+            .Select(Projection)
+            .ToListAsync(cancellationToken);
+    }
+
     private static IQueryable<Domain.Entities.HuddlePlacement> Query(IApplicationDbContext dbContext) =>
         dbContext.HuddlePlacements.AsNoTracking().Where(x => x.IsActive);
 

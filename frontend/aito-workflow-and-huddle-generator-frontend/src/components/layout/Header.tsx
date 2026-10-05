@@ -1,4 +1,4 @@
-import { Bell, HelpCircle, Menu, Search, X } from "lucide-react";
+import { HelpCircle, Menu, Search, X } from "lucide-react";
 import { useAtom } from "jotai";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
@@ -31,22 +31,28 @@ export function Header() {
 
   return <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
     <div className="mx-auto flex h-16 max-w-[1920px] items-center justify-between px-4 lg:px-6">
-      <button data-tour="brand" type="button" onClick={() => navigate("/")} className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-        <img src={aitoLogo} alt="AITO" className="h-12 w-12 shrink-0 object-contain" />
-        <span className="hidden text-left sm:flex"><strong className="whitespace-nowrap text-[16px] font-extrabold tracking-tight">Frontier Accelerator App</strong></span>
-      </button>
+      {/* Logo and the Workflow/Huddle mode switcher are grouped together so they sit close to the
+          brand mark, per design; the icon cluster below is pushed to the far right by justify-between. */}
+      <div className="flex items-center gap-6">
+        <button data-tour="brand" type="button" onClick={() => navigate("/")} className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+          <img src={aitoLogo} alt="AITO" className="h-12 w-12 shrink-0 object-contain" />
+          <span className="hidden text-left sm:flex"><strong className="whitespace-nowrap text-[16px] font-extrabold tracking-tight">Frontier Accelerator App</strong></span>
+        </button>
 
-      <div className="hidden items-center gap-3 md:flex">
-        <div data-tour="mode-toggle"><ModeToggle /></div>
-        {/* Rendered on every route (not just Huddle) so this slot always reserves the same width; this keeps the Workflow/Huddle switcher's horizontal position identical between Workflow and Huddle mode. Hidden visually (but still occupying layout space) outside Huddle via `invisible`. */}
-        <div data-tour="huddle-role" className={isHuddleRoute ? undefined : "invisible"}><HuddleExperienceSelector value={huddlePersona} onChange={changeHuddleExperience} className="hidden lg:block" /></div>
+        <div className="hidden items-center gap-3 md:flex">
+          <div data-tour="mode-toggle"><ModeToggle /></div>
+          {/* Rendered on every route (not just Huddle) so this slot always reserves the same width; this keeps the Workflow/Huddle switcher's horizontal position identical between Workflow and Huddle mode. Hidden visually (but still occupying layout space) outside Huddle via `invisible`. */}
+          <div data-tour="huddle-role" className={isHuddleRoute ? undefined : "invisible"}><HuddleExperienceSelector value={huddlePersona} onChange={changeHuddleExperience} className="hidden lg:block" /></div>
+        </div>
       </div>
 
       <div className="flex items-center gap-1">
         <div data-tour="global-search" className="mx-2 hidden w-[274px] xl:block"><GlobalSearch /></div>
         <Button type="button" variant="ghost" size="icon" className="xl:hidden" aria-label="Toggle search" onClick={() => setSearchOpen(value => !value)}>{searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}</Button>
         <Button data-tour="help" type="button" variant="ghost" size="icon" aria-label="Help and tips" title="Help and tips" onClick={() => window.dispatchEvent(new Event("aito:start-layout-tour"))}><HelpCircle className="h-5 w-5" /></Button>
+        {/* Notifications: hidden until the notification functionality is fully implemented and ready for use.
         <Button type="button" variant="ghost" size="icon" aria-label="Notifications" title="Notifications" className="relative"><Bell className="h-5 w-5" /><span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" /></Button>
+        */}
         <UserMenu isWorkflowMode={!isHuddleRoute} />
         <Button type="button" variant="ghost" size="icon" className="md:hidden" aria-label="Toggle navigation" onClick={() => setMobileMenuOpen(value => !value)}>{mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</Button>
       </div>

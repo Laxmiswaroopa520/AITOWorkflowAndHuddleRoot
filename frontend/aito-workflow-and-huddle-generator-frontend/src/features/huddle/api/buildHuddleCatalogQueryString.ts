@@ -12,6 +12,7 @@ export function buildHuddleCatalogQueryString(
     placementRoleExternalId: filters.placementRoleExternalId,
     additionalContentRoleExternalId: filters.additionalContentRoleExternalId,
     additionalContentOnly: filters.additionalContentOnly ? "true" : undefined,
+    includeRolePathTopics: filters.includeRolePathTopics ? "true" : undefined,
     focusAreaExternalId: filters.focusAreaExternalId,
     agentExternalId: filters.agentExternalId,
     type: filters.type,

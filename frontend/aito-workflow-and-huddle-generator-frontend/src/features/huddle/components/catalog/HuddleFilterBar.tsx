@@ -26,6 +26,9 @@ const SORT_OPTIONS: HuddleFilterOption[] = [
   { value: "role-relevance", label: "Role relevance" },
   { value: "most-upvoted", label: "Most upvoted" },
   { value: "default", label: "Default order" },
+  // Not a real sort order: HuddlePage translates this into hiding Role Path topics from the
+  // All Topics projection rather than sending it to the backend's Sort parameter.
+  { value: "only-all-topics", label: "Only All Topics" },
 ];
 
 /**

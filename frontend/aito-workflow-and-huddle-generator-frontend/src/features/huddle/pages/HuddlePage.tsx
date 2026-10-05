@@ -34,6 +34,16 @@ export function HuddlePage() {
   const [selectedRoleExternalId, setSelectedRoleExternalId] = useAtom(selectedHuddleRoleExternalIdAtom);
   const [filters, setFilters] = useState(initialFilters);
   const [audienceRoleIds, setAudienceRoleIds] = useState<string[]>([]);
+  // Once the reader has explicitly changed the All Topics Audience picker (checked/
+  // unchecked a role, used Select All, or Clear), stop silently falling back to the
+  // Role Path role below -- otherwise clearing or deselecting down to zero roles was
+  // immediately re-displayed (and re-filtered) as if the Role Path role were still
+  // picked, which read as "Clear"/deselect doing nothing.
+  const [audienceTouched, setAudienceTouched] = useState(false);
+  const handleAudienceChange = (selectedIds: string[]) => {
+    setAudienceTouched(true);
+    setAudienceRoleIds(selectedIds);
+  };
   const [downvoteTarget, setDownvoteTarget] = useState<{ id: string; name: string } | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -58,13 +68,17 @@ export function HuddlePage() {
   // All Topics is the workbook's Additional_Content sheet, scoped to the chosen audience or
   // to the reader's own Role Path role. It is not "every topic whose AlignedRoles mentions me",
   // which is what previously surfaced a role's own Role Path topics under All Topics.
-  const additionalRoleExternalId = (audienceRoleIds.length === 1 ? audienceRoleIds[0] : selectedRoleExternalId) ?? undefined;
+  const additionalRoleExternalId = (audienceRoleIds.length === 1 ? audienceRoleIds[0] : (audienceTouched ? undefined : selectedRoleExternalId)) ?? undefined;
   // All Topics silently inherits the Role Path role above when no explicit audience has
   // been chosen here (see additionalRoleExternalId). Reflect that inherited role in the picker
   // itself too, so it doesn't read "Select Audience" while a role is actually filtering the list.
-  const evergreenAudienceDisplayIds = audienceRoleIds.length === 0 && selectedRoleExternalId ? [selectedRoleExternalId] : audienceRoleIds;
+  const evergreenAudienceDisplayIds = !audienceTouched && audienceRoleIds.length === 0 && selectedRoleExternalId ? [selectedRoleExternalId] : audienceRoleIds;
   const evergreenAudienceNote = null;
   //const evergreenAudienceNote = audienceRoleIds.length === 0 && selectedRoleExternalId ? "Matches your Role Path audience" : null;
+  // "Only All Topics" rides the existing Sort control (see HuddleFilterBar's SORT_OPTIONS) rather
+  // than a dedicated filter of its own. It is not a real sort order, so it never reaches the
+  // backend's Sort parameter below -- it only suppresses the Role Path union in evergreenQuery.
+  const onlyAllTopics = filters.sort === "only-all-topics";
   // Only the All Topics tab reads this. It used to run unconditionally alongside
   // referenceCatalogQuery on every visit to the Huddle page -- two full catalogue reads in
   // parallel, competing for the same backend and database, before the reader had even chosen a
@@ -74,10 +88,15 @@ export function HuddlePage() {
     {
       additionalContentRoleExternalId: additionalRoleExternalId,
       additionalContentOnly: additionalRoleExternalId === undefined ? true : undefined,
+      // Default (no audience, or Clear/deselect): the All Topics content plus every applicable
+      // Role Path topic (every role's when additionalRoleExternalId is unset, otherwise just the
+      // selected audience's). "Only All Topics" turns this off so only the additional content above
+      // remains -- see onlyAllTopics.
+      includeRolePathTopics: onlyAllTopics ? undefined : true,
       focusAreaExternalId: filters.focusArea || undefined,
       agentExternalId: filters.agent || undefined,
       search: filters.search || undefined,
-      sort: (filters.sort || "default") as "default" | "most-upvoted" | "role-relevance",
+      sort: (onlyAllTopics ? "default" : filters.sort || "default") as "default" | "most-upvoted" | "role-relevance",
     },
     viewMode === "evergreen",
   );
@@ -227,10 +246,10 @@ export function HuddlePage() {
           </button>
         </div>
       )}
-      {persona && <div className="space-y-4"><nav data-tour="huddle-sections" aria-label="Huddle sections" className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-border/80 bg-muted/40 p-1.5 shadow-sm">{navigationItems.map((item) => <button key={item.id} type="button" onClick={() => changeViewMode(item.id)} className={cn("rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200", viewMode === item.id ? "border border-[#0F6CBD] bg-[#0F6CBD] text-white shadow-md shadow-[#0F6CBD]/20" : "text-muted-foreground hover:bg-white/80 hover:text-foreground")}>{item.label}</button>)}</nav>{viewMode === "guided" && <div data-tour="huddle-audience"><HuddleAudienceSelect mode="single" roles={roles} loading={rolesLoading} errorMessage={rolesErrorMessage} selectedIds={selectedRoleExternalId ? [selectedRoleExternalId] : []} onChange={(selectedIds) => { setSelectedRoleExternalId(selectedIds[0] ?? null); setSelectedExternalId(null); }} /></div>}{viewMode === "evergreen" && <div data-tour="huddle-filters"><HuddleFilterBar filters={filters} options={options} roles={roles} rolesLoading={rolesLoading} rolesErrorMessage={rolesErrorMessage} audienceRoleIds={evergreenAudienceDisplayIds} onAudienceChange={setAudienceRoleIds} audienceNote={evergreenAudienceNote} onFilterChange={changeFilter} /></div>}</div>}
+      {persona && <div className="space-y-4"><nav data-tour="huddle-sections" aria-label="Huddle sections" className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-border/80 bg-muted/40 p-1.5 shadow-sm">{navigationItems.map((item) => <button key={item.id} type="button" onClick={() => changeViewMode(item.id)} className={cn("rounded-lg px-5 py-2 text-sm font-semibold transition-all duration-200", viewMode === item.id ? "border border-[#0F6CBD] bg-[#0F6CBD] text-white shadow-md shadow-[#0F6CBD]/20" : "text-muted-foreground hover:bg-white/80 hover:text-foreground")}>{item.label}</button>)}</nav>{viewMode === "guided" && <div data-tour="huddle-audience"><HuddleAudienceSelect mode="single" roles={roles} loading={rolesLoading} errorMessage={rolesErrorMessage} selectedIds={selectedRoleExternalId ? [selectedRoleExternalId] : []} onChange={(selectedIds) => { setSelectedRoleExternalId(selectedIds[0] ?? null); setSelectedExternalId(null); }} /></div>}{viewMode === "evergreen" && <div data-tour="huddle-filters"><HuddleFilterBar filters={filters} options={options} roles={roles} rolesLoading={rolesLoading} rolesErrorMessage={rolesErrorMessage} audienceRoleIds={evergreenAudienceDisplayIds} onAudienceChange={handleAudienceChange} audienceNote={evergreenAudienceNote} onFilterChange={changeFilter} /></div>}</div>}
 
       {viewMode === "orientation" && <HuddleOnboardingExperience key={persona ?? "choose-experience"} persona={persona} onSelectPersona={selectPersona} onChangePersona={changePersona} onStartRolePath={() => changeViewMode("guided")} onAdditionalTopics={() => changeViewMode("evergreen")} />}
-      {persona && viewMode !== "orientation" && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"><div data-tour="huddle-list" className="min-w-0">{viewMode === "guided" ? <RecommendedPath data={recommendedPathQuery.data} roleName={presentationAudience.roleName} catalog={referenceCatalogQuery.data ?? []} isLoading={recommendedPathQuery.isLoading} error={recommendedPathQuery.error} mutationError={savePlanMutation.error ?? resetPlanMutation.error} selectedExternalId={selectedExternalId} hasRole={Boolean(selectedRoleExternalId)} votes={votes} votePending={voteMutation.isPending} savePending={savePlanMutation.isPending || resetPlanMutation.isPending} onSelect={setSelectedExternalId} onVote={setVote} onSave={savePlan} onReset={resetPlan} onRetry={() => void recommendedPathQuery.refetch()} /> : <HuddleCatalog data={evergreenQuery.data} isLoading={evergreenQuery.isLoading} error={evergreenQuery.error} selectedExternalId={selectedExternalId} audienceRoleIds={audienceRoleIds} filterKey={filterKey} filtersActive={Boolean(filters.focusArea || filters.agent || filters.search)} votes={votes} votePending={voteMutation.isPending} continueLearning={incompleteSessionsQuery.data} plan={customLearningPlan} planAudienceLabel={personaLabel} onSelect={setSelectedExternalId} onVote={setVote} onRetry={() => void evergreenQuery.refetch()} onContinue={continueLearning} onCloseDetails={() => setSelectedExternalId(null)} />}</div><div data-tour="huddle-detail">{detailPanel}</div></div>}
+      {persona && viewMode !== "orientation" && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"><div data-tour="huddle-list" className="min-w-0">{viewMode === "guided" ? <RecommendedPath data={recommendedPathQuery.data} roleName={presentationAudience.roleName} catalog={referenceCatalogQuery.data ?? []} isLoading={recommendedPathQuery.isLoading} error={recommendedPathQuery.error} mutationError={savePlanMutation.error ?? resetPlanMutation.error} selectedExternalId={selectedExternalId} hasRole={Boolean(selectedRoleExternalId)} votes={votes} votePending={voteMutation.isPending} savePending={savePlanMutation.isPending || resetPlanMutation.isPending} onSelect={(externalId) => setSelectedExternalId((current) => (current === externalId ? null : externalId))} onVote={setVote} onSave={savePlan} onReset={resetPlan} onRetry={() => void recommendedPathQuery.refetch()} /> : <HuddleCatalog data={evergreenQuery.data} isLoading={evergreenQuery.isLoading} error={evergreenQuery.error} selectedExternalId={selectedExternalId} audienceRoleIds={audienceRoleIds} filterKey={filterKey} filtersActive={Boolean(filters.focusArea || filters.agent || filters.search)} votes={votes} votePending={voteMutation.isPending} continueLearning={incompleteSessionsQuery.data} plan={customLearningPlan} planAudienceLabel={personaLabel} onSelect={(externalId) => setSelectedExternalId((current) => (current === externalId ? null : externalId))} onVote={setVote} onRetry={() => void evergreenQuery.refetch()} onContinue={continueLearning} onCloseDetails={() => setSelectedExternalId(null)} />}</div><div data-tour="huddle-detail">{detailPanel}</div></div>}
       {downvoteTarget && <HuddleDownvoteDialog huddleName={downvoteTarget.name} onCancel={() => setDownvoteTarget(null)} onSubmit={(downvoteReasons, comment) => { voteMutation.mutate({ externalId: downvoteTarget.id, request: { value: -1, downvoteReasons, comment } }); setDownvoteTarget(null); }} />}
       {workspaceOpen && presentationModel && !sessionQuery.isLoading && <HuddleWorkspace key={presentationModel.identity.externalId} model={presentationModel} session={sessionQuery.data} sessionLoading={sessionQuery.isLoading} sessionError={sessionError} mutationPending={saveSessionMutation.isPending || activityCompletionMutation.isPending || completeSessionMutation.isPending} onRefreshSession={async () => (await sessionQuery.refetch()).data} onSaveSession={saveSession} onSetActivityCompletion={setActivityCompletion} onCompleteSession={completeSession} onMeetCoach={() => setCoachContext({ externalId: presentationModel.identity.externalId, name: presentationModel.identity.name })} onPreviewSlides={() => setPreviewOpen(true)} onClose={() => setWorkspaceOpen(false)} />}
       {previewOpen && presentationModel && <HuddlePreviewDialog open model={presentationModel} onClose={() => setPreviewOpen(false)} />}
