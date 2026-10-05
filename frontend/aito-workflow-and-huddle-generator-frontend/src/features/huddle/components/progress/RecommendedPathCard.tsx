@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Bot, CalendarDays, Clock, ListChecks, Target } from "lucide-react";
+import { Bot, CalendarDays, Clock, Download, ListChecks, Loader2, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mapHuddleCatalogItemToCard } from "../../mappers";
 import type { HuddleCatalogItemResponse, HuddleVoteResponse } from "../../types";
@@ -17,6 +17,10 @@ interface RecommendedPathCardProps {
   managementMenuOpen?: boolean;
   onSelect: (externalId: string) => void;
   onVote: (externalId: string, value: -1 | 1 | null) => void;
+  htmlExportPending: boolean;
+  /** True while any week card is downloading, so downloads never overlap. */
+  htmlExportDisabled: boolean;
+  onExportHtml: () => void;
 }
 
 function agentLabel(names: string[]): string {
@@ -34,6 +38,9 @@ export function RecommendedPathCard({
   managementMenuOpen = false,
   onSelect,
   onVote,
+  htmlExportPending,
+  htmlExportDisabled,
+  onExportHtml,
 }: RecommendedPathCardProps) {
   const card = mapHuddleCatalogItemToCard(huddle);
 
@@ -110,6 +117,17 @@ export function RecommendedPathCard({
       </button>
 
       <div className="col-span-2 flex items-center justify-end gap-1 pt-1 sm:col-span-1 sm:pt-0">
+        <button
+          type="button"
+          disabled={htmlExportDisabled}
+          onClick={(event) => { event.stopPropagation(); onExportHtml(); }}
+          className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-white px-2 text-xs font-semibold text-[#242424] transition-colors hover:bg-[#F5F9FF] disabled:opacity-50"
+          title={`Download ${card.title} as HTML`}
+          aria-label={`Download ${card.title} as HTML`}
+          aria-busy={htmlExportPending}
+        >
+          {htmlExportPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}HTML
+        </button>
         <HuddleVoteControls
           huddleName={card.title}
           vote={vote}

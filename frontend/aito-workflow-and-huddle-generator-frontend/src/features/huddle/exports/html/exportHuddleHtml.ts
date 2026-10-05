@@ -407,6 +407,14 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
     background: #e3f0ff;
   }
 
+  /* Same button without a URL yet: keeps its place but does not look or act clickable. */
+  .activity-open-tool.is-placeholder,
+  .activity-open-tool.is-placeholder:hover {
+    border-color: #c7dcf3;
+    background: #eef6ff;
+    cursor: default;
+  }
+
   .activity-practice-grid > .activity-detail-card:only-child {
     grid-column: 1 / -1;
   }
@@ -738,6 +746,13 @@ const HUDDLE_EXPORT_STYLE_FIXES = `
   .resource-tool-open:hover {
     border-color: #0f6cbd;
     background: #e3f0ff;
+  }
+
+  .resource-tool-open.is-placeholder,
+  .resource-tool-open.is-placeholder:hover {
+    border-color: #c7dcf3;
+    background: #eef6ff;
+    cursor: default;
   }
 
   .resource-tool-details {
@@ -1234,12 +1249,18 @@ function activityToolActions(agents: readonly HuddlePresentationAgent[]): string
   return `<div class="activity-tool-actions">`
     + agents.map((agent) => {
       const label = agent.displayLabel?.trim() || agent.name;
-      const accessUrl = agent.showAccessLink ? safeExternalUrl(agent.accessUrl) : null;
+      const accessUrl = safeExternalUrl(agent.accessUrl);
+      const openLabel = `${text(agent.accessLinkLabel?.trim() || `Open ${label}`)} \u2197`;
+      // Every tool row carries the Open button. Until the agent has an access URL it is a
+      // non-clickable placeholder; once accessUrl arrives it becomes a real link with no change here.
+      const openTool = accessUrl
+        ? `<a class="activity-open-tool" href="${text(accessUrl)}" target="_blank" rel="noopener noreferrer">${openLabel}</a>`
+        : `<span class="activity-open-tool is-placeholder" aria-disabled="true" title="Link coming soon">${openLabel}</span>`;
       return `<div class="activity-tool-action">`
         + `<span class="activity-tool-kicker">AI Tool</span>`
         + `<span class="activity-tool-logo">${agentBrandMark(agent, "activity-agent-logo")}</span>`
         + `<strong class="activity-tool-name">${text(label)}</strong>`
-        + `${accessUrl ? `<a class="activity-open-tool" href="${text(accessUrl)}" target="_blank" rel="noopener noreferrer">${text(agent.accessLinkLabel?.trim() || `Open ${label}`)} \u2197</a>` : ""}`
+        + openTool
         + `</div>`;
     }).join("")
     + `</div>`;
@@ -1276,7 +1297,8 @@ function activityCard(activity: HuddlePresentationActivity, index: number, tier:
 function resourceHubToolCard(agent: HuddlePresentationAgent): string {
   const label = agent.displayLabel?.trim() || agent.name;
   const brandMark = agentBrandMark(agent, "agent-logo");
-  const accessUrl = agent.showAccessLink ? safeExternalUrl(agent.accessUrl) : null;
+  const accessUrl = safeExternalUrl(agent.accessUrl);
+  const openLabel = `${text(agent.accessLinkLabel?.trim() || `Open ${label}`)} ↗`;
   const identitySubtitle = agent.shortDescription?.trim() || "Microsoft AI experience";
   const whatItIs = agent.whatItIs?.trim() || null;
   const helps = agent.whatItHelpsYouDo?.trim() || null;
@@ -1293,7 +1315,10 @@ function resourceHubToolCard(agent: HuddlePresentationAgent): string {
     + `<div class="resource-tool-badge-slot"></div>`
     + `<div class="resource-tool-head"><span class="resource-tool-logo">${brandMark}</span>`
     + `<div class="resource-tool-identity"><h3>${text(label)}</h3><span>${text(identitySubtitle)}</span></div>`
-    + `${accessUrl ? `<a class="resource-tool-open" href="${text(accessUrl)}" target="_blank" rel="noopener noreferrer">${text(agent.accessLinkLabel?.trim() || `Open ${label}`)} \u2197</a>` : ""}`
+    // Always shown, like the activity tool rows: a placeholder until the agent has an access URL.
+    + (accessUrl
+      ? `<a class="resource-tool-open" href="${text(accessUrl)}" target="_blank" rel="noopener noreferrer">${openLabel}</a>`
+      : `<span class="resource-tool-open is-placeholder" aria-disabled="true" title="Link coming soon">${openLabel}</span>`)
     + `</div>`
     + `<div class="resource-tool-details">`
     + detail("what-it-is", "What it is", whatItIs)
@@ -1389,7 +1414,8 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     if (!topFiveNames.length && !alsoUsedNames.length) return "Not configured";
     const topFivePart = topFiveNames.length ? `Top 5: ${topFiveNames.join(", ")}.` : "";
     const alsoUsedPart = alsoUsedNames.length ? `Also used: ${alsoUsedNames.join(", ")}.` : "";
-    return [topFivePart, alsoUsedPart].filter(Boolean).join(" ");
+    // "Also used" starts on its own line; .meta-item strong uses white-space: pre-line to honour it.
+    return [topFivePart, alsoUsedPart].filter(Boolean).join("\n");
   })();
   const stageName = (index: number, fallback: string) => phases[index]?.name?.trim() || fallback;
   const stageDescription = (index: number) => phases[index]?.description ?? null;

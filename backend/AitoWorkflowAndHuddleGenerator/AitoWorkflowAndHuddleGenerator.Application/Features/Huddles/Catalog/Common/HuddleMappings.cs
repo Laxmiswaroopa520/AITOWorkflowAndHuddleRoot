@@ -277,16 +277,37 @@ internal static class HuddleMappings                //static class means no need
         return fields;
     }
 
+    /// <summary>
+    /// Reads a stored list: a JSON array of strings, or plain text with one item per line.
+    /// </summary>
+    /// <remarks>
+    /// The seeded content is plain text, so JSON is only attempted when the value looks like an
+    /// array. Trying JSON first on every value threw and caught an exception per field, which under
+    /// the debugger cost seconds per Role Path read and close to a minute per catalogue read.
+    /// Results are unchanged: arrays parse as JSON, the literal "null" is an empty list, and
+    /// anything else (including an invalid array) is split by line.
+    /// </remarks>
     private static IReadOnlyList<string> ParseList(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return [];
-        try
+
+        string trimmed = value.Trim();
+        if (trimmed.StartsWith('['))
         {
-            return JsonSerializer.Deserialize<List<string>>(value) ?? [];
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(value) ?? [];
+            }
+            catch (JsonException)
+            {
+                // Looked like an array but is not valid JSON: fall back to line splitting below.
+            }
         }
-        catch (JsonException)
+        else if (trimmed == "null")
         {
-            return value.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return [];
         }
+
+        return value.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 }
