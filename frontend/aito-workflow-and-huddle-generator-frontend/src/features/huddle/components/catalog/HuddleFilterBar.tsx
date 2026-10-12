@@ -92,8 +92,11 @@ function FilterSelect({ label, value, options, allLabel, showAllOption = true, o
  */
 export function HuddleFilterBar({ filters, options, roles, rolesLoading = false, rolesErrorMessage = null, audienceRoleIds, onAudienceChange, audienceNote = null, onFilterChange }: HuddleFilterBarProps) {
   return (
-    <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-2 lg:grid-cols-5">
-      <HuddleAudienceSelect mode="multi" roles={roles} loading={rolesLoading} errorMessage={rolesErrorMessage} selectedIds={audienceRoleIds} onChange={onAudienceChange} note={audienceNote} />
+    <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-2 lg:grid-cols-6">
+      {/* Segment + Role sit side by side, so the audience takes two columns. */}
+      <div className="min-w-0 md:col-span-2">
+        <HuddleAudienceSelect mode="multi" roles={roles} loading={rolesLoading} errorMessage={rolesErrorMessage} selectedIds={audienceRoleIds} onChange={onAudienceChange} note={audienceNote} />
+      </div>
       <FilterSelect label="Focus Area" value={filters.focusArea} options={options.focusAreas} allLabel="All Focus Areas" onChange={(value) => onFilterChange("focusArea", value)} />
       <FilterSelect label="AI Tool" value={filters.agent} options={options.agents} allLabel="All AI Tools" onChange={(value) => onFilterChange("agent", value)} />
       <FilterSelect label="Sort" value={filters.sort} options={SORT_OPTIONS} allLabel="Default order" showAllOption={false} onChange={(value) => onFilterChange("sort", value)} />

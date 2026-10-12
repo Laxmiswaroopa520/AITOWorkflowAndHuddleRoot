@@ -1376,22 +1376,20 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   // author-curated agents.primary/secondary tags mention it. Those tags can list an agent no
   // activity actually uses, which used to make it show as "Used in huddle" in the Top 5 band
   // (and in the AI Tools summary / Resources tool grid below) even though nothing in the
-  // Huddle calls on it. Matching by agentArtwork (rather than externalId) keeps this
-  // label-tolerant, the same way topFiveAgentBand already matches artwork.
+  // Huddle calls on it. Matching is by externalId: agentArtwork only recognizes a handful of
+  // name patterns, so an agent without artwork (e.g. "Sales Home", "MSXI Assist V2") was treated
+  // as unused even when an activity genuinely used it. agentArtwork stays the tool for cosmetic
+  // lookups (logos, Top 5 band matching below); it no longer decides "used".
   const declaredAgents = [...model.agents.primary, ...model.agents.secondary]
     .filter((agent, index, all) => all.findIndex((candidate) => candidate.externalId === agent.externalId) === index)
     .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId));
 
-  const activityAgentArtworkSources = new Set(
+  const activityAgentExternalIds = new Set(
     allActivities
       .flatMap((activity) => activity.agents)
-      .map((agent) => agentArtwork(agent.name)?.source)
-      .filter((source): source is string => Boolean(source)),
+      .map((agent) => agent.externalId),
   );
-  const usedDeclaredAgents = declaredAgents.filter((agent) => {
-    const source = agentArtwork(agent.name)?.source;
-    return source ? activityAgentArtworkSources.has(source) : false;
-  });
+  const usedDeclaredAgents = declaredAgents.filter((agent) => activityAgentExternalIds.has(agent.externalId));
 
   // The Top 5 (in the official band order) that this Huddle actually uses, followed by
   // whichever other used agents are not one of the five -- matching the "Top 5: ... . Also
@@ -1416,7 +1414,21 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   const topicName = model.identity.name;
   const aiToolsSummary = (() => {
     const topFiveNames = agentNames(topFiveUsedAgents);
-    const alsoUsedNames = agentNames(alsoUsedAgents);
+    // "Also used" also lists the Huddle's secondary agents, even when no activity calls on them, so
+    // the summary matches the Secondary AI Tools shown in the app. The secondary tags can repeat an
+    // agent under another id, so anything whose id or name is already shown is skipped. The Top 5
+    // band and the Resources tool grid keep the activity-used list (alsoUsedAgents / agents).
+    const secondaryAgents = [...model.agents.secondary]
+      .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId));
+    const shownIds = new Set(topFiveUsedAgents.map((agent) => agent.externalId));
+    const shownNames = new Set(topFiveNames.map((name) => name.toLowerCase()));
+    const alsoUsedNames = agentNames([...alsoUsedAgents, ...secondaryAgents].filter((agent) => {
+      const name = agentNames([agent])[0]?.toLowerCase();
+      if (shownIds.has(agent.externalId) || !name || shownNames.has(name)) return false;
+      shownIds.add(agent.externalId);
+      shownNames.add(name);
+      return true;
+    }));
     if (!topFiveNames.length && !alsoUsedNames.length) return "Not configured";
     const topFivePart = topFiveNames.length ? `Top 5: ${topFiveNames.join(", ")}.` : "";
     const alsoUsedPart = alsoUsedNames.length ? `Also used: ${alsoUsedNames.join(", ")}.` : "";
