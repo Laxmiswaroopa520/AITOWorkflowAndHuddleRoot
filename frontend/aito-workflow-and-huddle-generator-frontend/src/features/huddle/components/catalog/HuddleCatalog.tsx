@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { LoadingSpinner } from "@/components/feedback/LoadingSpinner";
@@ -38,12 +39,18 @@ interface HuddleCatalogProps {
   /** Human-readable persona shown on the exported plan. */
   planAudienceLabel?: string | null;
   onCloseDetails?: () => void;
+  /** Opens the "Create your own Huddle" (Huddle in a Box) dialog from the footer prompt. */
+  onCreateOwnHuddle: () => void;
+  /** The topic whose HTML download is in progress, if any (same value the Role Path cards use). */
+  htmlExportExternalId?: string | null;
+  /** Downloads a topic's HTML the same way the Role Path week cards do. Omit to hide the button. */
+  onExportHtml?: (huddle: HuddleCatalogItemResponse) => void;
 }
 
 const PAGE_SIZE = 10;
 
 
-export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audienceRoleIds, filterKey, filtersActive = false, votes, votePending, continueLearning, plan, planAudienceLabel, onSelect, onVote, onRetry, onContinue, onCloseDetails }: HuddleCatalogProps) {
+export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audienceRoleIds, filterKey, filtersActive = false, votes, votePending, continueLearning, plan, planAudienceLabel, onSelect, onVote, onRetry, onContinue, onCloseDetails, onCreateOwnHuddle, htmlExportExternalId = null, onExportHtml }: HuddleCatalogProps) {
   const [page, setPage] = useState(1);
   // Tracks the filterKey that `page` was last reset for, so paging can restart at page one
   // without an effect (adjusting state during render instead of in a useEffect, per React's
@@ -59,6 +66,8 @@ export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audi
     return (data ?? []).filter((item) => item.roles.some((role) => audienceRoleIds.includes(role.externalId)));
   }, [data, audienceRoleIds]);
   const cards = useMemo(() => visible.map(mapHuddleCatalogItemToCard), [visible]);
+  // The HTML export needs the API item, not the card view model; cards are keyed by topic id here.
+  const itemsById = useMemo(() => new Map(visible.map((item) => [item.externalId, item])), [visible]);
 
   // Resolve the plan sequence against the full API payload so a topic stays in the plan
   // even when the current filters or page would hide its card.
@@ -111,11 +120,12 @@ export function HuddleCatalog({ data, isLoading, error, selectedExternalId, audi
       <ContinueLearningList items={continueLearning} onContinue={onContinue} />
       {plan && plan.selectedIds.length > 0 && <CustomLearningPlanCard selectedCount={plan.selectedIds.length} exporting={exporting} onBuild={() => setPlanOpen(true)} onExport={exportPlan} onClear={clearPlan} />}
       {planError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">{planError}</p>}
-      <div className="space-y-3">{pagedCards.map((huddle) => <HuddleCatalogCard showManagementMenu key={huddle.id} huddle={huddle} selected={selectedExternalId === huddle.id} vote={votes.get(huddle.id)} votePending={votePending} primaryAccessUrl={huddle.primaryAccessUrl} planChecked={plan?.isSelected(huddle.id) ?? false} onTogglePlan={plan ? plan.toggle : undefined} onSelect={onSelect} onVote={onVote} />)}</div>
+      <div className="space-y-3">{pagedCards.map((huddle) => <HuddleCatalogCard showManagementMenu key={huddle.id} huddle={huddle} selected={selectedExternalId === huddle.id} vote={votes.get(huddle.id)} votePending={votePending} primaryAccessUrl={huddle.primaryAccessUrl} planChecked={plan?.isSelected(huddle.id) ?? false} onTogglePlan={plan ? plan.toggle : undefined} onSelect={onSelect} onVote={onVote} onExportHtml={onExportHtml ? () => { const item = itemsById.get(huddle.id); if (item) onExportHtml(item); } : undefined} htmlExportPending={htmlExportExternalId === huddle.id} htmlExportDisabled={htmlExportExternalId !== null} />)}</div>
       {/* A role can have a Role Path and no additional content, which is the mirror of All Roles
           having additional content and no Role Path. Say which of the two happened. */}
       {cards.length === 0 && <div className="rounded-xl border border-dashed bg-white py-10 text-center text-sm text-muted-foreground">{filtersActive ? "No Huddles match this filter." : "No  Topics are configured for this audience."}</div>}
       {cards.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 pt-1"><p className="text-xs text-muted-foreground">Showing {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, cards.length)} of {cards.length} Huddles</p>{totalPages > 1 && <div className="flex items-center gap-2"><Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</Button><span className="min-w-16 text-center text-xs font-medium text-muted-foreground">Page {currentPage} of {totalPages}</span><Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Next</Button></div>}</div>}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-6"><p className="max-w-lg text-sm text-muted-foreground">Not finding the role, workflow, practice, or tool you&apos;re looking for? Try creating your own huddle content!</p><button type="button" onClick={onCreateOwnHuddle} className="inline-flex h-10 shrink-0 items-center rounded-lg border border-[#0A6BBA] bg-white px-3 text-sm font-semibold text-[#0A6BBA] hover:bg-[#E2F1F9]"><Box className="mr-2 h-4 w-4" />Create your own Huddle</button></div>
       {plan && planOpen && <CustomLearningPlanDialog huddles={planHuddles} exporting={exporting} onMove={plan.move} onRemove={plan.remove} onClear={clearPlan} onExport={exportPlan} onClose={() => setPlanOpen(false)} />}
     </section>
   );

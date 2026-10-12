@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ElementType } from "react";
-import { Briefcase, Building2, Check, ChevronDown, Cpu, Handshake, Loader2, Plus, Shield, Target, Users2, Wrench } from "lucide-react";
+import { Briefcase, Building2, Check, ChevronDown, Cpu, Handshake, Layers, Loader2, Plus, Shield, Target, Users2, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDismissOnOutside } from "../../hooks/useDismissOnOutside";
 import type { HuddleRoleResponse } from "../../types";
@@ -44,18 +44,31 @@ interface HuddleAudienceSelectProps {
    * why a role is already showing instead of "Select Audience".
    */
   note?: string | null;
+  /** Segment to start on, so a parent-held segment survives this picker remounting (e.g. a tab switch). */
+  initialSegment?: string | null;
+  /** Told whenever the reader picks a segment (null = All Segments). */
+  onSegmentChange?: (segment: string | null) => void;
 }
 
 function roleIcon(externalId: string): ElementType {
   return ROLE_ICONS[externalId] ?? Briefcase;
 }
 
-export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onChange, loading = false, errorMessage = null, note = null }: HuddleAudienceSelectProps) {
+function roleSegment(role: HuddleRoleResponse): string {
+  return role.segment ?? "Other";
+}
+
+export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onChange, loading = false, errorMessage = null, note = null, initialSegment = null, onSegmentChange }: HuddleAudienceSelectProps) {
   const [open, setOpen] = useState(false);
+  const [segmentOpen, setSegmentOpen] = useState(false);
+  /** The segment picked in the first dropdown. null means "not chosen yet" (single) or "All Segments" (multi). */
+  const [chosenSegment, setChosenSegment] = useState<string | null>(initialSegment);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const segmentContainerRef = useRef<HTMLDivElement | null>(null);
   const multi = mode === "multi";
 
   useDismissOnOutside(open, containerRef, useCallback(() => setOpen(false), []));
+  useDismissOnOutside(segmentOpen, segmentContainerRef, useCallback(() => setSegmentOpen(false), []));
 
   // Segments keep first-appearance order so Enterprise leads, matching the reference design.
   // "All Roles" is pulled out of the segment groups and rendered as its own separate entry at
@@ -66,7 +79,7 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
     const grouped = new Map<string, HuddleRoleResponse[]>();
     roles.forEach((role) => {
       if (role.name === "All Roles") return;
-      const segment = role.segment ?? "Other";
+      const segment = roleSegment(role);
       const bucket = grouped.get(segment);
       if (bucket) bucket.push(role);
       else grouped.set(segment, [role]);
@@ -75,7 +88,40 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
   }, [roles]);
 
   const selected = roles.filter((role) => selectedIds.includes(role.externalId));
-  const allSelected = roles.length > 0 && selected.length === roles.length;
+
+  // The selection can arrive from outside (a saved Role Path role, or All Topics inheriting it),
+  // so the segment follows the selection whenever the picked segment no longer contains it.
+  // Otherwise the Segment dropdown would read one segment while the Role dropdown shows a role
+  // from another.
+  const selectedSegments = [...new Set(selected.filter((role) => role.name !== "All Roles").map(roleSegment))];
+  const derivedSegment = selectedSegments.length === 1 ? selectedSegments[0] : null;
+  const chosenSegmentFitsSelection = chosenSegment !== null && selected.every((role) => role.name !== "All Roles" && roleSegment(role) === chosenSegment);
+  const activeSegment = chosenSegmentFitsSelection ? chosenSegment : selected.length === 0 ? chosenSegment : derivedSegment;
+
+  // Roles offered in the second dropdown: only the active segment's, or every group when
+  // multi-select is on "All Segments".
+  const visibleSegments = activeSegment ? segments.filter(([segment]) => segment === activeSegment) : multi ? segments : [];
+  const visibleRoles = [...visibleSegments.flatMap(([, segmentRoles]) => segmentRoles), ...(allRolesRole && !activeSegment ? [allRolesRole] : [])];
+  const allSelected = visibleRoles.length > 0 && visibleRoles.every((role) => selectedIds.includes(role.externalId));
+  const roleDisabled = !multi && !activeSegment;
+
+  const chooseSegment = (segment: string | null) => {
+    setChosenSegment(segment);
+    onSegmentChange?.(segment);
+    setSegmentOpen(false);
+    // Drop any selected role outside the new segment, so the Role dropdown never holds a
+    // role the reader can no longer see in its list.
+    if (segment !== null) {
+      const kept = selected.filter((role) => role.name !== "All Roles" && roleSegment(role) === segment).map((role) => role.externalId);
+      if (kept.length !== selectedIds.length) onChange(kept);
+      // Role Path needs a role next, so move straight on to the role list.
+      if (!multi) setOpen(true);
+    } else if (selectedIds.length > 0) {
+      // "All Segments" resets the audience. Keeping the roles would also snap the Segment
+      // dropdown straight back to their segment (see activeSegment above).
+      onChange([]);
+    }
+  };
 
   /** Renders the trigger icon. A helper (like renderRole below) rather than a JSX-tag
    * variable, since the icon can switch between different components as the selection
@@ -138,24 +184,81 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
   };
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-[260px]">
-      <span className="mb-1.5 block text-xs font-medium text-[#424242]">Audience <span aria-hidden="true">&#9432;</span></span>
+    <div className={cn("w-full min-w-0", !multi && "max-w-[540px]")}>
+      <div className="grid grid-cols-2 gap-3">
+        <div ref={segmentContainerRef} className="relative min-w-0">
+          <span className="mb-1.5 block text-xs font-medium text-[#424242]">Segment</span>
+          <button
+            type="button"
+            role="combobox"
+            aria-expanded={segmentOpen}
+            aria-haspopup="listbox"
+            aria-label="Segment"
+            onClick={() => setSegmentOpen((value) => !value)}
+            className={cn(
+              "flex h-10 w-full items-center justify-between rounded-lg border bg-white px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0F6CBD]/25",
+              activeSegment ? "border-[#0F6CBD]/60" : "border-input",
+            )}
+          >
+            {activeSegment ? (
+              <span className="flex min-w-0 items-center gap-2"><Layers className="h-4 w-4 flex-none text-[#0F6CBD]" /><span className="truncate">{activeSegment}</span></span>
+            ) : (
+              <span className="flex min-w-0 items-center gap-2 font-normal text-muted-foreground"><Layers className="h-4 w-4 flex-none" /><span className="truncate">{multi ? "All Segments" : "Select Segment"}</span></span>
+            )}
+            <ChevronDown className={cn("ml-2 h-4 w-4 flex-none text-muted-foreground transition-transform", segmentOpen && "rotate-180")} />
+          </button>
+
+          {segmentOpen && (
+            <div role="listbox" aria-label="Segment" className="absolute left-0 top-full z-30 mt-1 max-h-72 w-full min-w-[200px] overflow-y-auto rounded-lg border bg-white py-1 shadow-xl">
+              {loading && segments.length === 0 && (
+                <p className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground" role="status"><Loader2 className="h-4 w-4 animate-spin text-[#0F6CBD]" />Loading segments...</p>
+              )}
+              {!loading && errorMessage && <p className="px-3 py-2 text-sm text-[#A80000]" role="alert">{errorMessage}</p>}
+              {!loading && !errorMessage && segments.length === 0 && <p className="px-3 py-2 text-sm text-muted-foreground">No segments available.</p>}
+              {multi && segments.length > 0 && (
+                <button type="button" role="option" aria-selected={activeSegment === null} onClick={() => chooseSegment(null)} className={cn("block w-full px-3 py-2 text-left text-sm", activeSegment === null ? "bg-[#E8F2FF] font-semibold text-[#0F6CBD]" : "hover:bg-[#F5F9FF]")}>
+                  All Segments
+                </button>
+              )}
+              {segments.map(([segment, segmentRoles]) => (
+                <button
+                  key={segment}
+                  type="button"
+                  role="option"
+                  aria-selected={segment === activeSegment}
+                  onClick={() => chooseSegment(segment)}
+                  className={cn("flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm", segment === activeSegment ? "bg-[#E8F2FF] font-semibold text-[#0F6CBD]" : "hover:bg-[#F5F9FF]")}
+                >
+                  <span className="truncate">{segment}</span>
+                  <span className="flex-none text-[11px] font-normal text-muted-foreground">{segmentRoles.length} role{segmentRoles.length === 1 ? "" : "s"}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+    <div ref={containerRef} className="relative min-w-0">
+      <span className="mb-1.5 block text-xs font-medium text-[#424242]">Role <span aria-hidden="true">&#9432;</span></span>
 
       <button
         type="button"
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-label="Role"
+        disabled={roleDisabled}
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-lg border bg-white px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0F6CBD]/25",
+          "flex h-10 w-full items-center justify-between rounded-lg border bg-white px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#0F6CBD]/25 disabled:cursor-not-allowed disabled:bg-muted/40",
           selected.length > 0 ? "border-[#0F6CBD]/60" : "border-input",
         )}
       >
-        {selected.length === 0 && loading ? (
+        {roleDisabled && !loading ? (
+          <span className="flex min-w-0 items-center gap-2 font-normal text-muted-foreground"><Briefcase className="h-4 w-4 flex-none" /><span className="truncate">Select a segment first</span></span>
+        ) : selected.length === 0 && loading ? (
           <span className="flex items-center gap-2 font-normal text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin text-[#0F6CBD]" />Loading audience...</span>
         ) : selected.length === 0 ? (
-          <span className="flex items-center gap-2 font-normal text-muted-foreground"><Briefcase className="h-4 w-4" />Select Audience</span>
+          <span className="flex items-center gap-2 font-normal text-muted-foreground"><Briefcase className="h-4 w-4 flex-none" /><span className="truncate">Select Role</span></span>
         ) : selected.length === 1 ? (
           // A single selected role always reads by its full name here, in both single- and
           // multi-select mode -- the abbreviation ("AE") only appears once two or more roles are
@@ -169,20 +272,25 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
         )}
         <ChevronDown className={cn("ml-2 h-4 w-4 flex-none text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
-      {note && <p className="mt-1 text-[11px] italic text-muted-foreground">{note}</p>}
 
       {open && (
         <div role="listbox" aria-multiselectable={multi} className="absolute left-0 z-30 mt-1 w-80 overflow-hidden rounded-xl border bg-white shadow-xl">
           <div className="border-b p-3">
-            <p className="text-base font-semibold">Select Audience</p>
-            <p className="text-xs text-muted-foreground">{multi ? "Choose one or more audience roles for the Huddle" : "Choose one audience role for the Huddle"}</p>
+            <p className="text-base font-semibold">Select Role</p>
+            <p className="text-xs text-muted-foreground">
+              {multi ? "Choose one or more" : "Choose one"} {activeSegment ? `${activeSegment} ` : "audience "}role{multi ? "s" : ""} for the Huddle
+            </p>
 
             <div className="mt-2.5 flex items-center justify-between gap-2">
               {multi ? (
                 <button
                   type="button"
-                  disabled={loading || roles.length === 0}
-                  onClick={() => onChange(allSelected ? [] : roles.map((role) => role.externalId))}
+                  disabled={loading || visibleRoles.length === 0}
+                  onClick={() => {
+                    // Scoped to the roles in view, so Select All inside one segment does not also pick every other segment's roles.
+                    const visibleIds = visibleRoles.map((role) => role.externalId);
+                    onChange(allSelected ? selectedIds.filter((id) => !visibleIds.includes(id)) : [...new Set([...selectedIds, ...visibleIds])]);
+                  }}
                   className={cn(
                     "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors",
                     allSelected ? "border-[#0F6CBD] bg-[#0F6CBD] text-white hover:bg-[#115EA3]" : "border-[#0F6CBD]/30 bg-[#0F6CBD]/[0.08] text-[#115EA3] hover:bg-[#0F6CBD]/[0.16]",
@@ -209,17 +317,20 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
               </p>
             )}
             {!loading && errorMessage && <p className="px-2 py-6 text-center text-sm text-[#A80000]" role="alert">{errorMessage}</p>}
-            {!loading && !errorMessage && segments.length === 0 && !allRolesRole && <p className="px-2 py-6 text-center text-sm text-muted-foreground">No audience roles available.</p>}
-            {segments.map(([segment, segmentRoles]) => (
+            {!loading && !errorMessage && visibleRoles.length === 0 && <p className="px-2 py-6 text-center text-sm text-muted-foreground">No audience roles available.</p>}
+            {visibleSegments.map(([segment, segmentRoles]) => (
               <div key={segment} className="mb-3 last:mb-0">
-                <div className="mb-1 px-2 py-1.5">
-                  <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", SEGMENT_STYLES[segment] ?? "border-input bg-muted text-muted-foreground")}>{segment}</span>
-                </div>
+                {/* The Segment dropdown already names a single segment; the badge only helps when every segment is listed. */}
+                {!activeSegment && (
+                  <div className="mb-1 px-2 py-1.5">
+                    <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", SEGMENT_STYLES[segment] ?? "border-input bg-muted text-muted-foreground")}>{segment}</span>
+                  </div>
+                )}
 
                 {segmentRoles.map((role) => renderRole(role))}
               </div>
             ))}
-            {allRolesRole && (
+            {allRolesRole && !activeSegment && (
               <div className="mt-1 border-t pt-3">
                 <div className="mb-1 px-2 py-1.5">
                   <span className="rounded-full border border-input bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Every role</span>
@@ -238,6 +349,9 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
           )}
         </div>
       )}
+    </div>
+      </div>
+      {note && <p className="mt-1 text-[11px] italic text-muted-foreground">{note}</p>}
     </div>
   );
 }

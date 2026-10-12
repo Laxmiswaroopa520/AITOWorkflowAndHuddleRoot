@@ -27,7 +27,7 @@ const WORKFLOW_CONTENT: TourStep[] = [
 const HUDDLE_TIPS: Record<HuddlePersona, Record<string, string>> = {
   manager: {
     "huddle-role": "You are set up as a Manager. Switch experience here if you are standing in for someone else.",
-    "huddle-sections": "Onboarding explains the programme, Role Path is the seven-week plan you assign, and All Topics is where you build extra plans.",
+    "huddle-sections": "Role Path is the seven-week plan you assign, and All Topics is where you build extra plans. Select Manager in the breadcrumb to return to the onboarding page.",
     "huddle-launch-planner": "Plan the rollout for your team: dates, comms, and which sessions to run first.",
     "huddle-audience": "Pick the audience role. The seven recommended Huddles change to match it, and you can reorder or reset the plan.",
     "huddle-filters": "Narrow the catalogue by audience, focus area, AI tool, or keyword before you choose topics.",
@@ -38,7 +38,7 @@ const HUDDLE_TIPS: Record<HuddlePersona, Record<string, string>> = {
   },
   facilitator: {
     "huddle-role": "You are set up as a Facilitator. Switch experience here if your role changes.",
-    "huddle-sections": "Onboarding explains the programme, Role Path is the seven-week sequence you run, and All Topics is where you assemble your own running order.",
+    "huddle-sections": "Role Path is the seven-week sequence you run, and All Topics is where you assemble your own running order. Select Facilitator in the breadcrumb to return to the onboarding page.",
     "huddle-launch-planner": "Plan the rollout: dates, comms, and which sessions to run first.",
     "huddle-audience": "Pick the audience you are facilitating for. The recommended seven Huddles follow that role.",
     "huddle-filters": "Filter by audience, focus area, AI tool, or keyword to find the topic that fits the room.",
@@ -49,7 +49,7 @@ const HUDDLE_TIPS: Record<HuddlePersona, Record<string, string>> = {
   },
   "team-member": {
     "huddle-role": "You are set up as a Team Member. Switch experience here if your role changes.",
-    "huddle-sections": "Start with Orientation to see how the programme works. Role Path is your seven-week sequence, and All Topics has extra Huddles for your role.",
+    "huddle-sections": "Role Path is your seven-week sequence, and All Topics has extra Huddles for your role. Select Team Member in the breadcrumb to return to the orientation page.",
     "huddle-launch-planner": "Plan the rollout: dates, comms, and which sessions to run first.",
     "huddle-audience": "Pick your role so the seven recommended Huddles match the work you actually do.",
     "huddle-filters": "Filter by audience, focus area, AI tool, or keyword to find a topic you want to work through.",
@@ -69,7 +69,7 @@ const NEUTRAL_TIPS: Record<string, string> = {
 const HUDDLE_TITLES: Record<string, string> = {
   "huddle-experience": "Choose your experience",
   "huddle-role": "Your experience",
-  "huddle-sections": "The three sections",
+  "huddle-sections": "The two sections",
   "huddle-launch-planner": "Launch Planner",
   "huddle-audience": "Audience",
   "huddle-filters": "Filters",
