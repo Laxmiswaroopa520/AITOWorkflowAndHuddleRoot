@@ -17,26 +17,19 @@ interface HuddleCatalogCardProps {
   /** Renders the custom learning plan checkbox when provided. */
   planChecked?: boolean;
   onTogglePlan?: (externalId: string) => void;
-<<<<<<< Updated upstream
   /** Renders the same HTML download button the Role Path week cards have when provided. */
   onExportHtml?: () => void;
   htmlExportPending?: boolean;
   htmlExportDisabled?: boolean;
-=======
   /** Marks this card's controls as the walkthrough targets; only the first card sets it. */
   tourFirst?: boolean;
->>>>>>> Stashed changes
 }
 
 function agentLabel(names: string[]): string {
   return names.length === 0 ? "None" : names.join(", ");
 }
 
-<<<<<<< Updated upstream
-export function HuddleCatalogCard({ huddle, selected, vote, votePending, week, onSelect, onVote, primaryAccessUrl, showManagementMenu = false, planChecked = false, onTogglePlan, onExportHtml, htmlExportPending = false, htmlExportDisabled = false }: HuddleCatalogCardProps) {
-=======
-export function HuddleCatalogCard({ huddle, selected, vote, votePending, week, onSelect, onVote, primaryAccessUrl, showManagementMenu = false, planChecked = false, onTogglePlan, tourFirst = false }: HuddleCatalogCardProps) {
->>>>>>> Stashed changes
+export function HuddleCatalogCard({ huddle, selected, vote, votePending, week, onSelect, onVote, primaryAccessUrl, showManagementMenu = false, planChecked = false, onTogglePlan, onExportHtml, htmlExportPending = false, htmlExportDisabled = false, tourFirst = false }: HuddleCatalogCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // A single activation path for the card: tick the plan checkbox and make this the
@@ -72,11 +65,7 @@ export function HuddleCatalogCard({ huddle, selected, vote, votePending, week, o
                 <span className={cn("font-semibold", selected && "text-[#115EA3]")}>{huddle.title}</span>
               </span>
             </div>
-<<<<<<< Updated upstream
-            <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>{onExportHtml && <button type="button" disabled={htmlExportDisabled} onClick={onExportHtml} className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-white px-2 text-xs font-semibold text-[#242424] transition-colors hover:bg-[#F5F9FF] disabled:opacity-50" title={`Download ${huddle.title} as HTML`} aria-label={`Download ${huddle.title} as HTML`} aria-busy={htmlExportPending}>{htmlExportPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}HTML</button>}<HuddleVoteControls huddleName={huddle.title} vote={vote} disabled={votePending} onVote={(value) => onVote(huddle.id, value)} />{showManagementMenu && <div className="relative"><button type="button" aria-label={`Manage ${huddle.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)} className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted"><MoreHorizontal className="h-4 w-4" /></button>{menuOpen && <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border bg-white p-1 shadow-xl"><button type="button" onClick={() => { onSelect(huddle.id); setMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-[#F5F9FF]"><Presentation className="h-4 w-4" />View details</button>{primaryAccessUrl && <a href={primaryAccessUrl} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-[#F5F9FF]"><ExternalLink className="h-4 w-4" />Open AI Tool</a>}</div>}</div>}</div>
-=======
-            <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}><HuddleVoteControls tour={tourFirst} huddleName={huddle.title} vote={vote} disabled={votePending} onVote={(value) => onVote(huddle.id, value)} />{showManagementMenu && <div className="relative"><button type="button" data-tour={tourFirst ? "huddle-card-menu" : undefined} aria-label={`Manage ${huddle.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)} className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted"><MoreHorizontal className="h-4 w-4" /></button>{menuOpen && <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border bg-white p-1 shadow-xl"><button type="button" onClick={() => { onSelect(huddle.id); setMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-[#F5F9FF]"><Presentation className="h-4 w-4" />View details</button>{primaryAccessUrl && <a href={primaryAccessUrl} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-[#F5F9FF]"><ExternalLink className="h-4 w-4" />Open AI Tool</a>}</div>}</div>}</div>
->>>>>>> Stashed changes
+            <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>{onExportHtml && <button type="button" disabled={htmlExportDisabled} onClick={onExportHtml} className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-white px-2 text-xs font-semibold text-[#242424] transition-colors hover:bg-[#F5F9FF] disabled:opacity-50" title={`Download ${huddle.title} as HTML`} aria-label={`Download ${huddle.title} as HTML`} aria-busy={htmlExportPending}>{htmlExportPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}HTML</button>}<HuddleVoteControls tour={tourFirst} huddleName={huddle.title} vote={vote} disabled={votePending} onVote={(value) => onVote(huddle.id, value)} />{showManagementMenu && <div className="relative"><button type="button" data-tour={tourFirst ? "huddle-card-menu" : undefined} aria-label={`Manage ${huddle.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)} className="flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted"><MoreHorizontal className="h-4 w-4" /></button>{menuOpen && <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border bg-white p-1 shadow-xl"><button type="button" onClick={() => { onSelect(huddle.id); setMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-[#F5F9FF]"><Presentation className="h-4 w-4" />View details</button>{primaryAccessUrl && <a href={primaryAccessUrl} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-[#F5F9FF]"><ExternalLink className="h-4 w-4" />Open AI Tool</a>}</div>}</div>}</div>
           </div>
           <div className="block w-full text-left">
             <span className="mt-1 block min-h-10 line-clamp-2 text-sm text-muted-foreground">{huddle.description ?? "Description unavailable."}</span>
@@ -88,3 +77,15 @@ export function HuddleCatalogCard({ huddle, selected, vote, votePending, week, o
     </article>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
