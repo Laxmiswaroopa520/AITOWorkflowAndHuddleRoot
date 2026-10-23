@@ -460,7 +460,9 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
     <HuddleResourcesSection />
 
     {/* End-of-page next step, so the reader does not have to scroll back up to pick a role. */}
-    <div className="flex justify-end">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* A real link, so hovering shows the address in the tooltip and the browser status bar. */}
+      <a href="https://www.microsoft.com/en-us/privacy/privacystatement" target="_blank" rel="noopener noreferrer" title="https://www.microsoft.com/en-us/privacy/privacystatement" className="inline-flex h-10 items-center rounded-lg border border-[#DCE6ED] bg-white px-4 text-sm font-semibold text-[#16233A] transition-colors hover:bg-[#F4F9FC]"><ShieldCheck className="mr-2 h-4 w-4 text-[#0A6BBA]" />Privacy</a>
       <Button size="lg" className="bg-[#0A6BBA] px-5 hover:bg-[#115EA3]" onClick={()=>document.getElementById('choose-experience')?.scrollIntoView({behavior:'smooth'})}>
         Choose your experience<ArrowRight className="ml-2 h-4 w-4" />
       </Button>
