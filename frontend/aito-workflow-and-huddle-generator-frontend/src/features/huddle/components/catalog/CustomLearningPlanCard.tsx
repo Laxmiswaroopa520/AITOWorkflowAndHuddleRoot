@@ -14,7 +14,7 @@ interface CustomLearningPlanCardProps {
  */
 export function CustomLearningPlanCard({ selectedCount, exporting, onBuild, onExport, onClear }: CustomLearningPlanCardProps) {
   return (
-    <div className="sticky top-2 z-10 rounded-2xl border border-[#C7E0F4] bg-white/95 px-4 py-3 shadow-[0_8px_24px_rgba(15,108,189,0.10)] backdrop-blur">
+    <div data-tour="huddle-plan-card" className="sticky top-2 z-10 rounded-2xl border border-[#C7E0F4] bg-white/95 px-4 py-3 shadow-[0_8px_24px_rgba(15,108,189,0.10)] backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-[190px]">
           <div className="flex items-center gap-2">

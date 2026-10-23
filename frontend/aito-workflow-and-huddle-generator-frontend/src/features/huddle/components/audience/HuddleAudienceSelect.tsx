@@ -74,7 +74,8 @@ export function HuddleAudienceSelect({ roles, mode = "single", selectedIds, onCh
   // "All Roles" is pulled out of the segment groups and rendered as its own separate entry at
   // the end of the list instead. Sorted in with the named roles it landed alphabetically between
   // two of them, which read as a data error rather than the "every role" option it actually is.
-  const allRolesRole = useMemo(() => roles.find((role) => role.name === "All Roles") ?? null, [roles]);
+  // The standalone "All Roles" entry is only offered in "multi" mode (All Topics); the single-role Role Path picker hides it.
+  const allRolesRole = useMemo(() => (multi ? roles.find((role) => role.name === "All Roles") ?? null : null), [roles, multi]);
   const segments = useMemo(() => {
     const grouped = new Map<string, HuddleRoleResponse[]>();
     roles.forEach((role) => {

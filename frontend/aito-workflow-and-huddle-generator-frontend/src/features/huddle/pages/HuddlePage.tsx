@@ -86,6 +86,7 @@ export function HuddlePage() {
   const handleAudienceChange = (selectedIds: string[]) => {
     setAudienceTouched(true);
     setAudienceRoleIds(selectedIds);
+    setSelectedExternalId(null); // a topic highlighted under the previous audience must not carry over
   };
   const [downvoteTarget, setDownvoteTarget] = useState<{ id: string; name: string } | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
@@ -332,7 +333,127 @@ export function HuddlePage() {
 
   return (
     <div className="mx-auto max-w-[1540px] space-y-6 p-4 [font-family:var(--aito-font-sans)] lg:p-6">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div>{persona && <nav aria-label="Huddle breadcrumb" className="mb-1.5 flex min-w-0 items-center gap-1 text-sm font-medium"><button type="button" onClick={changePersona} title="Back to the Huddle landing page" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[#0F6CBD] transition-colors hover:bg-[#E8F2FF] hover:underline"><Home className="h-3.5 w-3.5" aria-hidden="true" />Home</button><ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" aria-hidden="true" />{viewMode === "orientation" ? <span className="px-1.5 py-0.5 text-muted-foreground" aria-current="page">{personaLabel}</span> : <button type="button" onClick={() => changeViewMode("orientation")} title={`Back to ${personaLabel} home`} className="truncate rounded-md px-1.5 py-0.5 text-[#0F6CBD] transition-colors hover:bg-[#E8F2FF] hover:underline">{personaLabel}</button>}</nav>}<div className="mb-2 flex items-center gap-3"><span className="rounded-xl bg-[#E8F2FF] p-2"><Users className="h-6 w-6 text-[#0F6CBD]" /></span><h1 className="text-2xl font-bold lg:text-3xl">{persona ? personaLabel : "Huddles"}</h1></div><p className="text-muted-foreground">{persona ? "Discover and run guided Huddles that help your team apply AI to real workflows." : "Build AI fluency through guided conversations, practical activities, and shared learning."}</p></div><div className="flex flex-wrap items-center gap-2"><span className="group relative inline-flex shrink-0"><button type="button" data-tour="huddle-in-a-box" onClick={() => setHuddleInABoxOpen(true)} className="inline-flex h-10 items-center rounded-lg border border-[#0A6BBA] bg-white px-4 text-sm font-semibold text-[#0A6BBA] hover:bg-[#E2F1F9]"><Box className="mr-2 h-4 w-4" />Create your own huddle</button><span role="tooltip" className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border bg-white p-2.5 text-xs font-medium leading-4 text-[#242424] opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">Not finding the role, workflow, practice, or tool you&apos;re looking for? Try creating your own huddle content!</span></span>{SHOW_LAUNCH_PLANNER && persona === "manager" && <button type="button" data-tour="huddle-launch-planner" onClick={() => navigate("/huddle/launch-planner")} className="inline-flex h-10 items-center rounded-lg border border-[#C7C7C7] bg-[#F0F0F0] px-4 text-sm font-semibold text-[#616161] hover:bg-[#E6E6E6]"><CalendarDays className="mr-2 h-4 w-4" />Launch Planner</button>}<button type="button" data-tour="huddle-resources" onClick={() => setResourcesOpen(true)} className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-semibold hover:bg-muted"><Library className="mr-2 h-4 w-4" />Resources</button>{selectedExternalId && persona === "facilitator" && <button type="button" data-tour="huddle-generate" title="For Facilitators" onClick={() => setWorkspaceOpen(true)} className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-semibold hover:bg-muted"><Sparkles className="mr-2 h-4 w-4" />Facilitator Hub</button>}</div></header>
+
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          {persona && (
+            <nav
+              data-tour="huddle-breadcrumb"
+              aria-label="Huddle breadcrumb"
+              className="mb-1.5 flex min-w-0 items-center gap-1 text-sm font-medium"
+            >
+              <button
+                type="button"
+                onClick={changePersona}
+                title="Back to the Huddle landing page"
+                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[#0F6CBD] transition-colors hover:bg-[#E8F2FF] hover:underline"
+              >
+                <Home className="h-3.5 w-3.5" aria-hidden="true" />
+                Home
+              </button>
+              <ChevronRight
+                className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50"
+                aria-hidden="true"
+              />
+              {viewMode === "orientation" ? (
+                <span
+                  className="px-1.5 py-0.5 text-muted-foreground"
+                  aria-current="page"
+                >
+                  {personaLabel}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => changeViewMode("orientation")}
+                  title={`Back to ${personaLabel} home`}
+                  className="truncate rounded-md px-1.5 py-0.5 text-[#0F6CBD] transition-colors hover:bg-[#E8F2FF] hover:underline"
+                >
+                  {personaLabel}
+                </button>
+              )}
+            </nav>
+          )}
+
+          <div className="mb-2 flex items-center gap-3">
+            <span className="rounded-xl bg-[#E8F2FF] p-2">
+              <Users className="h-6 w-6 text-[#0F6CBD]" />
+            </span>
+            <h1 className="text-2xl font-bold lg:text-3xl">
+              {persona ? personaLabel : "Huddles"}
+            </h1>
+          </div>
+
+          <p className="text-muted-foreground">
+            {persona
+              ? "Discover and run guided Huddles that help your team apply AI to real workflows."
+              : "Build AI fluency through guided conversations, practical activities, and shared learning."}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="group relative inline-flex shrink-0">
+            <button
+              type="button"
+              data-tour="huddle-in-a-box"
+              onClick={() => setHuddleInABoxOpen(true)}
+              className="inline-flex h-10 items-center rounded-lg border border-[#0A6BBA] bg-white px-4 text-sm font-semibold text-[#0A6BBA] hover:bg-[#E2F1F9]"
+            >
+              <Box className="mr-2 h-4 w-4" />
+              Create your own huddle
+            </button>
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border bg-white p-2.5 text-xs font-medium leading-4 text-[#242424] opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+            >
+              Not finding the role, workflow, practice, or tool you&apos;re
+              looking for? Try creating your own huddle content!
+            </span>
+          </span>
+
+          {SHOW_LAUNCH_PLANNER && persona === "manager" && (
+            <button
+              type="button"
+              data-tour="huddle-launch-planner"
+              onClick={() => navigate("/huddle/launch-planner")}
+              className="inline-flex h-10 items-center rounded-lg border border-[#0A6BBA] bg-white px-4 text-sm font-semibold text-[#0A6BBA] hover:bg-[#E2F1F9]"
+            >
+              <CalendarDays className="mr-2 h-4 w-4" />
+              Launch Planner
+            </button>
+          )}
+
+          <button
+            type="button"
+            data-tour="huddle-resources"
+            onClick={() => setResourcesOpen(true)}
+            className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-semibold hover:bg-muted"
+          >
+            <Library className="mr-2 h-4 w-4" />
+            Resources
+          </button>
+
+          {viewMode !== "orientation" && (
+            <span className="inline-flex h-10 items-center rounded-lg border border-[#0F6CBD]/25 bg-[#E8F2FF] px-3 text-sm font-semibold text-[#0F6CBD]">
+              {selectedExternalId ? "1 selected" : "0 selected"}
+            </span>
+          )}
+
+          {selectedExternalId && persona === "facilitator" && (
+            <button
+              type="button"
+              data-tour="huddle-facilitator-hub"
+              title="For Facilitators"
+              onClick={() => setWorkspaceOpen(true)}
+              className="inline-flex h-10 items-center rounded-lg border bg-white px-4 text-sm font-semibold hover:bg-muted"
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Facilitator Hub
+            </button>
+          )}
+        </div>
+      </header>
+
       {feedback && (
         <div
           role="status"

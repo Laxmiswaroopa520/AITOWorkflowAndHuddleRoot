@@ -1,0 +1,343 @@
+{
+  "manifestVersion": 1,
+  "name": "aito-huddle-seed",
+  "description": "Approved, immutable seed script versions for the Workflow and Huddle reference/content tables. Add new versions; never edit a version that has been applied anywhere.",
+  "bootstrap": {
+    "file": "sql/bootstrap/000_Create_SeedScriptHistory.sql",
+    "sha256": "59e01f5557c020642a77eec7c03d38e3e4a012a2f1b550a77519c31fe8d86cf0"
+  },
+  "preflightGates": [
+    {
+      "id": "preflight-schema-ready",
+      "file": "sql/gates/pre/02_Preflight_Checks.sql",
+      "sha256": "9a3fb0c0f28644b5c65ad82fbe354ffed584056bfd5abc7664e11a279bea04a1",
+      "description": "Read-only: EF migration present, 24 target tables and V4 columns exist",
+      "source": "database/Data_Scripts/02_Preflight_Checks.sql"
+    }
+  ],
+  "steps": [
+    {
+      "id": "workflow-roles",
+      "version": 1,
+      "file": "sql/steps/workflow-roles/v001__baseline_03_Workflow_Roles.sql",
+      "sha256": "255e0fa47674f67703e3dde4ee167f8b695c7c56efed770ef738245f881d919f",
+      "description": "8 Workflow Builder roles (Roles, keyed on ExternalId)",
+      "source": "database/Data_Scripts/03_Workflow_Roles.sql",
+      "requires": [],
+      "reads": [],
+      "writes": [
+        "Roles"
+      ]
+    },
+    {
+      "id": "workflow-ai-tools",
+      "version": 1,
+      "file": "sql/steps/workflow-ai-tools/v001__baseline_04_Workflow_AiTools.sql",
+      "sha256": "f49c703e59203616e8f08be9f64c54d075f313d9cf7ff29228bb48b3b101b1d4",
+      "description": "14 AI tools (AiTools, keyed on ExternalId)",
+      "source": "database/Data_Scripts/04_Workflow_AiTools.sql",
+      "requires": [],
+      "reads": [],
+      "writes": [
+        "AiTools"
+      ]
+    },
+    {
+      "id": "workflow-buckets",
+      "version": 1,
+      "file": "sql/steps/workflow-buckets/v001__baseline_05_Workflow_Buckets.sql",
+      "sha256": "839b0a9daee99f8accadc3c45568fb343f81909627984cbf3bfbad24ee79eedc",
+      "description": "9 workflow buckets (WorkflowBuckets, keyed on ExternalId)",
+      "source": "database/Data_Scripts/05_Workflow_Buckets.sql",
+      "requires": [],
+      "reads": [],
+      "writes": [
+        "WorkflowBuckets"
+      ]
+    },
+    {
+      "id": "workflow-activities",
+      "version": 1,
+      "file": "sql/steps/workflow-activities/v001__baseline_06_Workflow_Activities.sql",
+      "sha256": "961bb0f79f0e5cc80c0e830dcbcfaf5bb6ceb39277cac4a02c33c1774b35794c",
+      "description": "186 Workflow activities; needs Roles and WorkflowBuckets",
+      "source": "database/Data_Scripts/06_Workflow_Activities.sql",
+      "requires": [
+        "workflow-roles",
+        "workflow-buckets"
+      ],
+      "reads": [
+        "Roles",
+        "WorkflowBuckets"
+      ],
+      "writes": [
+        "Activities"
+      ]
+    },
+    {
+      "id": "workflow-activity-ai-tools",
+      "version": 1,
+      "file": "sql/steps/workflow-activity-ai-tools/v001__baseline_07_Workflow_Activity_AiTools.sql",
+      "sha256": "fd34a6ff0127152bd2d686862daa1ccfc0e82c592bd27b9162726663726aef7c",
+      "description": "215 activity-to-tool links; needs Activities and AiTools",
+      "source": "database/Data_Scripts/07_Workflow_Activity_AiTools.sql",
+      "requires": [
+        "workflow-ai-tools",
+        "workflow-activities"
+      ],
+      "reads": [
+        "Activities",
+        "AiTools"
+      ],
+      "writes": [
+        "ActivityAiTools"
+      ]
+    },
+    {
+      "id": "huddle-reference-data",
+      "version": 1,
+      "file": "sql/steps/huddle-reference-data/v001__baseline_09_Huddle_Reference_Data.sql",
+      "sha256": "26e29a091ada7c99e21e5baafb4f81f86b7f95d6ae25e3cdf7c2d52c61f74d41",
+      "description": "Huddle segments, ROLE-* roles, segment-roles, focus areas, MCEM stages",
+      "source": "database/Data_Scripts/09_Huddle_Reference_Data.sql",
+      "requires": [
+        "workflow-roles"
+      ],
+      "reads": [],
+      "writes": [
+        "HuddleSegments",
+        "Roles",
+        "HuddleSegmentRoles",
+        "HuddleFocusAreas",
+        "HuddleMcemStages"
+      ]
+    },
+    {
+      "id": "huddle-role-descriptions",
+      "version": 1,
+      "file": "sql/steps/huddle-role-descriptions/v001__baseline_09b_Fix_Huddle_Role_Descriptions.sql",
+      "sha256": "dbb93be3039986c321e162d543f63389c1c0593387c9535285d91fb8b9704c2b",
+      "description": "Fills NULL Roles.Description on ROLE-* rows from the Workflow role with the same Abbreviation",
+      "source": "database/Data_Scripts/09b_Fix_Huddle_Role_Descriptions.sql",
+      "requires": [
+        "workflow-roles",
+        "huddle-reference-data"
+      ],
+      "reads": [
+        "Roles"
+      ],
+      "writes": [
+        "Roles"
+      ]
+    },
+    {
+      "id": "huddle-topics",
+      "version": 1,
+      "file": "sql/steps/huddle-topics/v001__baseline_10_Huddle_Topics.sql",
+      "sha256": "b134a040e954e8b0ce2f8f5bbd00510d2364bbed5fc4e6194bf930a3a63a0374",
+      "description": "Huddle topics and topic-role links",
+      "source": "database/Data_Scripts/10_Huddle_Topics.sql",
+      "requires": [
+        "huddle-reference-data"
+      ],
+      "reads": [
+        "HuddleFocusAreas",
+        "Roles"
+      ],
+      "writes": [
+        "HuddleTopics",
+        "HuddleTopicRoles"
+      ]
+    },
+    {
+      "id": "huddle-placements",
+      "version": 1,
+      "file": "sql/steps/huddle-placements/v001__baseline_11_Huddle_Placements.sql",
+      "sha256": "e989c4a48d87c78a5cfda6f733ba53b6a4c709eb726a6d9c090ec22d3f1148bc",
+      "description": "Placements (role-path/orientation/additional) and role-path items",
+      "source": "database/Data_Scripts/11_Huddle_Placements.sql",
+      "requires": [
+        "huddle-reference-data",
+        "huddle-topics"
+      ],
+      "reads": [
+        "HuddleSegmentRoles",
+        "HuddleTopics"
+      ],
+      "writes": [
+        "HuddlePlacements",
+        "HuddleRolePathItems"
+      ]
+    },
+    {
+      "id": "huddle-phases",
+      "version": 1,
+      "file": "sql/steps/huddle-phases/v001__baseline_12_Huddle_Phases.sql",
+      "sha256": "279eec75640a0b504394f47aa6faefee02eb8f795a93ccf963b02ca8ce1072de",
+      "description": "Three phases per placement",
+      "source": "database/Data_Scripts/12_Huddle_Phases.sql",
+      "requires": [
+        "huddle-placements"
+      ],
+      "reads": [
+        "HuddlePlacements",
+        "HuddleTopics"
+      ],
+      "writes": [
+        "HuddlePhases"
+      ]
+    },
+    {
+      "id": "huddle-facilitator-guides",
+      "version": 1,
+      "file": "sql/steps/huddle-facilitator-guides/v001__baseline_13_Huddle_Facilitator_Guides.sql",
+      "sha256": "dd34c0cde199fa90617be012fc591a3ffda2567978603fbd04dd584b27571d91",
+      "description": "One facilitator guide per placement",
+      "source": "database/Data_Scripts/13_Huddle_Facilitator_Guides.sql",
+      "requires": [
+        "huddle-placements"
+      ],
+      "reads": [
+        "HuddlePlacements",
+        "HuddleTopics"
+      ],
+      "writes": [
+        "HuddleFacilitatorGuides"
+      ]
+    },
+    {
+      "id": "huddle-agents",
+      "version": 1,
+      "file": "sql/steps/huddle-agents/v001__baseline_14_Huddle_Agents.sql",
+      "sha256": "c35b7003dce398d46fd158403e4b6d3cd9afaf085c1927660794722ef1446c6c",
+      "description": "Huddle AI agents",
+      "source": "database/Data_Scripts/14_Huddle_Agents.sql",
+      "requires": [],
+      "reads": [],
+      "writes": [
+        "HuddleAgents"
+      ]
+    },
+    {
+      "id": "huddle-resources",
+      "version": 1,
+      "file": "sql/steps/huddle-resources/v001__baseline_15_Huddle_Resources.sql",
+      "sha256": "59ef87089348f5dc8c0b56223007028344760eb908214deda9a21c6c3c9811d1",
+      "description": "Huddle resources",
+      "source": "database/Data_Scripts/15_Huddle_Resources.sql",
+      "requires": [],
+      "reads": [],
+      "writes": [
+        "HuddleResources"
+      ]
+    },
+    {
+      "id": "huddle-activities",
+      "version": 1,
+      "file": "sql/steps/huddle-activities/v001__baseline_16_Huddle_Activities.sql",
+      "sha256": "58db1f8bbf1913381287d1efdfd721f239d9d929bcb2aac944a7aefc6f39cd15",
+      "description": "Huddle activities; needs placements and phases",
+      "source": "database/Data_Scripts/16_Huddle_Activities.sql",
+      "requires": [
+        "huddle-placements",
+        "huddle-phases"
+      ],
+      "reads": [
+        "HuddlePhases",
+        "HuddlePlacements",
+        "HuddleTopics"
+      ],
+      "writes": [
+        "HuddleActivities"
+      ]
+    },
+    {
+      "id": "huddle-activity-prerequisites",
+      "version": 1,
+      "file": "sql/steps/huddle-activity-prerequisites/v001__baseline_17_Huddle_Activity_Prerequisites.sql",
+      "sha256": "3f9f0da7543c50be648f772b428fe927304b1349f5889c94a006f96e409eca26",
+      "description": "Activity prerequisite links (UPDATE of HuddleActivities.PrerequisiteHuddleActivityId)",
+      "source": "database/Data_Scripts/17_Huddle_Activity_Prerequisites.sql",
+      "requires": [
+        "huddle-activities"
+      ],
+      "reads": [
+        "HuddleActivities",
+        "HuddlePlacements"
+      ],
+      "writes": [
+        "HuddleActivities"
+      ]
+    },
+    {
+      "id": "huddle-topic-agent-joins",
+      "version": 1,
+      "file": "sql/steps/huddle-topic-agent-joins/v001__baseline_18_Huddle_Topic_And_Agent_Joins.sql",
+      "sha256": "1bec51713517e69185e77304667d7bca99fde8afd109fa935371ffedb5f291ab",
+      "description": "Topic-MCEM, topic-agent, topic-resource and agent-resource links",
+      "source": "database/Data_Scripts/18_Huddle_Topic_And_Agent_Joins.sql",
+      "requires": [
+        "huddle-topics",
+        "huddle-agents",
+        "huddle-resources",
+        "huddle-reference-data"
+      ],
+      "reads": [
+        "HuddleAgents",
+        "HuddleMcemStages",
+        "HuddleResources",
+        "HuddleTopics"
+      ],
+      "writes": [
+        "HuddleTopicMcemStages",
+        "HuddleTopicAgents",
+        "HuddleTopicResources",
+        "HuddleAgentResources"
+      ]
+    },
+    {
+      "id": "huddle-activity-joins",
+      "version": 1,
+      "file": "sql/steps/huddle-activity-joins/v001__baseline_19_Huddle_Activity_Joins.sql",
+      "sha256": "72aeaa9556ed7d65367b3a1c8785938f7b72caef1b243c782ae2f06561b86e57",
+      "description": "Activity-agent and activity-resource links",
+      "source": "database/Data_Scripts/19_Huddle_Activity_Joins.sql",
+      "requires": [
+        "huddle-activities",
+        "huddle-agents",
+        "huddle-resources"
+      ],
+      "reads": [
+        "HuddleActivities",
+        "HuddleAgents",
+        "HuddleResources"
+      ],
+      "writes": [
+        "HuddleActivityAgents",
+        "HuddleActivityResources"
+      ]
+    }
+  ],
+  "postflightGates": [
+    {
+      "id": "workflow-verify",
+      "file": "sql/gates/post/08_Workflow_Verify.sql",
+      "sha256": "7d573ba4ebe7581b9af08b434176cce4e3ce020a5bb3f1124fdee56abcee5abe",
+      "description": "Read-only informational counts for the Workflow module (prints only; does not fail on low counts)",
+      "source": "database/Data_Scripts/08_Workflow_Verify.sql"
+    },
+    {
+      "id": "validate-everything",
+      "file": "sql/gates/post/20_Validate_Everything.sql",
+      "sha256": "21bb0eb4e06ebe9dda8eb5ba1c9e7631cdd385f60bb185d9934177b51b1896cb",
+      "description": "Read-only integrity assertions (THROW 51001-51022)",
+      "source": "database/Data_Scripts/20_Validate_Everything.sql"
+    },
+    {
+      "id": "minimum-row-counts",
+      "file": "sql/gates/post/91_Minimum_Row_Counts.sql",
+      "sha256": "9cae9e6aaf85ca53eadd6751ff52e11603ad1005dccf2a963c2fbc3483700b7a",
+      "description": "Read-only: fails when a seeded table holds fewer rows than the approved minimum (new gate)"
+    }
+  ]
+}

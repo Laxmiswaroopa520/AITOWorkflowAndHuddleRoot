@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router";
 import aitoLogo from "@/assets/AITO New Logo.png";
 import { Button } from "@/components/ui/button";
 import { HuddleExperienceSelector } from "@/features/huddle/components/onboarding";
-import { huddlePersonaAtom, huddleViewModeAtom } from "@/features/huddle/store";
+import { huddlePersonaAtom, huddleViewModeAtom, selectedHuddleExternalIdAtom } from "@/features/huddle/store";
 import type { HuddlePersona } from "@/features/huddle/types/huddlePersona.types";
 import { ModeToggle } from "./ModeToggle";
 import { UserMenu } from "./UserMenu";
@@ -20,11 +20,14 @@ export function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [huddlePersona, setHuddlePersona] = useAtom(huddlePersonaAtom);
   const [, setHuddleViewMode] = useAtom(huddleViewModeAtom);
+  const [, setSelectedHuddleExternalId] = useAtom(selectedHuddleExternalIdAtom);
   const isHuddleRoute = location.pathname.startsWith("/huddle");
 
   const changeHuddleExperience = (value: string) => {
     setHuddlePersona(value as HuddlePersona);
     setHuddleViewMode("orientation");
+    // The selected topic belongs to the role it was picked under; do not carry it into the new role.
+    setSelectedHuddleExternalId(null);
     setMobileMenuOpen(false);
     navigate("/huddle");
   };
@@ -48,7 +51,7 @@ export function Header() {
 
       <div className="flex items-center gap-1">
         <div data-tour="global-search" className="mx-2 hidden w-[274px] xl:block"><GlobalSearch /></div>
-        <Button type="button" variant="ghost" size="icon" className="xl:hidden" aria-label="Toggle search" onClick={() => setSearchOpen(value => !value)}>{searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}</Button>
+        <Button type="button" variant="ghost" size="icon" className="xl:hidden" data-tour="global-search" aria-label="Toggle search" onClick={() => setSearchOpen(value => !value)}>{searchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}</Button>
         <Button data-tour="help" type="button" variant="ghost" size="icon" aria-label="Help and tips" title="Help and tips" onClick={() => window.dispatchEvent(new Event("aito:start-layout-tour"))}><HelpCircle className="h-5 w-5" /></Button>
         {/* Notifications: hidden until the notification functionality is fully implemented and ready for use.
         <Button type="button" variant="ghost" size="icon" aria-label="Notifications" title="Notifications" className="relative"><Bell className="h-5 w-5" /><span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" /></Button>

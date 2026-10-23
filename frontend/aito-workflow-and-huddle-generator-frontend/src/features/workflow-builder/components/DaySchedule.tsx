@@ -305,7 +305,7 @@ export function DaySchedule({
             );
           })}
           {headerActions}
-          <Button type="button" size="sm" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)} className="ml-1 gap-2"><CalendarDays className="h-4 w-4" />Add to my calendar</Button>
+          <Button type="button" size="sm" data-tour="workflow-calendar" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)} className="ml-1 gap-2"><CalendarDays className="h-4 w-4" />Add to my calendar</Button>
         </div>
       </div>
 

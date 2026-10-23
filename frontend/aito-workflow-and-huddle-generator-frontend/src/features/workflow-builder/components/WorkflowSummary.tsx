@@ -344,6 +344,7 @@ export function WorkflowSummary({
         className="gap-1.5 border-2 border-primary/40 text-sm font-semibold text-primary hover:bg-primary/8"
         disabled={activities.length === 0 || isMutationPending}
         onClick={handleUpdate}
+        data-tour="workflow-save"
       >
         <Save className="h-4 w-4" aria-hidden="true" />
         {updateMutation.isPending ? "Updating..." : "Update Workflow"}
@@ -357,6 +358,7 @@ export function WorkflowSummary({
       className="gap-1.5 border-2 border-border text-sm font-semibold text-muted-foreground hover:border-primary/40 hover:text-primary"
       disabled={activities.length === 0 || isMutationPending}
       onClick={openSaveDialog}
+      data-tour="workflow-save"
     >
       <Save className="h-4 w-4" aria-hidden="true" />
       Save Workflow
@@ -453,7 +455,7 @@ export function WorkflowSummary({
         <TimelineToggle value={timelineView} onChange={setTimelineView} />
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2" role="tablist" aria-label="Workflow view">
+      <div className="mt-5 flex flex-wrap items-center gap-2" role="tablist" aria-label="Workflow view" data-tour="workflow-views">
         {(
           [
             { id: "filters" as const, label: "Filters", icon: SlidersHorizontal },

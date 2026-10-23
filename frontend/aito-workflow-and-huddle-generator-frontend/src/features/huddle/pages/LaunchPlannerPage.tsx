@@ -340,6 +340,7 @@ export function LaunchPlannerPage() {
               className="mt-1 shrink-0 border-[#CFDEE8] bg-white text-[#2A446F]"
               onClick={() => navigate('/huddle')}
               aria-label="Back to Huddles"
+              data-tour="planner-back"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -360,7 +361,7 @@ export function LaunchPlannerPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" className="border-[#0A6BBA] bg-white text-[#0A6BBA] hover:bg-[#E2F1F9]" onClick={exportPackage} disabled={!generated}>
+            <Button data-tour="planner-export" variant="outline" className="border-[#0A6BBA] bg-white text-[#0A6BBA] hover:bg-[#E2F1F9]" onClick={exportPackage} disabled={!generated}>
               <Download className="mr-2 h-4 w-4" />
               Export launch package
             </Button>
@@ -369,7 +370,7 @@ export function LaunchPlannerPage() {
 
         {!generated ? (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,.75fr)]">
-            <Card className="overflow-hidden rounded-2xl border-[#D7E4EC] bg-white shadow-[0_8px_30px_rgba(42,68,111,0.07)]">
+            <Card data-tour="planner-config" className="overflow-hidden rounded-2xl border-[#D7E4EC] bg-white shadow-[0_8px_30px_rgba(42,68,111,0.07)]">
               <div className="border-b border-[#E2EAF0] bg-white px-6 py-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0A6BBA] text-sm font-semibold text-white">1</div>
@@ -421,7 +422,7 @@ export function LaunchPlannerPage() {
                   <Input id="facilitators" value={configuration.facilitators} onChange={(event) => updateConfig('facilitators', event.target.value)} placeholder="Names separated by commas" className="h-11" />
                 </div>
                 <div className="md:col-span-2 flex justify-end border-t border-[#E5ECF1] pt-5">
-                  <Button onClick={generatePlan} className="h-11 bg-[#0A6BBA] px-6 text-white hover:bg-[#095D9F]">
+                  <Button data-tour="planner-generate" onClick={generatePlan} className="h-11 bg-[#0A6BBA] px-6 text-white hover:bg-[#095D9F]">
                     <Sparkles className="mr-2 h-4 w-4" /> Generate launch plan
                   </Button>
                 </div>
@@ -468,7 +469,7 @@ export function LaunchPlannerPage() {
                     </div>
                     <p className="text-sm text-[#66798C]">{configuration.teamName} · Huddle kickoff {formatLaunchDate(milestoneDate(configuration, FRONTIER_LAUNCH_MILESTONES[4]), true)}</p>
                   </div>
-                  <div className="flex min-w-[280px] items-center gap-4">
+                  <div data-tour="planner-status" className="flex min-w-[280px] items-center gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="mb-1.5 flex items-center justify-between gap-2 text-xs"><span className="font-medium text-[#5B6E82]">Launch readiness</span><span className="font-semibold text-[#1E3252]">{progress}%</span></div>
                       <Progress value={progress} className="h-2" />
@@ -484,7 +485,7 @@ export function LaunchPlannerPage() {
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(330px,.7fr)]">
               <div className="space-y-6">
-                <section>
+                <section data-tour="planner-next">
                   <div className="mb-3 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-[#1E3252]">What do I need to do next?</h2>
@@ -515,7 +516,7 @@ export function LaunchPlannerPage() {
                       <h2 className="text-lg font-semibold text-[#1E3252]">Personalized communication plan</h2>
                       <p className="text-sm text-[#66798C]">Review the launch motion as a timeline or calendar. Select any item to open its communication assets.</p>
                     </div>
-                    <div className="inline-flex w-fit rounded-xl border border-[#D7E4EC] bg-white p-1 shadow-sm" role="tablist" aria-label="Launch plan view">
+                    <div data-tour="planner-views" className="inline-flex w-fit rounded-xl border border-[#D7E4EC] bg-white p-1 shadow-sm" role="tablist" aria-label="Launch plan view">
                       <button
                         type="button"
                         role="tab"
