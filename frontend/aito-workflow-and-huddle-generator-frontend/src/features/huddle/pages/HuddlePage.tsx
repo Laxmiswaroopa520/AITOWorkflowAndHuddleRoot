@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAtom } from "jotai";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Box, CalendarDays, CheckCircle2, ChevronRight, Home, Library, Sparkles, Users, X } from "lucide-react";
+import { AlertTriangle, Box, CalendarDays, CheckCircle2, ChevronRight, HelpCircle, Home, Library, Sparkles, Users, X } from "lucide-react";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { useApiClient } from "@/api/useApiClient";
@@ -9,7 +9,8 @@ import { getHuddleById } from "../api";
 import { huddleQueryKeys } from "../hooks/huddleQueryKeys";
 import { HuddleAudienceSelect } from "../components/audience";
 import { HuddleCatalog, HuddleDownvoteDialog, HuddleFilterBar } from "../components/catalog";
-import { HuddleDetailPanel, HuddleGuideImageDialog, HuddlePreviewDialog, HuddleWorkspace } from "../components/generated";
+// HuddleGuideImageDialog is paused with the week guide popup below.
+import { HuddleDetailPanel, /* HuddleGuideImageDialog, */ HuddlePreviewDialog, HuddleWorkspace } from "../components/generated";
 import { MeetCoachDialog } from "../components/coach";
 import { HuddleOnboardingExperience } from "../components/onboarding";
 import { HuddleInABoxDialog } from "../components/huddleInABox";
@@ -22,10 +23,8 @@ import { huddlePersonaAtom, huddleViewModeAtom, selectedHuddleExternalIdAtom, se
 import type { HuddleCatalogItemResponse, HuddlePlanResponse, HuddlePresentationModel, HuddleVoteResponse } from "../types";
 import type { HuddlePersona } from "../types/huddlePersona.types";
 import { createHuddlePresentationModel } from "../mappers";
-import facilitatorGuideImage from "@/assets/huddle/guides/facilitator-guide.png";
-import managerGuideImage from "@/assets/huddle/guides/manager-guide.png";
-// ?url keeps this 5.9 MB file out of the JS bundle; it is only fetched when Week 1's HTML is downloaded.
-import orientationPreviewHtmlUrl from "@/assets/huddle/orientation/orientation-preview.html?url";
+// import facilitatorGuideImage from "@/assets/huddle/guides/facilitator-guide.png";
+// import managerGuideImage from "@/assets/huddle/guides/manager-guide.png";
 
 /**
  * The onboarding page has no tab of its own: it still opens first when a persona is chosen, and
@@ -44,21 +43,19 @@ const SHOW_LAUNCH_PLANNER = false;
 
 const initialFilters = { focusArea: "", agent: "", sort: "default", search: "" };
 
+/*
+ * Week guide popup is paused for now: a Role Path week's HTML button only downloads the HTML.
+ * To bring the popup back, uncomment this block, the two guide image imports, HuddleGuideImageDialog
+ * in the generated import, the openGuide state, the guide lines in exportRolePathHuddleHtml,
+ * and the dialog render near the end of the page.
+ *
 type HuddleGuide = { title: string; imageSrc: string; fileName: string };
 
-/** The one-page guide that goes with a Role Path week's HTML. Team Members get none. */
+// The one-page guide that goes with a Role Path week's HTML. Team Members get none.
 const HUDDLE_GUIDES = new Map<HuddlePersona, HuddleGuide>([
   ["manager", { title: "How to Lead a Huddle - Manager Guide", imageSrc: managerGuideImage, fileName: "How to Lead a Huddle - Manager Guide.png" }],
   ["facilitator", { title: "How a Huddle Runs - Facilitator Guide", imageSrc: facilitatorGuideImage, fileName: "How a Huddle Runs - Facilitator Guide.png" }],
 ]);
-
-/**
- * Week 1's Frontier Accelerator Orientation ships as a hand-built HTML page instead of the generated
- * export. Matched on the name prefix because some roles title it "...Orientation for Account Executives".
- */
-function isFrontierAcceleratorOrientation(huddle: HuddleCatalogItemResponse): boolean {
-  return huddle.name.trim().toLowerCase().startsWith("frontier accelerator orientation");
-}
 
 function downloadAssetFile(href: string, fileName: string): void {
   const anchor = document.createElement("a");
@@ -69,6 +66,7 @@ function downloadAssetFile(href: string, fileName: string): void {
   anchor.click();
   anchor.remove();
 }
+*/
 
 export function HuddlePage() {
   const navigate = useNavigate();
@@ -94,7 +92,7 @@ export function HuddlePage() {
   const [htmlExportPending, setHtmlExportPending] = useState(false);
   // Which Role Path week card is downloading its HTML, so only that card's button shows as busy.
   const [cardHtmlExportId, setCardHtmlExportId] = useState<string | null>(null);
-  const [openGuide, setOpenGuide] = useState<HuddleGuide | null>(null);
+  // const [openGuide, setOpenGuide] = useState<HuddleGuide | null>(null);
   const queryClient = useQueryClient();
   const apiClient = useApiClient();
   const [coachContext, setCoachContext] = useState<{ externalId: string; name: string } | null>(null);
@@ -293,27 +291,21 @@ export function HuddlePage() {
     setCardHtmlExportId(huddle.externalId);
     const placementExternalId = huddle.placementExternalId ?? null;
     try {
-      let downloaded: boolean;
-      if (isFrontierAcceleratorOrientation(huddle)) {
-        setFeedback(null);
-        downloadAssetFile(orientationPreviewHtmlUrl, "orientation-preview.html");
-        setFeedback({ kind: "success", message: "HTML downloaded successfully." });
-        downloaded = true;
-      } else {
-        downloaded = await downloadHuddleHtml(async () => {
-          const detail = await queryClient.fetchQuery({
-            queryKey: huddleQueryKeys.detail(huddle.externalId, placementExternalId),
-            queryFn: ({ signal }) => getHuddleById(apiClient, huddle.externalId, placementExternalId, signal),
-            staleTime: 5 * 60 * 1000,
-          });
-          return createHuddlePresentationModel(detail, presentationAudience);
+      // Week 1 (Orientation) goes through the same export, which downloads its hand-built page.
+      /* const downloaded = */ await downloadHuddleHtml(async () => {
+        const detail = await queryClient.fetchQuery({
+          queryKey: huddleQueryKeys.detail(huddle.externalId, placementExternalId),
+          queryFn: ({ signal }) => getHuddleById(apiClient, huddle.externalId, placementExternalId, signal),
+          staleTime: 5 * 60 * 1000,
         });
-      }
-      const guide = persona ? HUDDLE_GUIDES.get(persona) : undefined;
-      if (downloaded && guide) {
-        downloadAssetFile(guide.imageSrc, guide.fileName);
-        setOpenGuide(guide);
-      }
+        return createHuddlePresentationModel(detail, presentationAudience);
+      });
+      // Week guide popup paused; see the note above HUDDLE_GUIDES.
+      // const guide = persona ? HUDDLE_GUIDES.get(persona) : undefined;
+      // if (downloaded && guide) {
+      //   downloadAssetFile(guide.imageSrc, guide.fileName);
+      //   setOpenGuide(guide);
+      // }
     } finally {
       setCardHtmlExportId(null);
     }
@@ -392,6 +384,23 @@ export function HuddlePage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Same action as the header's "?" icon, placed where a reader who is unsure where to go will see it. */}
+          <span className="group relative inline-flex shrink-0">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("aito:start-layout-tour"))}
+              className="inline-flex h-10 items-center rounded-lg border bg-white px-3 text-sm font-semibold hover:bg-muted"
+            >
+              <HelpCircle className="mr-2 h-4 w-4" />
+              Help and tips
+            </button>
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-64 rounded-lg border bg-white p-2.5 text-xs font-medium leading-4 text-[#242424] opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+            >
+              Not sure where to go? Take a quick tour of this page.
+            </span>
+          </span>
           <span className="group relative inline-flex shrink-0">
             <button
               type="button"
@@ -477,7 +486,7 @@ export function HuddlePage() {
 
       {viewMode === "orientation" && <HuddleOnboardingExperience key={persona ?? "choose-experience"} persona={persona} onSelectPersona={selectPersona} onChangePersona={changePersona} onStartRolePath={() => changeViewMode("guided")} onAdditionalTopics={() => changeViewMode("evergreen")} />}
     {persona && viewMode !== "orientation" && <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]"><div data-tour="huddle-list" className="min-w-0">{viewMode === "guided" ? <RecommendedPath data={recommendedPathQuery.data} roleName={presentationAudience.roleName} catalog={referenceCatalogQuery.data ?? []} isLoading={recommendedPathQuery.isLoading} error={recommendedPathQuery.error} mutationError={savePlanMutation.error ?? resetPlanMutation.error} selectedExternalId={selectedExternalId} hasRole={Boolean(selectedRoleExternalId)} votes={votes} votePending={voteMutation.isPending} savePending={savePlanMutation.isPending || resetPlanMutation.isPending} onSelect={(externalId) => setSelectedExternalId((current) => (current === externalId ? null : externalId))} onVote={setVote} htmlExportExternalId={cardHtmlExportId} onExportHtml={(huddle) => void exportRolePathHuddleHtml(huddle)} onSave={savePlan} onReset={resetPlan} onRetry={() => void recommendedPathQuery.refetch()} /> : <HuddleCatalog data={evergreenQuery.data} isLoading={evergreenQuery.isLoading} error={evergreenQuery.error} selectedExternalId={selectedExternalId} audienceRoleIds={audienceRoleIds} filterKey={filterKey} filtersActive={Boolean(filters.focusArea || filters.agent || filters.search)} votes={votes} votePending={voteMutation.isPending} continueLearning={incompleteSessionsQuery.data} plan={customLearningPlan} planAudienceLabel={personaLabel} onSelect={(externalId) => setSelectedExternalId((current) => (current === externalId ? null : externalId))} onVote={setVote} onRetry={() => void evergreenQuery.refetch()} onContinue={continueLearning} onCloseDetails={() => setSelectedExternalId(null)} onCreateOwnHuddle={() => setHuddleInABoxOpen(true)} htmlExportExternalId={cardHtmlExportId} onExportHtml={(huddle) => void exportRolePathHuddleHtml(huddle)} />}</div><div data-tour="huddle-detail">{detailPanel}</div></div>}
-      {openGuide && <HuddleGuideImageDialog title={openGuide.title} imageSrc={openGuide.imageSrc} onClose={() => setOpenGuide(null)} />}
+      {/* Week guide popup paused. {openGuide && <HuddleGuideImageDialog title={openGuide.title} imageSrc={openGuide.imageSrc} onClose={() => setOpenGuide(null)} />} */}
       {downvoteTarget && <HuddleDownvoteDialog huddleName={downvoteTarget.name} onCancel={() => setDownvoteTarget(null)} onSubmit={(downvoteReasons, comment) => { voteMutation.mutate({ externalId: downvoteTarget.id, request: { value: -1, downvoteReasons, comment } }); setDownvoteTarget(null); }} />}
       {workspaceOpen && presentationModel && !sessionQuery.isLoading && <HuddleWorkspace key={presentationModel.identity.externalId} model={presentationModel} session={sessionQuery.data} sessionLoading={sessionQuery.isLoading} sessionError={sessionError} mutationPending={saveSessionMutation.isPending || activityCompletionMutation.isPending || completeSessionMutation.isPending} onRefreshSession={async () => (await sessionQuery.refetch()).data} onSaveSession={saveSession} onSetActivityCompletion={setActivityCompletion} onCompleteSession={completeSession} onMeetCoach={() => setCoachContext({ externalId: presentationModel.identity.externalId, name: presentationModel.identity.name })} onPreviewSlides={() => setPreviewOpen(true)} onClose={() => setWorkspaceOpen(false)} />}
       {previewOpen && presentationModel && <HuddlePreviewDialog open model={presentationModel} onClose={() => setPreviewOpen(false)} />}

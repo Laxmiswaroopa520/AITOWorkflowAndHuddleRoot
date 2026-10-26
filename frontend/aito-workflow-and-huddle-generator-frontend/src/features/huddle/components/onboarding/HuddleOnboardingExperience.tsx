@@ -50,7 +50,7 @@ const personas = [
   {
     id: 'manager' as const, icon: Target, title: 'Manager', headline: 'Lead AI adoption across your team', image: IMAGES.manager,
     body: 'Set direction, shape learning priorities, and help team members turn AI practice into stronger team habits.',
-    helps: ['Select a role-based learning path', 'Customise recommended Huddles', 'Build and export a team learning plan', 'Reinforce adoption through team rhythm'],
+    helps: ['Select a role-based learning path', 'Customize recommended Huddles', 'Build and export a team learning plan', 'Reinforce adoption through team rhythm'],
     success: 'Your team applies AI to real workflows and brings back examples that improve how work gets done.',
     cta: 'Open Manager View', accent: '#0A6BBA',
   },
@@ -58,13 +58,13 @@ const personas = [
     id: 'facilitator' as const, icon: Presentation, title: 'Facilitator', headline: 'Run practical Huddles with confidence', image: IMAGES.facilitator,
     body: 'Prepare, guide, capture, and follow up on Huddles that connect AI to the work team members do every day.',
     helps: ['Prepare for a Huddle', 'Guide the conversation', 'Use recommended prompts', 'Capture notes and actions', 'Export session materials'],
-    success: 'Team members practise with real prompts and leave with one practical commitment they can apply.',
+    success: 'Team members practice with real prompts and leave with one practical commitment they can apply.',
     cta: 'Open Facilitator View', accent: '#2A446F',
   },
   {
     id: 'team-member' as const, icon: Users, title: 'Team Member', headline: 'Build AI habits through real work', image: IMAGES.member,
-    body: 'Follow a role-based path, practise AI in daily workflows, explore all topics, and share what works.',
-    helps: ['Understand the learning journey', 'Complete role-based Huddles', 'Practise AI with real workflows', 'Explore all topics', 'Build repeatable AI habits'],
+    body: 'Follow a role-based path, practice AI in daily workflows, explore all topics, and share what works.',
+    helps: ['Understand the learning journey', 'Complete role-based Huddles', 'Practice AI with real workflows', 'Explore all topics', 'Build repeatable AI habits'],
     success: 'You know when to use the right AI experiences and can apply them to everyday work with confidence.',
     cta: 'Start Learning Journey', accent: '#287C70',
   },
@@ -79,7 +79,7 @@ const whyItExists: Array<[string, string, ElementType]> = [
 
 const readiness = [
   ['Verify access to required tools', 'Step 1'],
-  ['Top 5 MCAPS Agents training', 'Step 2 · Plus recommended resources'],
+  ['Top 5 MCAPS Agents training', 'Step 2 · Includes relevant recommended resources'],
   ['Review motion expectations', 'Step 3'],
   ['Watch the motion overview', 'Step 4'],
 ];
@@ -96,7 +96,7 @@ const rhythm = [
   ['Reflect', 'Share wins, lessons, and friction points.'],
   ['Frame', 'Connect the topic to the workflow and outcome.'],
   ['Discuss', 'Surface questions, blockers, and peer insights.'],
-  ['Practise', 'Try a prompt, tool, or workflow pattern.'],
+  ['Practice', 'Try a prompt, tool, or workflow pattern.'],
   ['Commit', 'Choose one practical action for this week.'],
   ['Bring Back', 'Return with evidence, learning, or a result.'],
 ];
@@ -106,7 +106,7 @@ const topAgents = [
   { name: 'Cowork', label: 'Create & orchestrate', description: 'Turn complex work into structured outputs and actionable next steps.', logo: coworkLogo },
   { name: 'Scout', label: 'Monitor & discover', description: 'Surface relevant signals, changes and information worth exploring.', logo: scoutLogo },
   { name: 'Sales Agent', label: 'Plan & progress', description: 'Support customer, account and opportunity workflows.', logo: salesAgentLogo },
-  { name: 'Agent J.ai', label: 'Prepare & practise', description: 'Prepare and practise for important customer conversations.', logo: agentJLogo },
+  { name: 'Agent J.ai', label: 'Prepare & practice', description: 'Prepare and practice for important customer conversations.', logo: agentJLogo },
 ];
 
 const journeySteps: Array<[string, string, string, string, string, ElementType, string]> = [
@@ -159,8 +159,8 @@ const personaOnboarding = {
 
 function ThinkFeelDo() {
   const nodes = [
-    { label: 'THINK', title: 'Adopt a Frontier Mindset', detail: 'Be curious, adaptive, human-centred, and outcome-oriented. See AI as a transformation lever and learn as Customer Zero.', color: '#8DC8E8', text: '#184C6A', pos: 'left-1/2 top-0 -translate-x-1/2' },
-    { label: 'DO', title: 'Apply AI in Real Work', detail: 'Practise inside real workflows, use useful prompts, experiment with the team, and build reusable patterns.', color: '#0A6BBA', text: '#FFFFFF', pos: 'right-0 bottom-3' },
+    { label: 'THINK', title: 'Adopt a Frontier Mindset', detail: 'Be curious, adaptive, human-centered, and outcome-oriented. See AI as a transformation lever and learn as Customer Zero.', color: '#8DC8E8', text: '#184C6A', pos: 'left-1/2 top-0 -translate-x-1/2' },
+    { label: 'DO', title: 'Apply AI in Real Work', detail: 'Practice inside real workflows, use useful prompts, experiment with the team, and build reusable patterns.', color: '#0A6BBA', text: '#FFFFFF', pos: 'right-0 bottom-3' },
     { label: 'FEEL', title: 'Build Confidence', detail: 'Share wins, lessons, and friction. Repeated practice builds confidence, momentum, and clarity.', color: '#92D3C6', text: '#224E46', pos: 'left-0 bottom-3' },
   ];
 
@@ -189,7 +189,7 @@ function ThinkFeelDo() {
             <p className="mt-0 max-h-0 overflow-hidden text-xs leading-5 opacity-0 transition-all duration-300 group-hover:mt-3 group-hover:max-h-32 group-hover:opacity-90">{node.detail}</p>
           </motion.article>)}
           {/* Clockwise cycle arrows (Think -> Do -> Feel -> Think), drawn as arcs on a circle around the
-              loop's centre so each sits in the gap between two cards and points at the next step. */}
+              loop's center so each sits in the gap between two cards and points at the next step. */}
           <svg className="pointer-events-none absolute left-1/2 top-0 h-[430px] w-[400px] -translate-x-1/2" viewBox="0 0 400 430" fill="none" aria-hidden="true">
             <defs>
               {[['think-do', '#0A6BBA'], ['do-feel', '#287C70'], ['feel-think', '#5B93B1']].map(([id, color]) => (
@@ -295,7 +295,7 @@ const milestoneCols: Record<number, string> = { 2: 'md:grid-cols-2', 3: 'md:grid
 const rhythmCols: Record<number, string> = { 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' };
 
 function ActionPlanTimeline({ plan }: { plan: ActionPlan }) {
-  return <section>
+  return <section data-tour="huddle-onboarding-timeline">
     <p className="text-xs font-bold uppercase tracking-[.14em] text-[#0A6BBA]">Get ready</p>
     <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#16233A] md:text-3xl">{plan.heading}</h2>
     <p className="mt-2 max-w-3xl text-sm leading-6 text-[#647185]">{plan.caption}</p>
@@ -313,7 +313,7 @@ function ActionPlanTimeline({ plan }: { plan: ActionPlan }) {
 }
 
 function ActionPlanRhythm({ plan }: { plan: ActionPlan }) {
-  return <section>
+  return <section data-tour="huddle-onboarding-rhythm">
     <p className="text-xs font-bold uppercase tracking-[.14em] text-[#0A6BBA]">Weekly rhythm</p>
     <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#16233A] md:text-3xl">Before, during, and after each Huddle</h2>
     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647185]">Keep the flow simple and repeatable. Each Huddle should pick up from the last one and leave the team with something practical to try.</p>
@@ -335,7 +335,7 @@ function PersonaOnboarding({ persona, onStartRolePath, onAdditionalTopics }: Pic
     <ThinkFeelDo />
     <section className="overflow-hidden rounded-[26px] border border-[#DCE6ED] bg-white shadow-[0_14px_40px_rgba(22,35,58,.06)]">
       <div className="grid lg:grid-cols-[1fr_.55fr]">
-        <div className="p-7 md:p-9"><div className="flex flex-wrap items-center gap-3"><span className="inline-flex rounded-full bg-[#E2F1F9] px-3 py-1.5 text-xs font-semibold text-[#0A6BBA]">{p.title}</span></div><h1 className="mt-4 text-3xl font-semibold tracking-tight text-[#16233A]">{p.subtitle}</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-[#5F6D80]">{p.role}</p><div className="mt-6 flex flex-wrap items-center gap-3">{'heroCta' in p && <Button className="bg-[#0A6BBA] hover:bg-[#115EA3]" onClick={onStartRolePath}>{p.heroCta}<ArrowRight className="ml-2 h-4 w-4"/></Button>}{walkthrough && <Button variant="outline" className="border-[#0A6BBA] text-[#0A6BBA] hover:bg-[#E2F1F9]" onClick={() => setWalkthroughOpen(true)}><FileImage className="mr-2 h-4 w-4"/>HTML Walkthrough</Button>}</div></div>
+        <div className="p-7 md:p-9"><div className="flex flex-wrap items-center gap-3"><span className="inline-flex rounded-full bg-[#E2F1F9] px-3 py-1.5 text-xs font-semibold text-[#0A6BBA]">{p.title}</span></div><h1 className="mt-4 text-3xl font-semibold tracking-tight text-[#16233A]">{p.subtitle}</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-[#5F6D80]">{p.role}</p><div className="mt-6 flex flex-wrap items-center gap-3">{'heroCta' in p && <Button data-tour="huddle-onboarding-start" className="bg-[#0A6BBA] hover:bg-[#115EA3]" onClick={onStartRolePath}>{p.heroCta}<ArrowRight className="ml-2 h-4 w-4"/></Button>}{walkthrough && <Button data-tour="huddle-onboarding-walkthrough" variant="outline" className="border-[#0A6BBA] text-[#0A6BBA] hover:bg-[#E2F1F9]" onClick={() => setWalkthroughOpen(true)}><FileImage className="mr-2 h-4 w-4"/>HTML Walkthrough</Button>}</div></div>
         {walkthrough && walkthroughOpen && <HuddleGuideImageDialog title={walkthrough.title} imageSrc={walkthrough.imageSrc} downloadFileName={walkthrough.fileName} onClose={() => setWalkthroughOpen(false)} />}
         <div className="min-h-[230px] bg-[#EDF5F8]"><img src={persona === 'manager' ? IMAGES.manager : persona === 'facilitator' ? IMAGES.facilitator : IMAGES.member} alt="Team collaborating during practical work" className="h-full w-full object-cover" /></div>
       </div>
@@ -348,7 +348,7 @@ function PersonaOnboarding({ persona, onStartRolePath, onAdditionalTopics }: Pic
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#16233A]">A strong team rhythm looks like this</h2>
         <ul className="mt-5 space-y-3">{p.success.map(s=><li key={s} className="flex gap-2 text-sm text-[#5C697D]"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0A6BBA]"/>{s}</li>)}</ul>
       </div>
-      <div className="flex flex-col justify-center border-t border-[#E6ECF1] bg-[#F7F6F4] p-6 md:p-8 lg:border-l lg:border-t-0">
+      <div data-tour="huddle-onboarding-continue" className="flex flex-col justify-center border-t border-[#E6ECF1] bg-[#F7F6F4] p-6 md:p-8 lg:border-l lg:border-t-0">
         <p className="text-xs font-bold uppercase tracking-[.14em] text-[#0A6BBA]">Ready to continue?</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#16233A]">Move from onboarding into practice</h2>
         <p className="mt-2 text-sm leading-6 text-[#647185]">Continue into your role path or explore additional topics when you are ready.</p>
@@ -382,7 +382,7 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
 
           <div className="mt-7 flex flex-wrap gap-3">
             <Button size="lg" className="bg-[#0A6BBA] px-5 hover:bg-[#115EA3]" onClick={()=>document.getElementById('choose-experience')?.scrollIntoView({behavior:'smooth'})}>
-              Choose your experience<ArrowRight className="ml-2 h-4 w-4" />
+              Select your huddle role<ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" className="border-[#BFD6E5] bg-white/90 text-[#2A446F] hover:bg-[#F4F9FC]" onClick={()=>document.getElementById('how-huddles-work')?.scrollIntoView({behavior:'smooth'})}>
               How Huddles work
@@ -397,7 +397,7 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
         {/* Immediate quick-start panel keeps a meaningful action above the fold. */}
         <div className="flex items-center border-t border-[#E1E9EF] bg-gradient-to-br from-[#F7FBFD]/90 to-[#EAF5F1]/90 p-6 md:p-8 lg:border-l lg:border-t-0 lg:p-9">
           <div data-tour="huddle-agents" className="w-full rounded-[24px] border border-white/80 bg-white/90 p-6 shadow-[0_16px_40px_rgba(42,68,111,.10)] backdrop-blur">
-            <p className="text-[11px] font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Top 5 Agents</p>
+            <p className="text-[11px] font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Top 5 MCAPS Agents</p>
             <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#16233A]">Meet the agents that help you get work done</h2>
             <p className="mt-2 text-sm leading-5 text-[#647185]">Explore the core AI agents used across Frontier Accelerator. Each agent supports a different part of your workflow, from research and preparation to execution and follow-through.</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -418,9 +418,9 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
     </section>
 
     {/* Rich role cards remain available for users who want more context before choosing. */}
-    <section id="choose-experience" className="scroll-mt-24 space-y-5">
+    <section id="choose-experience" data-tour="huddle-experience" className="scroll-mt-24 space-y-5">
       <div className="max-w-3xl">
-        <p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Choose Your Experience</p>
+        <p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Select your huddle role</p>
         <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#16233A] md:text-4xl">Choose how you want to use Huddles</h2>
         <p className="mt-2 text-sm leading-6 text-[#647185]">Select the experience that best matches your role in the Huddle motion. You can switch later.</p>
       </div>
@@ -447,24 +447,24 @@ export function HuddleOnboardingExperience({ persona, onSelectPersona, onStartRo
 
     <div id="how-huddles-work" data-tour="huddle-journey" className="scroll-mt-24"><HuddleJourney /></div>
 
-    <ThinkFeelDo />
-
     <section className="overflow-hidden rounded-[28px] border border-[#DCE6ED] bg-gradient-to-br from-[#F7FBFD] via-white to-[#EDF7F2] shadow-[0_14px_42px_rgba(22,35,58,.06)]"><div className="grid lg:grid-cols-[1.05fr_.95fr]"><div className="p-7 md:p-10"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">What is Frontier Accelerator?</p><h2 className="mt-3 text-3xl font-semibold text-[#16233A]">A practical path from AI awareness to adoption</h2><p className="mt-5 max-w-2xl text-base leading-8 text-[#637085]">Frontier Accelerator helps teams adopt AI through structured conversations, guided practice, and real-world application.</p><p className="mt-3 max-w-2xl text-base leading-8 text-[#637085]">Rather than learning tools in isolation, team members learn how AI supports the workflows they already use every day.</p><div className="mt-7 rounded-2xl border border-[#C5DFF0] bg-white p-5 shadow-sm"><div className="flex gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0A6BBA] text-white"><Lightbulb className="h-5 w-5"/></div><div><p className="font-semibold text-[#2A446F]">The motion principle</p><p className="mt-2 text-sm leading-6 text-[#657286]">Start with the job to be done, then apply the right AI experience to improve the workflow.</p></div></div></div></div><div className="border-t border-[#E2E9EE] p-7 md:p-10 lg:border-l lg:border-t-0"><h3 className="text-xl font-semibold text-[#16233A]">Why it exists</h3><div className="mt-6 grid gap-4 sm:grid-cols-2">{whyItExists.map(([title,body,Icon])=><article key={title} className="rounded-[20px] border border-[#DDE6EC] bg-white/75 p-5"><div className="flex items-center gap-3"><div className="rounded-xl bg-[#E2F1F9] p-2.5"><Icon className="h-5 w-5 text-[#0A6BBA]"/></div><h4 className="font-semibold text-[#16233A]">{title}</h4></div><p className="mt-4 text-sm leading-6 text-[#637085]">{body}</p></article>)}</div></div></div></section>
 
-    <section data-tour="huddle-learning-journey" className="space-y-5"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Learning Journey</p><h2 className="mt-2 text-3xl font-semibold text-[#16233A]">One motion. Three connected steps.</h2><p className="mt-2 text-sm text-[#647185]">Move from understanding the motion to role-based practice, then keep expanding through self-directed topics.</p></div><div className="relative rounded-[28px] border border-[#DDE6EC] bg-white p-6 md:p-8"><div className="absolute bottom-16 left-[12%] right-[12%] top-16 hidden rounded-full border-2 border-dashed border-[#C7DDE8] lg:block"/><div className="relative grid gap-4 lg:grid-cols-3">{journeySteps.map(([n,title,purpose,,outcome,Icon,surface],i)=><motion.article whileHover={{y:-4}} key={title} className="relative flex flex-col rounded-[22px] border border-[#DDE5EB] bg-white p-5 shadow-[0_10px_28px_rgba(22,35,58,.06)]"><div className="flex items-center justify-between"><div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{background:surface}}><Icon className="h-5 w-5 text-[#0A6BBA]"/></div><span className="text-xs font-bold tracking-[.14em] text-[#8390A0]">STEP {n}</span></div><h3 className="mt-5 text-xl font-semibold text-[#16233A]">{title}</h3><div className="mt-4 flex flex-1 flex-col gap-3"><div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8793A2]">Purpose</p><p className="mt-1 text-sm leading-6 text-[#5F6D80]">{purpose}</p></div><div className="mt-auto rounded-xl bg-[#F7FAFC] p-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#8793A2]">Outcome</p><p className="mt-1 text-sm font-medium leading-6 text-[#2A446F]">{outcome}</p></div></div>{i<2 && <div className="absolute -right-3 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border bg-white text-[#0A6BBA] shadow lg:flex">→</div>}</motion.article>)}</div></div></section>
+    <ThinkFeelDo />
+
+        <section data-tour="huddle-learning-journey" className="space-y-5"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Learning Journey</p><h2 className="mt-2 text-3xl font-semibold text-[#16233A]">One motion. Three connected steps.</h2><p className="mt-2 text-sm text-[#647185]">Move from understanding the motion to role-based practice, then keep expanding through self-directed topics.</p></div><div className="relative rounded-[28px] border border-[#DDE6EC] bg-white p-6 md:p-8"><div className="absolute bottom-16 left-[12%] right-[12%] top-16 hidden rounded-full border-2 border-dashed border-[#C7DDE8] lg:block"/><div className="relative grid gap-4 lg:grid-cols-3">{journeySteps.map(([n,title,purpose,,outcome,Icon,surface],i)=><motion.article whileHover={{y:-4}} key={title} className="relative rounded-[22px] border border-[#DDE5EB] bg-white p-5 shadow-[0_10px_28px_rgba(22,35,58,.06)]"><div className="flex items-center justify-between"><div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{background:surface}}><Icon className="h-5 w-5 text-[#0A6BBA]"/></div><span className="text-xs font-bold tracking-[.14em] text-[#8390A0]">STEP {n}</span></div><h3 className="mt-5 text-xl font-semibold text-[#16233A]">{title}</h3><div className="mt-4 space-y-3"><div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8793A2]">Purpose</p><p className="mt-1 text-sm leading-6 text-[#5F6D80]">{purpose}</p></div><div className="rounded-xl bg-[#F7FAFC] p-3"><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#8793A2]">Outcome</p><p className="mt-1 text-sm font-medium leading-5 text-[#2A446F]">{outcome}</p></div></div>{i<2 && <div className="absolute -right-3 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border bg-white text-[#0A6BBA] shadow lg:flex">→</div>}</motion.article>)}</div></div></section>
 
     <section className="grid gap-5 xl:grid-cols-2"><div data-tour="huddle-readiness" className="overflow-hidden rounded-[26px] border border-[#DCE5EC] bg-white"><div className="bg-gradient-to-r from-[#EEF7FC] to-white p-7"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#0A6BBA]">Before you begin</p><h2 className="mt-2 text-2xl font-semibold text-[#16233A]">Readiness checklist</h2><p className="mt-2 text-sm text-[#647185]">Complete these steps before your first role-based Huddle.</p></div><div className="grid gap-3 p-6 sm:grid-cols-2">{readiness.map(([title,step])=><div key={title} className="flex gap-3 rounded-2xl border border-[#E1E7ED] p-4"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E7F6EA]"><Check className="h-4 w-4 text-[#24863A]"/></div><div><p className="text-sm font-semibold text-[#24344C]">{title}</p><p className="mt-1 text-xs text-[#8793A2]">{step}</p></div></div>)}</div></div><div className="overflow-hidden rounded-[26px] border border-[#DCE5EC] bg-white"><div className="bg-gradient-to-r from-[#F4EEFC] to-[#EEF8F2] p-7"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#5E45A8]">Success looks like</p><h2 className="mt-2 text-2xl font-semibold text-[#16233A]">Practical, repeatable adoption</h2><p className="mt-2 text-sm text-[#647185]">The motion is successful when team members change how work gets done.</p></div><div className="grid gap-3 p-6 sm:grid-cols-2">{successSignals.map(([title,body,Icon],i)=><div key={title} className={`${i===4?'sm:col-span-2':''} flex gap-3 rounded-2xl border border-[#E1E7ED] p-4`}><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F0E9FA]"><Icon className="h-4 w-4 text-[#6743B5]"/></div><div><p className="text-sm font-semibold text-[#24344C]">{title}</p><p className="mt-1 text-xs leading-5 text-[#647185]">{body}</p></div></div>)}</div></div></section>
 
-    <section className="rounded-[28px] border border-[#C9DDE9] bg-gradient-to-br from-[#193B63] to-[#2A446F] p-7 text-white md:p-9"><div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#BFE2F5]">Weekly Huddle Rhythm</p><h2 className="mt-2 text-3xl font-semibold">A continuous loop from reflection to action</h2><p className="mt-2 text-sm leading-6 text-white/70">Each Huddle picks up where the previous one ended. Teams reflect, practise, commit, and bring real examples back into the next conversation.</p></div><div className="mx-auto mt-8 hidden h-[500px] max-w-[780px] lg:block"><div className="relative h-full"><motion.div animate={{rotate:360}} transition={{duration:34,repeat:Infinity,ease:'linear'}} className="absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/35"/><div className="absolute left-1/2 top-1/2 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-white/20 bg-white/10 text-center backdrop-blur"><Repeat2 className="h-6 w-6 text-[#92D3C6]"/><p className="mt-2 text-sm font-semibold">Team rhythm</p><p className="mt-1 px-3 text-xs leading-5 text-white/65">Learn, apply, bring back, repeat.</p></div>{rhythm.map(([title,body],i)=>{const positions=['left-1/2 top-0 -translate-x-1/2','right-[2%] top-[22%]','right-[8%] bottom-[10%]','left-1/2 bottom-0 -translate-x-1/2','left-[8%] bottom-[10%]','left-[2%] top-[22%]'];return <motion.div whileHover={{scale:1.04}} key={title} className={`absolute w-[205px] rounded-[20px] border border-white/15 bg-white/[.08] p-4 backdrop-blur ${positions[i]}`}><span className="text-[10px] font-bold text-[#92D3C6]">0{i+1}</span><p className="mt-2 font-semibold">{title}</p><p className="mt-1 text-xs leading-5 text-white/65">{body}</p></motion.div>})}</div></div><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:hidden">{rhythm.map(([t,b],i)=><div key={t} className="rounded-2xl border border-white/12 bg-white/[.07] p-4"><span className="text-xs font-bold text-[#92D3C6]">0{i+1}</span><p className="mt-3 font-semibold">{t}</p><p className="mt-2 text-xs leading-5 text-white/70">{b}</p></div>)}</div></section>
+    <section className="rounded-[28px] border border-[#C9DDE9] bg-gradient-to-br from-[#193B63] to-[#2A446F] p-7 text-white md:p-9"><div className="max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#BFE2F5]">Weekly Huddle Rhythm</p><h2 className="mt-2 text-3xl font-semibold">A continuous loop from reflection to action</h2><p className="mt-2 text-sm leading-6 text-white/70">Each Huddle picks up where the previous one ended. Teams reflect, practice, commit, and bring real examples back into the next conversation.</p></div><div className="mx-auto mt-8 hidden h-[500px] max-w-[780px] lg:block"><div className="relative h-full"><motion.div animate={{rotate:360}} transition={{duration:34,repeat:Infinity,ease:'linear'}} className="absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/35"/><div className="absolute left-1/2 top-1/2 flex h-40 w-40 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-white/20 bg-white/10 text-center backdrop-blur"><Repeat2 className="h-6 w-6 text-[#92D3C6]"/><p className="mt-2 text-sm font-semibold">Team rhythm</p><p className="mt-1 px-3 text-xs leading-5 text-white/65">Learn, apply, bring back, repeat.</p></div>{rhythm.map(([title,body],i)=>{const positions=['left-1/2 top-0 -translate-x-1/2','right-[2%] top-[22%]','right-[8%] bottom-[10%]','left-1/2 bottom-0 -translate-x-1/2','left-[8%] bottom-[10%]','left-[2%] top-[22%]'];return <motion.div whileHover={{scale:1.04}} key={title} className={`absolute w-[205px] rounded-[20px] border border-white/15 bg-white/[.08] p-4 backdrop-blur ${positions[i]}`}><span className="text-[10px] font-bold text-[#92D3C6]">0{i+1}</span><p className="mt-2 font-semibold">{title}</p><p className="mt-1 text-xs leading-5 text-white/65">{body}</p></motion.div>})}</div></div><div className="mt-7 grid gap-3 sm:grid-cols-2 lg:hidden">{rhythm.map(([t,b],i)=><div key={t} className="rounded-2xl border border-white/12 bg-white/[.07] p-4"><span className="text-xs font-bold text-[#92D3C6]">0{i+1}</span><p className="mt-3 font-semibold">{t}</p><p className="mt-2 text-xs leading-5 text-white/70">{b}</p></div>)}</div></section>
 
     <HuddleResourcesSection />
 
     {/* End-of-page next step, so the reader does not have to scroll back up to pick a role. */}
     <div className="flex flex-wrap items-center justify-between gap-3">
       {/* A real link, so hovering shows the address in the tooltip and the browser status bar. */}
-      <a href="https://www.microsoft.com/en-us/privacy/privacystatement" target="_blank" rel="noopener noreferrer" title="https://www.microsoft.com/en-us/privacy/privacystatement" className="inline-flex h-10 items-center rounded-lg border border-[#DCE6ED] bg-white px-4 text-sm font-semibold text-[#16233A] transition-colors hover:bg-[#F4F9FC]"><ShieldCheck className="mr-2 h-4 w-4 text-[#0A6BBA]" />Privacy</a>
+      <a href="https://go.microsoft.com/fwlink/?LinkId=518021" target="_blank" rel="noopener noreferrer" title="https://go.microsoft.com/fwlink/?LinkId=518021" className="inline-flex h-10 items-center rounded-lg border border-[#DCE6ED] bg-white px-4 text-sm font-semibold text-[#16233A] transition-colors hover:bg-[#F4F9FC]"><ShieldCheck className="mr-2 h-4 w-4 text-[#0A6BBA]" />Privacy</a>
       <Button size="lg" className="bg-[#0A6BBA] px-5 hover:bg-[#115EA3]" onClick={()=>document.getElementById('choose-experience')?.scrollIntoView({behavior:'smooth'})}>
-        Choose your experience<ArrowRight className="ml-2 h-4 w-4" />
+        Select your huddle role<ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </div>
   </motion.section>;

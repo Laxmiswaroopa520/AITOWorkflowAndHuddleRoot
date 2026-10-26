@@ -6,6 +6,8 @@ import { huddleGuideInteractions } from "./huddleGuideInteractions";
 import { huddleGuideStyles } from "./huddleGuideStyles";
 import { agentArtwork, frontierAcceleratorLogo } from "./huddleGuideAssets";
 import { HUDDLE_FONT_STACK } from "./fontStack";
+// ?url keeps this large hand-built page out of the JS bundle; it is only fetched when Week 1 is downloaded.
+import orientationHtmlUrl from "@/assets/huddle/orientation/orientation-preview.html?url";
 
 const text = (value: string | number) => escapeHtml(value);
 
@@ -1233,8 +1235,8 @@ function topFiveAgentBand(agents: readonly HuddlePresentationAgent[]): string {
       .filter((source): source is string => Boolean(source)),
   );
 
-  return `<section class="top-five-agent-band" aria-label="Top 5 agents">`
-    + `<div class="top-five-agent-band-label">Top 5 agents<span>Circle = included today</span></div>`
+  return `<section class="top-five-agent-band" aria-label="Top 5 MCAPS Agents">`
+    + `<div class="top-five-agent-band-label">Top 5 MCAPS Agents<span>Circle = included today</span></div>`
     + TOP_FIVE_AGENT_NAMES.map((name) => {
       const artwork = agentArtwork(name);
       const isUsed = artwork ? usedArtworkSources.has(artwork.source) : false;
@@ -1456,9 +1458,7 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   const generated = new Date();
   const generatedDate = generated.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const generatedTime = generated.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  const workflowExportName = compactFileToken(getWorkflowExportName(model)) || "Huddle";
-  const roleExportName = getRoleExportName(model);
-  const exportBaseName = `FA-Huddle_${workflowExportName}_${roleExportName}_${exportDateToken(generated)}`;
+  const exportBaseName = huddleExportBaseName(model, generated);
 
   const overviewPanel = `<section class="huddle-section-panel is-active" data-section-panel="overview">`
     + `<div class="overview-timing-band" aria-label="Today\u2019s Huddle"><div class="overview-timing-title">Today\u2019s Huddle</div><div class="overview-timing-steps">`
@@ -1589,7 +1589,39 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   };
 }
 
+/** FA-Huddle_<Huddle>_<Role>_<date>, the base name every Huddle HTML download uses. */
+function huddleExportBaseName(model: HuddlePresentationModel, generated: Date): string {
+  const workflowExportName = compactFileToken(getWorkflowExportName(model)) || "Huddle";
+  return `FA-Huddle_${workflowExportName}_${getRoleExportName(model)}_${exportDateToken(generated)}`;
+}
+
+/**
+ * Week 1's Frontier Accelerator Orientation ships as one hand-built page for every segment and role
+ * instead of the generated export. Matched on the name prefix because some roles title it
+ * "...Orientation for Account Executives".
+ */
+function isFrontierAcceleratorOrientation(model: HuddlePresentationModel): boolean {
+  return model.identity.name.trim().toLowerCase().startsWith("frontier accelerator orientation");
+}
+
+function downloadUrlFile(href: string, fileName: string): void {
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
 export function exportHuddleHtml(model: HuddlePresentationModel, options: HuddleHtmlExportOptions = {}): HtmlExportFile {
+  if (isFrontierAcceleratorOrientation(model)) {
+    // Same page for every segment and role, so the name has no role: FA-Huddle_FrontierAcceleratorOrientation_<date>.
+    const fileName = options.fileName ?? safeHtmlFileName(`FA-Huddle_FrontierAcceleratorOrientation_${exportDateToken(new Date())}`, "FA-Huddle");
+    downloadUrlFile(orientationHtmlUrl, fileName);
+    // The page is downloaded from its asset URL, so there is no generated HTML to return.
+    return { html: "", fileName };
+  }
   const output = createHuddleHtmlExport(model, options);
   downloadHtmlFile(output.html, output.fileName);
   return output;
