@@ -51,7 +51,7 @@ export function TimelineBucketView({ activities, timeline, headerActions }: Time
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {headerActions}
-            <Button type="button" size="sm" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)}><CalendarDays className="mr-2 h-4 w-4" />Add to my calendar</Button>
+            <Button type="button" data-tour="workflow-calendar" size="sm" disabled={!calendarItems.length} onClick={() => setCalendarOpen(true)}><CalendarDays className="mr-2 h-4 w-4" />Add to my calendar</Button>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

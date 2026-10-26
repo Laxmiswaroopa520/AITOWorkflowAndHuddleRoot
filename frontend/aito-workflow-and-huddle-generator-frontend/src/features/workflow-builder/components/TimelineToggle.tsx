@@ -8,7 +8,7 @@ interface TimelineToggleProps {
 
 export function TimelineToggle({ value, onChange }: TimelineToggleProps) {
   return (
-    <div className="flex max-w-full items-center overflow-x-auto rounded-xl border border-border bg-muted/50 p-1" aria-label="Workflow timeline">
+    <div data-tour="workflow-timeline-toggle" className="flex max-w-full items-center overflow-x-auto rounded-xl border border-border bg-muted/50 p-1" aria-label="Workflow timeline">
       {TIMELINE_OPTIONS.map(option => (
         <button
           key={option.value}

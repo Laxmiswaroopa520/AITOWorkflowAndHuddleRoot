@@ -339,6 +339,7 @@ export function WorkflowSummary({
 
       <Button
         type="button"
+        data-tour="workflow-save"
         variant="outline"
         size="sm"
         className="gap-1.5 border-2 border-primary/40 text-sm font-semibold text-primary hover:bg-primary/8"
@@ -352,6 +353,7 @@ export function WorkflowSummary({
   ) : (
     <Button
       type="button"
+      data-tour="workflow-save"
       variant="outline"
       size="sm"
       className="gap-1.5 border-2 border-border text-sm font-semibold text-muted-foreground hover:border-primary/40 hover:text-primary"
@@ -453,7 +455,7 @@ export function WorkflowSummary({
         <TimelineToggle value={timelineView} onChange={setTimelineView} />
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2" role="tablist" aria-label="Workflow view">
+      <div data-tour="workflow-view-tabs" className="mt-5 flex flex-wrap items-center gap-2" role="tablist" aria-label="Workflow view">
         {(
           [
             { id: "filters" as const, label: "Filters", icon: SlidersHorizontal },

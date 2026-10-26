@@ -16,7 +16,7 @@ export function UserMenu({ isWorkflowMode }: { isWorkflowMode: boolean }) {
   const email = currentUser.data?.email ?? account?.username ?? "";
   useEffect(() => { const close = (event: MouseEvent) => { if (!rootRef.current?.contains(event.target as Node)) setOpen(false); }; document.addEventListener("mousedown", close); return () => document.removeEventListener("mousedown", close); }, []);
   if (!account) return null;
-  return <div ref={rootRef} className="relative">
+  return <div ref={rootRef} data-tour="user-menu" className="relative">
     <button type="button" onClick={() => setOpen(value => !value)} className={cn("flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-accent", open && "bg-accent")}>
       <span className={cn("flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium", isWorkflowMode ? "bg-primary/10 text-primary" : "bg-[#0F6CBD]/10 text-[#0F6CBD]")}>{name.trim().charAt(0).toUpperCase() || "U"}</span>
       <span className="hidden text-sm font-medium sm:inline">{name.split(" ")[0]}</span><ChevronDown className={cn("hidden h-3.5 w-3.5 text-muted-foreground transition-transform sm:block", open && "rotate-180")} />

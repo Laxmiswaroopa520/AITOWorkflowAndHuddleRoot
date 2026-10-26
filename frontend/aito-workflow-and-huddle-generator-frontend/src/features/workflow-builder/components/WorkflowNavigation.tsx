@@ -36,6 +36,7 @@ export function WorkflowNavigation({
 }: WorkflowNavigationProps) {
   return (
     <div
+      data-tour="workflow-navigation"
       className="
         flex
         flex-wrap
