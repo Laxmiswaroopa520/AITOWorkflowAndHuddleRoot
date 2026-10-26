@@ -25,7 +25,7 @@ export function ContinueLearningList({ items, onContinue }: ContinueLearningList
   const visible = expanded ? sessions : [latest];
 
   return (
-    <div className="space-y-2">
+    <div data-tour="huddle-continue" className="space-y-2">
       {visible.map((item) => <ContinueLearningCard key={item.huddleExternalId} item={item} onContinue={onContinue} />)}
 
       {older.length > 0 && (

@@ -566,7 +566,7 @@ export function SavedWorkflowsPage() {
           </div>
         )}
 
-      <div className="mt-6">
+      <div data-tour="saved-filters" className="mt-6">
         <WorkflowHistoryFilters
           search={search}
           favoritesOnly={
@@ -585,7 +585,7 @@ export function SavedWorkflowsPage() {
         />
       </div>
 
-      <div className="mt-6">
+      <div data-tour="saved-list" className="mt-6">
         <WorkflowHistoryList
           workflows={
             workflowsQuery.data ??

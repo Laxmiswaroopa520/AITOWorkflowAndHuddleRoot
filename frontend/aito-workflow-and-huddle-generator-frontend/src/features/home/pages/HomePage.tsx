@@ -4,6 +4,7 @@ import {
   ListChecks,
   Map,
   Save,
+  ShieldCheck,
   Sparkles,
   Target,
   Users,
@@ -106,6 +107,19 @@ export function HomePage() {
           You can switch modes anytime from the top navigation.
         </motion.p>
       </motion.div>
+
+      {/* Pinned to the page's bottom-right corner. A real link, so hovering shows the address in the
+          tooltip and the browser status bar. */}
+      <a
+        href="https://www.microsoft.com/en-us/privacy/privacystatement"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="https://www.microsoft.com/en-us/privacy/privacystatement"
+        className="absolute bottom-6 right-6 z-10 inline-flex h-9 items-center rounded-lg border bg-white px-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+      >
+        <ShieldCheck className="mr-2 h-4 w-4" />
+        Privacy
+      </a>
     </main>
   );
 }

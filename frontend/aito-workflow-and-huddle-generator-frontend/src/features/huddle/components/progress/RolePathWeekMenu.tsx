@@ -19,6 +19,8 @@ interface RolePathWeekMenuProps {
   onMoveToWeek: (week: number) => void;
   onReplace: (externalId: string) => void;
   onReset: () => void;
+  /** Marks the menu button as the walkthrough target; only the first week sets it. */
+  tourFirst?: boolean;
 }
 
 type Submenu = "week" | "huddle";
@@ -59,6 +61,7 @@ export function RolePathWeekMenu(props: RolePathWeekMenuProps) {
         }}
         className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-muted-foreground hover:bg-[#E8F2FF] disabled:opacity-40"
         aria-label={`Manage Week ${props.week}`}
+        data-tour={props.tourFirst ? "huddle-week-menu" : undefined}
         aria-haspopup="menu"
         aria-expanded={props.open}
       >

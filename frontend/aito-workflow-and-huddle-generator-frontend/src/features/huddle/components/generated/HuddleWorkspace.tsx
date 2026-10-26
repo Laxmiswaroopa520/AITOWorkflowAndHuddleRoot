@@ -33,6 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import type {
   HuddlePresentationActivity,
+  HuddlePresentationAgent,
   HuddlePresentationModel,
   HuddlePresentationResource,
   HuddleSessionResponse,
@@ -159,7 +160,9 @@ function ActivityField({ label, value, tone = "default" }: { label: string; valu
 }
 
 export function HuddleWorkspace({ model, session, sessionLoading, sessionError, mutationPending, onRefreshSession, onSaveSession, onSetActivityCompletion, onCompleteSession, onMeetCoach, onPreviewSlides, onClose }: HuddleWorkspaceProps) {
-  const [section, setSection] = useState<WorkspaceSection>(model.phases.length > 0 ? "activities" : "overview");
+  // The hub always opens on Overview so the facilitator starts from the summary of what the Huddle
+  // covers. The phase below is still pre-selected, so Huddle Flow opens where the session left off.
+  const [section, setSection] = useState<WorkspaceSection>("overview");
   const [activePhaseId, setActivePhaseId] = useState<string | null>(() =>
     session?.currentPhaseExternalId && model.phases.some((phase) => phase.externalId === session.currentPhaseExternalId)
       ? session.currentPhaseExternalId
@@ -317,8 +320,51 @@ function MobileNav({ label, active, onClick }: { label: string; active: boolean;
   return <button type="button" onClick={onClick} className={cn("rounded-md border px-3 py-2 text-sm", active ? "border-[#0f6cbd] bg-[#e8f2ff] text-[#0f6cbd]" : "bg-white")}>{label}</button>;
 }
 
+/**
+ * Which AI tools the Huddle uses, most-used first, split into the Huddle's primary and secondary tools.
+ * Agents are grouped by their shown name because the same tool can be declared under more than one id;
+ * a declared tool no activity uses still appears. A tool belongs to the list the Huddle declares it in.
+ */
+function summarizeTools(model: HuddlePresentationModel): { primary: { name: string; activityCount: number }[]; secondary: { name: string; activityCount: number }[] } {
+  const nameOf = (agent: HuddlePresentationAgent) => agent.displayLabel?.trim() || agent.name;
+  const primaryIds = new Set(model.agents.primary.map((agent) => agent.externalId));
+  const secondaryIds = new Set(model.agents.secondary.map((agent) => agent.externalId));
+  const categoryOf = (agent: HuddlePresentationAgent): "primary" | "secondary" =>
+    primaryIds.has(agent.externalId) ? "primary" : secondaryIds.has(agent.externalId) ? "secondary" : agent.usageType === "Secondary" ? "secondary" : "primary";
+  const counts = { primary: new Map<string, number>(), secondary: new Map<string, number>() };
+  model.agents.primary.forEach((agent) => { if (!counts.primary.has(nameOf(agent))) counts.primary.set(nameOf(agent), 0); });
+  model.agents.secondary.forEach((agent) => { if (!counts.secondary.has(nameOf(agent))) counts.secondary.set(nameOf(agent), 0); });
+  model.phases.forEach((phase) => phase.activities.forEach((activity) => {
+    ([["primary", counts.primary], ["secondary", counts.secondary]] as const).forEach(([category, categoryCounts]) => {
+      new Set(activity.agents.filter((agent) => categoryOf(agent) === category).map(nameOf)).forEach((name) => categoryCounts.set(name, (categoryCounts.get(name) ?? 0) + 1));
+    });
+  }));
+  const sorted = (map: Map<string, number>) => [...map.entries()].map(([name, activityCount]) => ({ name, activityCount })).sort((left, right) => right.activityCount - left.activityCount || left.name.localeCompare(right.name));
+  return { primary: sorted(counts.primary), secondary: sorted(counts.secondary) };
+}
+
+/**
+ * High-level summary: the Huddle's featured activities, lettered A, B, C as in the downloaded HTML's
+ * "What you'll practice" card, alongside the AI tools it relies on.
+ */
+function OverviewSummary({ model }: { model: HuddlePresentationModel }) {
+  const tools = summarizeTools(model);
+  const featured = model.phases.flatMap((phase) => phase.activities).filter((activity) => activity.practiceTier !== "Extended");
+  return <div className="grid gap-4 lg:grid-cols-2">
+    <section className="rounded-xl border border-[#dfe3e8] bg-white p-5"><h4 className="flex items-center gap-2 font-semibold"><span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-[#16233A]" aria-hidden="true"><span className="h-1.5 w-1.5 rounded-full bg-[#16233A]" /></span>What you&apos;ll practice</h4>
+      {featured.length === 0 ? <OptionalContent value={null} /> : <ol className="mt-3 divide-y divide-[#e6ecf1]">{featured.map((activity, index) => <li key={activity.externalId} className="flex items-start gap-3 py-3 first:pt-1 last:pb-0"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0f6cbd] text-xs font-bold text-white" aria-hidden="true">{index < 26 ? String.fromCharCode(65 + index) : index + 1}</span><span className="min-w-0"><span className="block text-sm font-semibold text-[#242424]">{activity.name}</span>{activity.description && <span className="mt-0.5 block text-sm leading-5 text-[#616161]">{activity.description}</span>}</span></li>)}</ol>}
+    </section>
+    <section className="rounded-xl border border-[#dfe3e8] bg-white p-5">
+      {tools.primary.length === 0 && tools.secondary.length === 0 ? <><h4 className="font-semibold">AI tools</h4><OptionalContent value={null} /></> : <div className="space-y-5">
+        {([["Primary AI tools", tools.primary], ["Secondary AI tools", tools.secondary]] as const).filter(([, list]) => list.length > 0).map(([title, list]) => <div key={title}><h4 className="font-semibold">{title}</h4>
+          <ul className="mt-3 flex flex-wrap gap-2">{list.map((tool) => <li key={tool.name} className="inline-flex items-center gap-1.5 rounded border border-[#0f6cbd]/20 bg-[#e8f2ff] px-3 py-1.5 text-sm text-[#0f6cbd]"><Bot className="h-3.5 w-3.5" />{tool.name}</li>)}</ul></div>)}
+      </div>}
+    </section>
+  </div>;
+}
+
 function Overview({ model }: { model: HuddlePresentationModel }) {
-  return <div className="mx-auto max-w-4xl space-y-5"><div><p className="text-xs font-semibold uppercase tracking-wide text-[#0f6cbd]">Overview</p><h3 className="mt-1 text-2xl font-semibold">{model.identity.name}</h3><OptionalContent value={model.identity.description} /></div><div className="grid gap-4 md:grid-cols-2"><OverviewCard title="Today’s Objective" value={model.narrative.todayObjective} /><OverviewCard title="Use Case" value={model.narrative.useCase} /><OverviewCard title="Why It Matters" value={model.narrative.whyItMatters} /><OverviewCard title="Desired Outcome" value={model.narrative.desiredOutcome} /></div>{(model.audience.roleName || model.audience.audienceDescription) && <OverviewCard title="Audience" value={[model.audience.roleName, model.audience.audienceDescription].filter(Boolean).join(" — ")} />}{model.mcemStages.length > 0 && <section className="rounded-xl border border-[#dfe3e8] bg-white p-5"><h4 className="font-semibold">MCEM stages</h4><div className="mt-3 flex flex-wrap gap-2">{model.mcemStages.map((stage) => <span key={stage.externalId} className="rounded border border-[#0f6cbd]/20 bg-[#e8f2ff] px-3 py-1.5 text-sm text-[#0f6cbd]">{stage.name}</span>)}</div></section>}</div>;
+  return <div className="mx-auto max-w-4xl space-y-5"><div><p className="text-xs font-semibold uppercase tracking-wide text-[#0f6cbd]">Overview</p><h3 className="mt-1 text-2xl font-semibold">{model.identity.name}</h3><OptionalContent value={model.identity.description} /></div><OverviewSummary model={model} /><div className="grid gap-4 md:grid-cols-2"><OverviewCard title="Today’s Objective" value={model.narrative.todayObjective} /><OverviewCard title="Use Case" value={model.narrative.useCase} /><OverviewCard title="Why It Matters" value={model.narrative.whyItMatters} /><OverviewCard title="Desired Outcome" value={model.narrative.desiredOutcome} /></div>{(model.audience.roleName || model.audience.audienceDescription) && <OverviewCard title="Audience" value={[model.audience.roleName, model.audience.audienceDescription].filter(Boolean).join(" — ")} />}{model.mcemStages.length > 0 && <section className="rounded-xl border border-[#dfe3e8] bg-white p-5"><h4 className="font-semibold">MCEM stages</h4><div className="mt-3 flex flex-wrap gap-2">{model.mcemStages.map((stage) => <span key={stage.externalId} className="rounded border border-[#0f6cbd]/20 bg-[#e8f2ff] px-3 py-1.5 text-sm text-[#0f6cbd]">{stage.name}</span>)}</div></section>}</div>;
 }
 
 function OverviewCard({ title, value }: { title: string; value: string | null }) {
