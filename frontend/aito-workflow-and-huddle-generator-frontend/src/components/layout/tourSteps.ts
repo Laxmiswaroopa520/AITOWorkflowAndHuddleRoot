@@ -12,14 +12,14 @@ const SHELL_TOP: TourStep[] = [
 function shellBottom(isHuddleRoute: boolean): TourStep[] {
   return [
     isHuddleRoute
-      ? { target: "global-search", title: "Search Huddles", content: "Type at least two letters to find Huddles. Choose a result to open it in All Topics." }
+      ? { target: "global-search", title: "Search Huddles", content: "Type two or more letters to find Huddles and tools. Choosing a result opens that Huddle in All Topics." }
       : { target: "global-search", title: "Search", content: "Type at least two letters to find roles, activities, and AI tools. Choose a result to jump to it in the workflow builder." },
     { target: "help", title: "Page tips", content: "Reopen these tips any time. They change with your role and the tab you are on." },
   ];
 }
 
 /** Last layout step: the profile menu, which is where Send feedback lives. */
-const PROFILE: TourStep = { target: "user-menu", title: "Profile Settings & Feedback", content: "Open your profile menu to see your account details and use Send feedback to share your thoughts about the app." };
+const PROFILE: TourStep = { target: "user-menu", title: "Profile Settings & Feedback", content: "Open your profile menu to see your account details and find Send feedback to share ideas or report a problem." };
 
 const WORKFLOW_HEADER: TourStep[] = [];
 
@@ -205,8 +205,8 @@ interface ResolveTourStepsInput {
 /** Shown in place of the role-worded step until an experience is chosen. */
 const CHOOSE_ROLE_STEP: TourStep = {
   target: "huddle-role",
-  title: "Your experience",
-  content: "Pick how you take part: Manager, Facilitator, or Team Member. The rest of the page follows that choice.",
+  title: "Select your huddle role",
+  content: "Select how you want to use Huddles. Choose Manager to plan team learning, Facilitator to prepare and lead Huddles, or Team Member to follow a guided learning journey and practice AI. You can switch experiences later.",
 };
 
 /** The application shell: navigation, mode switching, search, and this help control. */

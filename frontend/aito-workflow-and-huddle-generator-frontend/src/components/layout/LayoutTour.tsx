@@ -99,8 +99,8 @@ export function LayoutTour() {
 
   if (choosing) {
     const options = [
-      { key: "page", icon: ListChecks, title: "Page tips", detail: describe(choice.page.length, "What is on this page, written for your role."), steps: choice.page },
       { key: "layout", icon: LayoutDashboard, title: "Layout tips", detail: describe(choice.layout.length, "Navigation, mode switching, and search."), steps: choice.layout },
+      { key: "page", icon: ListChecks, title: "Page tips", detail: describe(choice.page.length, "What is on this page, written for your role."), steps: choice.page },
       { key: "all", icon: Sparkles, title: "Everything", detail: describe(choice.layout.length + choice.page.length, "The full walkthrough."), steps: [...choice.layout, ...choice.page] },
     ];
 

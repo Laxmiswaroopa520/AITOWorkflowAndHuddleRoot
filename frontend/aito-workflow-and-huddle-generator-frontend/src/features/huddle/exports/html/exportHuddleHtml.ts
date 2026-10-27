@@ -1227,19 +1227,59 @@ function agentBrandMark(agent: HuddlePresentationAgent, className: string): stri
  */
 const TOP_FIVE_AGENT_NAMES = ["Researcher", "Cowork", "Scout", "Sales Agent", "Agent J.ai"] as const;
 
+/** True when `name` resolves (via the existing agentArtwork lookup) to one of the official Top 5. */
+function isOfficialTopFiveAgentName(name: string): boolean {
+  const source = agentArtwork(name)?.source;
+  if (!source) return false;
+  return TOP_FIVE_AGENT_NAMES.some((topName) => agentArtwork(topName)?.source === source);
+}
+
+/**
+ * A handful of agents (ECIF Agent, Deal Agent, CX Vitals) are tagged in HuddleActivityAgents /
+ * HuddleTopicAgents with a DisplayLabel of the form "X, surfaced through Y" rather than a plain
+ * name -- our own data's way of recording that this agent is reached through another one. Parsed
+ * here instead of hardcoded per-agent, so it applies to any agent tagged this way.
+ */
+const SURFACED_THROUGH_PATTERN = /^(.+?),\s*surfaced through\s+(.+)$/i;
+
+/** Agents that are part of a Top 5 agent without saying so in a "surfaced through" label. */
+const TOP_FIVE_PART_OF = new Map<string, (typeof TOP_FIVE_AGENT_NAMES)[number]>([
+  ["sales home", "Sales Agent"],
+]);
+
+function officialTopFiveName(name: string): (typeof TOP_FIVE_AGENT_NAMES)[number] | null {
+  const source = agentArtwork(name)?.source;
+  return source ? TOP_FIVE_AGENT_NAMES.find((topName) => agentArtwork(topName)?.source === source) ?? null : null;
+}
+
+/**
+ * The Top 5 agent this agent counts under on the Overview (AI Tools line and Top 5 band): itself,
+ * the agent it is part of (Sales Home), or the Top 5 agent it is surfaced through (Deal Agent).
+ * Null when it is not part of the Top 5. The Resources tab keeps its own Top 5 check.
+ */
+function topFiveGroupName(agent: HuddlePresentationAgent): (typeof TOP_FIVE_AGENT_NAMES)[number] | null {
+  const own = officialTopFiveName(agent.name);
+  if (own) return own;
+  const partOf = TOP_FIVE_PART_OF.get(agent.name.trim().toLowerCase());
+  if (partOf) return partOf;
+  const surfacedThrough = (agent.displayLabel?.trim() || agent.name).match(SURFACED_THROUGH_PATTERN)?.[2].trim();
+  return surfacedThrough ? officialTopFiveName(surfacedThrough) : null;
+}
+
+/** Name on the Top 5 line: a "surfaced through" label is shortened to the agent's own name. */
+function topFiveLineName(agent: HuddlePresentationAgent): string {
+  const rawLabel = agent.displayLabel?.trim() || agent.name;
+  return rawLabel.match(SURFACED_THROUGH_PATTERN)?.[1].trim() ?? rawLabel;
+}
+
 /** "Top 5 agents" pill band shown on the Overview panel, mirroring the reference guide. */
-function topFiveAgentBand(agents: readonly HuddlePresentationAgent[]): string {
-  const usedArtworkSources = new Set(
-    agents
-      .map((agent) => agentArtwork(agent.name)?.source)
-      .filter((source): source is string => Boolean(source)),
-  );
+function topFiveAgentBand(usedTopFiveNames: ReadonlySet<string>): string {
 
   return `<section class="top-five-agent-band" aria-label="Top 5 MCAPS Agents">`
     + `<div class="top-five-agent-band-label">Top 5 MCAPS Agents<span>Circle = included today</span></div>`
     + TOP_FIVE_AGENT_NAMES.map((name) => {
       const artwork = agentArtwork(name);
-      const isUsed = artwork ? usedArtworkSources.has(artwork.source) : false;
+      const isUsed = usedTopFiveNames.has(name);
       const icon = artwork
         ? `<img class="top-five-agent-logo" src="${artwork.source}" alt="${text(name)}">`
         : `<span>${text(name.split(/\s+/).map((part) => part[0]).join("").slice(0, 3))}</span>`;
@@ -1302,8 +1342,15 @@ function activityCard(activity: HuddlePresentationActivity, index: number, tier:
 }
 
 /** Resource-hub tool card (Resources tab). Same agent fields the old AI Tools tab used, restyled. */
-function resourceHubToolCard(agent: HuddlePresentationAgent): string {
+function resourceHubToolCard(agent: HuddlePresentationAgent, isTopFive: boolean): string {
   const label = agent.displayLabel?.trim() || agent.name;
+  const surfacedThroughName = label.match(SURFACED_THROUGH_PATTERN)?.[2].trim() ?? null;
+  // A "surfaced through" agent gets the secondary badge only when it is surfaced through an official Top 5 agent.
+  const badge = isTopFive
+    ? `<div class="resource-tool-badge">Top 5 MCAPS Agent</div>`
+    : surfacedThroughName && isOfficialTopFiveAgentName(surfacedThroughName)
+      ? `<div class="resource-tool-badge is-surfaced">Surfaced through Top 5 MCAPS Agents</div>`
+      : "";
   const brandMark = agentBrandMark(agent, "agent-logo");
   const accessUrl = safeExternalUrl(agent.accessUrl);
   const openLabel = `${text(agent.accessLinkLabel?.trim() || `Open ${label}`)} ↗`;
@@ -1316,11 +1363,8 @@ function resourceHubToolCard(agent: HuddlePresentationAgent): string {
     ? `<div class="resource-tool-detail ${className}"><strong>${text(heading)}</strong><p>${text(value)}</p></div>`
     : "";
 
-  return `<article class="resource-tool-card">`
-    // Empty badge slot reserved for layout parity with the reference design's "Top 5 agent"
-    // badge. This app has no agent-governance/Top-5 data source to populate it from, so no
-    // badge is rendered here -- see the export report for what a badge would require.
-    + `<div class="resource-tool-badge-slot"></div>`
+  return `<article class="resource-tool-card${isTopFive ? " top-five-resource" : ""}">`
+    + `<div class="resource-tool-badge-slot">${badge}</div>`
     + `<div class="resource-tool-head"><span class="resource-tool-logo">${brandMark}</span>`
     + `<div class="resource-tool-identity"><h3>${text(label)}</h3><span>${text(identitySubtitle)}</span></div>`
     // Always shown, like the activity tool rows: a placeholder until the agent has an access URL.
@@ -1393,11 +1437,12 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   );
   const usedDeclaredAgents = declaredAgents.filter((agent) => activityAgentExternalIds.has(agent.externalId));
 
-  // The Top 5 (in the official band order) that this Huddle actually uses, followed by
-  // whichever other used agents are not one of the five -- matching the "Top 5: ... . Also
-  // used: ... ." grouping in the AI Tools summary below and the order of the Resources tool grid.
+  // The Top 5 (in the official band order) that this Huddle lists as a primary or secondary agent,
+  // whether or not an activity calls on it, followed by whichever activity-used agents are not one
+  // of the five -- matching the "Top 5: ... . Also used: ... ." grouping in the AI Tools summary
+  // below and the order of the Resources tool grid.
   const topFiveUsedAgents = TOP_FIVE_AGENT_NAMES
-    .map((name) => usedDeclaredAgents.find((agent) => agentArtwork(agent.name)?.source === agentArtwork(name)?.source))
+    .map((name) => declaredAgents.find((agent) => agentArtwork(agent.name)?.source === agentArtwork(name)?.source))
     .filter((agent): agent is HuddlePresentationAgent => Boolean(agent));
   const alsoUsedAgents = usedDeclaredAgents.filter((agent) => !topFiveUsedAgents.includes(agent));
 
@@ -1424,15 +1469,23 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
       .sort((left, right) => left.displayOrder - right.displayOrder || left.externalId.localeCompare(right.externalId));
     const shownIds = new Set(topFiveUsedAgents.map((agent) => agent.externalId));
     const shownNames = new Set(topFiveNames.map((name) => name.toLowerCase()));
-    const alsoUsedNames = agentNames([...alsoUsedAgents, ...secondaryAgents].filter((agent) => {
+    const otherAgents = [...alsoUsedAgents, ...secondaryAgents].filter((agent) => {
       const name = agentNames([agent])[0]?.toLowerCase();
       if (shownIds.has(agent.externalId) || !name || shownNames.has(name)) return false;
       shownIds.add(agent.externalId);
       shownNames.add(name);
       return true;
-    }));
-    if (!topFiveNames.length && !alsoUsedNames.length) return "Not configured";
-    const topFivePart = topFiveNames.length ? `Top 5: ${topFiveNames.join(", ")}.` : "";
+    });
+    // Sales Home and agents surfaced through a Top 5 agent join the Top 5 line, grouped after the
+    // Top 5 agent they belong to in band order, instead of being listed under "Also used".
+    const topFiveGroup = [...topFiveUsedAgents, ...otherAgents.filter((agent) => topFiveGroupName(agent))]
+      .map((agent, index) => ({ agent, index, band: TOP_FIVE_AGENT_NAMES.indexOf(topFiveGroupName(agent) ?? "Sales Agent") }))
+      .sort((left, right) => left.band - right.band || left.index - right.index)
+      .map(({ agent }) => agent);
+    const topFiveLine = topFiveGroup.map(topFiveLineName).filter((name) => name.length > 0);
+    const alsoUsedNames = agentNames(otherAgents.filter((agent) => !topFiveGroupName(agent)));
+    if (!topFiveLine.length && !alsoUsedNames.length) return "Not configured";
+    const topFivePart = topFiveLine.length ? `Top 5: ${topFiveLine.join(", ")}.` : "";
     const alsoUsedPart = alsoUsedNames.length ? `Also used: ${alsoUsedNames.join(", ")}.` : "";
     // "Also used" starts on its own line; .meta-item strong uses white-space: pre-line to honour it.
     return [topFivePart, alsoUsedPart].filter(Boolean).join("\n");
@@ -1464,7 +1517,7 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
     + `<div class="overview-timing-band" aria-label="Today\u2019s Huddle"><div class="overview-timing-title">Today\u2019s Huddle</div><div class="overview-timing-steps">`
     + TEMPLATE.agenda.map((step, index) => `${index > 0 ? '<div class="overview-timing-arrow">\u2192</div>' : ""}<div class="overview-timing-step"><strong>${text(step.label)}</strong><span>\u00b7 ${step.minutes} min</span></div>`).join("")
     + `</div></div>`
-    + topFiveAgentBand(agents)
+    + topFiveAgentBand(new Set([...agents, ...model.agents.secondary].map(topFiveGroupName).filter((name): name is (typeof TOP_FIVE_AGENT_NAMES)[number] => name !== null)))
     + `<section class="hero-grid"><div class="hero-copy"><h1>${text(topicName)}</h1>${model.identity.description ? `<p class="hero-description">${text(model.identity.description)}</p>` : ""}`
     + `<div class="meta-strip">`
     + `<div class="meta-item"><span class="round-icon meta-icon">${ROLE_SVG}</span><span><small>Role</small><strong>${text(model.audience.roleName?.trim() || "Not specified")}</strong></span></div>`
@@ -1556,8 +1609,8 @@ export function createHuddleHtmlExport(model: HuddlePresentationModel, options: 
   // "AI Tools" tab (same `agents` array, same fields), followed by the supporting-resource
   // link cards (same `resources` array that resourceRows() used before).
   const resourcesPanel = `<section class="huddle-section-panel" data-section-panel="resources">`
-    + `<div class="resource-section-heading resource-section-heading-first"><div><h3>AI tools used in this Huddle</h3><p>Tools used across the ${text(stageName(1, "Explore & Practice"))} activities.</p></div><span class="resources-hub-count">${agents.length} ${agents.length === 1 ? "AI tool" : "AI tools"} \u00b7 ${resources.length} ${resources.length === 1 ? "resource" : "resources"}</span></div>`
-    + `${agents.length ? `<div class="resource-tool-grid">${agents.map(resourceHubToolCard).join("")}</div>` : placeholder("No AI tools are configured for this Huddle yet.")}`
+    + `<div class="resource-section-heading resource-section-heading-first"><div><h3>AI tools used in this Huddle</h3><p>Tools used across the ${text(stageName(1, "Explore & Practice"))} activities.</p></div><span class="resources-hub-count">${agents.length} ${agents.length === 1 ? "AI tool" : "AI tools"} \u00b7 ${topFiveUsedAgents.length} ${topFiveUsedAgents.length === 1 ? "Top 5 agent" : "Top 5 agents"} \u00b7 ${resources.length} ${resources.length === 1 ? "resource" : "resources"}</span></div>`
+    + `${agents.length ? `<div class="resource-tool-grid">${agents.map((agent) => resourceHubToolCard(agent, topFiveUsedAgents.includes(agent))).join("")}</div>` : placeholder("No AI tools are configured for this Huddle yet.")}`
     + `<div class="resource-section-heading"><div><h3>Supporting resources</h3><p>Use portfolio, role, topic, activity, and agent resources that support this Huddle.</p></div></div>`
     + `${resources.length ? resourceHubLinks(resources) : placeholder("No resources are configured for this Huddle yet.")}`
     + `</section>`;
