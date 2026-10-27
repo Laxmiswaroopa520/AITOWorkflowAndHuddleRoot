@@ -151,12 +151,30 @@ export function createApiClient(
     }
 
     if (!response.ok) {
-      let details: unknown;
+      // Read the error body exactly once (a Response body can only be consumed a single time),
+      // then try to parse it as JSON. Non-JSON bodies (plain text, APIM/proxy HTML pages,
+      // malformed JSON) are kept as raw text in `details`; empty bodies stay "". The HTTP status
+      // is always preserved, and getApiErrorMessage only surfaces ProblemDetails detail/title,
+      // so raw text or HTML is never shown to users as the error message.
+      let details: unknown = null;
 
       try {
-        details = await response.json();
-      } catch {
-        details = await response.text();
+        const responseText = await response.text();
+        details = responseText;
+
+        if (responseText.trim()) {
+          try {
+            details = JSON.parse(responseText);
+          } catch {
+            // Not JSON: keep the raw text.
+          }
+        }
+      } catch (readError) {
+        // A cancelled request should still surface as a cancellation, not as an HTTP error.
+        if (init.signal?.aborted) {
+          throw readError;
+        }
+        // Body could not be read: fall through and report the HTTP status with no details.
       }
 
       throw new ApiError(
