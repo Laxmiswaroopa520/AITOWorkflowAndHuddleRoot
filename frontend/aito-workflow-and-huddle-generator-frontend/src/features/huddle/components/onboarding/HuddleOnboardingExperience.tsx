@@ -326,13 +326,15 @@ function ActionPlanRhythm({ plan }: { plan: ActionPlan }) {
   </section>;
 }
 
+// Shown on every role's onboarding page in the Success looks like panel, as in AITO-inapp.
+const teamRhythmSuccess = ['The team understands why the Huddle matters', 'Huddles stay connected to real priorities', 'The weekly cadence remains protected', 'Team members bring back practical examples', 'Useful practices continue beyond the initial motion'];
+
 function PersonaOnboarding({ persona, onStartRolePath, onAdditionalTopics }: Pick<HuddleOnboardingExperienceProps, 'persona'|'onStartRolePath'|'onAdditionalTopics'>) {
   const [walkthroughOpen, setWalkthroughOpen] = useState(false);
   const p = persona ? personaOnboarding[persona] : null;
   if (!p) return null;
   const walkthrough = persona ? WALKTHROUGH_GUIDES.get(persona) : undefined;
   return <motion.section initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="space-y-9 pb-10">
-    <ThinkFeelDo />
     <section className="overflow-hidden rounded-[26px] border border-[#DCE6ED] bg-white shadow-[0_14px_40px_rgba(22,35,58,.06)]">
       <div className="grid lg:grid-cols-[1fr_.55fr]">
         <div className="p-7 md:p-9"><div className="flex flex-wrap items-center gap-3"><span className="inline-flex rounded-full bg-[#E2F1F9] px-3 py-1.5 text-xs font-semibold text-[#0A6BBA]">{p.title}</span></div><h1 className="mt-4 text-3xl font-semibold tracking-tight text-[#16233A]">{p.subtitle}</h1><p className="mt-4 max-w-3xl text-sm leading-7 text-[#5F6D80]">{p.role}</p><div className="mt-6 flex flex-wrap items-center gap-3">{'heroCta' in p && <Button data-tour="huddle-onboarding-start" className="bg-[#0A6BBA] hover:bg-[#115EA3]" onClick={onStartRolePath}>{p.heroCta}<ArrowRight className="ml-2 h-4 w-4"/></Button>}{walkthrough && <Button data-tour="huddle-onboarding-walkthrough" variant="outline" className="border-[#0A6BBA] text-[#0A6BBA] hover:bg-[#E2F1F9]" onClick={() => setWalkthroughOpen(true)}><FileImage className="mr-2 h-4 w-4"/>HTML Walkthrough</Button>}</div></div>
@@ -346,7 +348,7 @@ function PersonaOnboarding({ persona, onStartRolePath, onAdditionalTopics }: Pic
       <div className="p-6 md:p-8">
         <p className="text-xs font-bold uppercase tracking-[.14em] text-[#0A6BBA]">Success looks like</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#16233A]">A strong team rhythm looks like this</h2>
-        <ul className="mt-5 space-y-3">{p.success.map(s=><li key={s} className="flex gap-2 text-sm text-[#5C697D]"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0A6BBA]"/>{s}</li>)}</ul>
+        <ul className="mt-5 space-y-3">{teamRhythmSuccess.map(s=><li key={s} className="flex gap-2 text-sm text-[#5C697D]"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0A6BBA]"/>{s}</li>)}</ul>
       </div>
       <div data-tour="huddle-onboarding-continue" className="flex flex-col justify-center border-t border-[#E6ECF1] bg-[#F7F6F4] p-6 md:p-8 lg:border-l lg:border-t-0">
         <p className="text-xs font-bold uppercase tracking-[.14em] text-[#0A6BBA]">Ready to continue?</p>

@@ -442,12 +442,6 @@ export function HuddlePage() {
             Resources
           </button>
 
-          {viewMode !== "orientation" && (
-            <span className="inline-flex h-10 items-center rounded-lg border border-[#0F6CBD]/25 bg-[#E8F2FF] px-3 text-sm font-semibold text-[#0F6CBD]">
-              {selectedExternalId ? "1 selected" : "0 selected"}
-            </span>
-          )}
-
           {selectedExternalId && persona === "facilitator" && (
             <button
               type="button"
